@@ -1,0 +1,295 @@
+{
+  "number": 8,
+  "slug": "08-vpc-virtual-private-cloud",
+  "title": "VPC (Virtual Private Cloud)",
+  "sections": [
+    {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nAWS has millions of customers all sharing the same physical data centers.\n\nWithout VPC:\n→ Your database visible to every other AWS customer's network\n→ No privacy. Like living in a house with no walls.\n→ Terrifying.\n\nWith VPC:\n→ AWS gives you a completely isolated private network\n→ Your resources ONLY see each other (unless you open the door)\n→ Like a private gated community inside a massive city\n→ You design the streets, the gates, and who gets in\n\nEverything you've learned so far lives INSIDE a VPC:\nEC2 instances → in VPC subnets\nRDS databases → in VPC subnets\nLambda (VPC mode) → in VPC subnets\nECS tasks → in VPC subnets\nElastiCache → in VPC subnets\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "AWS has millions of customers all sharing the same physical data centers.\n\nWithout VPC:\n→ Your database visible to every other AWS customer's network\n→ No privacy. Like living in a house with no walls.\n→ Terrifying.\n\nWith VPC:\n→ AWS gives you a completely isolated private network\n→ Your resources ONLY see each other (unless you open the door)\n→ Like a private gated community inside a massive city\n→ You design the streets, the gates, and who gets in\n\nEverything you've learned so far lives INSIDE a VPC:\nEC2 instances → in VPC subnets\nRDS databases → in VPC subnets\nLambda (VPC mode) → in VPC subnets\nECS tasks → in VPC subnets\nElastiCache → in VPC subnets"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Your database visible to every other AWS customer's network",
+        "→ No privacy. Like living in a house with no walls.",
+        "→ Terrifying.",
+        "→ AWS gives you a completely isolated private network",
+        "→ Your resources ONLY see each other (unless you open the door)",
+        "→ Like a private gated community inside a massive city",
+        "→ You design the streets, the gates, and who gets in"
+      ]
+    },
+    {
+      "id": "vpc-core-concepts",
+      "title": "🏗️ VPC Core Concepts",
+      "type": "concept",
+      "rawMarkdown": "### VPC and CIDR Blocks\n\n```\nVPC = your own isolated virtual network in AWS\nDefined by: a CIDR block (IP address range)\n\nCIDR NOTATION EXPLAINED:\n10.0.0.0/16\n  10.0.0.0  → network address (starting point)\n  /16       → first 16 bits are fixed (the network)\n             → remaining 16 bits are for hosts\n             → 2^16 = 65,536 possible IP addresses\n\nCOMMON VPC CIDR CHOICES:\n10.0.0.0/16   → 65,536 IPs (recommended for most)\n10.0.0.0/8    → 16 million IPs (large enterprises)\n172.16.0.0/12 → 1 million IPs\n192.168.0.0/16 → 65,536 IPs\n\nRULES:\n→ Must use private IP ranges (RFC 1918):\n   10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16\n→ Cannot overlap with other VPCs you want to connect (peering/TGW)\n→ Choose /16 for new VPCs — gives you room to subdivide into many subnets\n→ Cannot change CIDR after creation (plan carefully!)\n   (you can ADD secondary CIDRs but cannot modify primary)\n\nAWS RESERVES 5 IPs IN EVERY SUBNET (not usable):\n10.0.0.0  → Network address\n10.0.0.1  → VPC router (AWS reserved)\n10.0.0.2  → DNS server (AWS reserved)\n10.0.0.3  → Future use (AWS reserved)\n10.0.0.255 → Broadcast (not used but reserved)\n→ /24 subnet = 256 IPs - 5 reserved = 251 usable\n```\n\n### Subnets\n\n```\nSUBNET = subdivision of your VPC in ONE specific AZ\n\nVPC (10.0.0.0/16) can have many subnets:\n\nPUBLIC SUBNETS (internet accessible):\n10.0.1.0/24 in AZ-a → load balancers, NAT Gateways, bastion hosts\n10.0.2.0/24 in AZ-b → load balancers, NAT Gateways\n10.0.3.0/24 in AZ-c → load balancers\n\nPRIVATE SUBNETS (internal only):\n10.0.11.0/24 in AZ-a → EC2 app servers, ECS tasks\n10.0.12.0/24 in AZ-b → EC2 app servers, ECS tasks\n10.0.13.0/24 in AZ-c → EC2 app servers, ECS tasks\n\nDATABASE SUBNETS (strictest isolation):\n10.0.21.0/24 in AZ-a → RDS, Aurora, ElastiCache\n10.0.22.0/24 in AZ-b → RDS, Aurora, ElastiCache\n10.0.23.0/24 in AZ-c → RDS, Aurora, ElastiCache\n\nWHAT MAKES A SUBNET \"PUBLIC\"?\n→ Its Route Table has a route: 0.0.0.0/0 → Internet Gateway\n→ Resources in it have a public IP (or Elastic IP)\n→ Security Group allows inbound from internet\n\nWHAT MAKES A SUBNET \"PRIVATE\"?\n→ Its Route Table has route: 0.0.0.0/0 → NAT Gateway (not IGW)\n→ Resources have ONLY private IPs\n→ Internet CANNOT initiate connections to private resources\n→ Private resources CAN initiate outbound connections (via NAT)\n```\n\n### Internet Gateway (IGW)\n\n```\nIGW = the door between your VPC and the internet\n→ One per VPC (cannot have two)\n→ Horizontally scaled, redundant, HA by AWS\n→ No bandwidth limit (unlike NAT Gateway)\n→ FREE (you pay for data transfer, not the IGW itself)\n\nFOR INTERNET ACCESS, resource needs ALL of:\n1. Public subnet (route table with IGW route)\n2. Public IP address (auto-assigned OR Elastic IP)\n3. Security Group allowing the traffic\n4. IGW attached to VPC\n\nIGW PERFORMS NAT:\n→ Private IP (10.0.1.50) → IGW → translates to Public IP → internet\n→ Response → IGW → translates back to Private IP → your EC2\n→ This is why EC2 doesn't know its own public IP\n   (check: curl http://169.254.169.254/latest/meta-data/public-ipv4)\n```\n\n### NAT Gateway — Private Subnet Internet Access\n\n```\nPROBLEM:\nPrivate EC2 needs to: download OS updates, call external API\nBut internet cannot initiate connections to private EC2 (good — it's private)\nHow does private EC2 get OUT to internet?\n\nSOLUTION: NAT Gateway\nPrivate EC2 → NAT Gateway (in PUBLIC subnet) → IGW → Internet\nInternet → IGW → NAT Gateway → Private EC2\n→ Outbound works. Inbound from internet: blocked (NAT doesn't allow it).\n\nNAT GATEWAY FACTS:\n→ Lives in a PUBLIC subnet (needs IGW to reach internet)\n→ Has an Elastic IP (static public IP)\n→ Managed by AWS (no maintenance, auto-scales)\n→ Bandwidth: 5 Gbps, scales to 100 Gbps automatically\n→ NOT free: $0.045/hour + $0.045/GB data processed\n\nCOST TRAP:\nNAT Gateway: $0.045/hour = $32.40/month (just for existing!)\n+ $0.045/GB of data processed\n→ 1 TB/month through NAT = $32.40 + $46.08 = $78.48/month\n→ Large workloads: NAT can cost $500-2000/month\n\nNAT GATEWAY HIGH AVAILABILITY:\n→ One NAT Gateway per AZ\n→ If AZ-a NAT fails and private subnets in AZ-b route through it → outage\n→ CREATE ONE NAT PER AZ in production\n→ Each AZ's private subnets route to NAT in SAME AZ\n→ Cost: 3 NAT Gateways × $32.40 = $97.20/month (worth it for HA)\n\nNAT GATEWAY vs NAT INSTANCE:\nNAT Gateway: managed, auto-scales, HA, expensive, recommended\nNAT Instance: EC2 instance running NAT (t3.nano = $3.76/month)\n              Manual HA, limited throughput, you manage it\n              Only for: very low traffic, cost-critical dev environments\n```\n\n### Route Tables\n\n```\nROUTE TABLE = rules that decide WHERE traffic goes\n\nEvery subnet has exactly ONE route table.\nEvery route table can be associated with MULTIPLE subnets.\n\nROUTE TABLE RULES:\nDestination → Target\n\nLOCAL ROUTE (always present, cannot delete):\n10.0.0.0/16 → local\n→ All traffic within VPC stays local (no gateway needed)\n\nPUBLIC SUBNET ROUTE TABLE:\n10.0.0.0/16 → local          (VPC traffic stays internal)\n0.0.0.0/0   → igw-xxxxxxxx  (everything else → internet gateway)\n\nPRIVATE SUBNET ROUTE TABLE:\n10.0.0.0/16 → local          (VPC traffic stays internal)\n0.0.0.0/0   → nat-xxxxxxxx  (outbound via NAT Gateway)\n\nDATABASE SUBNET ROUTE TABLE:\n10.0.0.0/16 → local          (only VPC-internal traffic)\n(no 0.0.0.0/0 route → NO internet access at all — databases don't need it)\n\nROUTE PRIORITY (longest prefix wins):\n10.0.1.0/24 → peering-connection   (more specific)\n10.0.0.0/16 → local                (less specific)\n0.0.0.0/0   → igw                  (default, least specific)\n→ Traffic to 10.0.1.50 uses the /24 route (most specific match)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### VPC and CIDR Blocks"
+        },
+        {
+          "type": "diagram",
+          "content": "VPC = your own isolated virtual network in AWS\nDefined by: a CIDR block (IP address range)\n\nCIDR NOTATION EXPLAINED:\n10.0.0.0/16\n  10.0.0.0  → network address (starting point)\n  /16       → first 16 bits are fixed (the network)\n             → remaining 16 bits are for hosts\n             → 2^16 = 65,536 possible IP addresses\n\nCOMMON VPC CIDR CHOICES:\n10.0.0.0/16   → 65,536 IPs (recommended for most)\n10.0.0.0/8    → 16 million IPs (large enterprises)\n172.16.0.0/12 → 1 million IPs\n192.168.0.0/16 → 65,536 IPs\n\nRULES:\n→ Must use private IP ranges (RFC 1918):\n   10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16\n→ Cannot overlap with other VPCs you want to connect (peering/TGW)\n→ Choose /16 for new VPCs — gives you room to subdivide into many subnets\n→ Cannot change CIDR after creation (plan carefully!)\n   (you can ADD secondary CIDRs but cannot modify primary)\n\nAWS RESERVES 5 IPs IN EVERY SUBNET (not usable):\n10.0.0.0  → Network address\n10.0.0.1  → VPC router (AWS reserved)\n10.0.0.2  → DNS server (AWS reserved)\n10.0.0.3  → Future use (AWS reserved)\n10.0.0.255 → Broadcast (not used but reserved)\n→ /24 subnet = 256 IPs - 5 reserved = 251 usable"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Subnets"
+        },
+        {
+          "type": "diagram",
+          "content": "SUBNET = subdivision of your VPC in ONE specific AZ\n\nVPC (10.0.0.0/16) can have many subnets:\n\nPUBLIC SUBNETS (internet accessible):\n10.0.1.0/24 in AZ-a → load balancers, NAT Gateways, bastion hosts\n10.0.2.0/24 in AZ-b → load balancers, NAT Gateways\n10.0.3.0/24 in AZ-c → load balancers\n\nPRIVATE SUBNETS (internal only):\n10.0.11.0/24 in AZ-a → EC2 app servers, ECS tasks\n10.0.12.0/24 in AZ-b → EC2 app servers, ECS tasks\n10.0.13.0/24 in AZ-c → EC2 app servers, ECS tasks\n\nDATABASE SUBNETS (strictest isolation):\n10.0.21.0/24 in AZ-a → RDS, Aurora, ElastiCache\n10.0.22.0/24 in AZ-b → RDS, Aurora, ElastiCache\n10.0.23.0/24 in AZ-c → RDS, Aurora, ElastiCache\n\nWHAT MAKES A SUBNET \"PUBLIC\"?\n→ Its Route Table has a route: 0.0.0.0/0 → Internet Gateway\n→ Resources in it have a public IP (or Elastic IP)\n→ Security Group allows inbound from internet\n\nWHAT MAKES A SUBNET \"PRIVATE\"?\n→ Its Route Table has route: 0.0.0.0/0 → NAT Gateway (not IGW)\n→ Resources have ONLY private IPs\n→ Internet CANNOT initiate connections to private resources\n→ Private resources CAN initiate outbound connections (via NAT)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Internet Gateway (IGW)"
+        },
+        {
+          "type": "diagram",
+          "content": "IGW = the door between your VPC and the internet\n→ One per VPC (cannot have two)\n→ Horizontally scaled, redundant, HA by AWS\n→ No bandwidth limit (unlike NAT Gateway)\n→ FREE (you pay for data transfer, not the IGW itself)\n\nFOR INTERNET ACCESS, resource needs ALL of:\n1. Public subnet (route table with IGW route)\n2. Public IP address (auto-assigned OR Elastic IP)\n3. Security Group allowing the traffic\n4. IGW attached to VPC\n\nIGW PERFORMS NAT:\n→ Private IP (10.0.1.50) → IGW → translates to Public IP → internet\n→ Response → IGW → translates back to Private IP → your EC2\n→ This is why EC2 doesn't know its own public IP\n   (check: curl http://169.254.169.254/latest/meta-data/public-ipv4)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### NAT Gateway — Private Subnet Internet Access"
+        },
+        {
+          "type": "diagram",
+          "content": "PROBLEM:\nPrivate EC2 needs to: download OS updates, call external API\nBut internet cannot initiate connections to private EC2 (good — it's private)\nHow does private EC2 get OUT to internet?\n\nSOLUTION: NAT Gateway\nPrivate EC2 → NAT Gateway (in PUBLIC subnet) → IGW → Internet\nInternet → IGW → NAT Gateway → Private EC2\n→ Outbound works. Inbound from internet: blocked (NAT doesn't allow it).\n\nNAT GATEWAY FACTS:\n→ Lives in a PUBLIC subnet (needs IGW to reach internet)\n→ Has an Elastic IP (static public IP)\n→ Managed by AWS (no maintenance, auto-scales)\n→ Bandwidth: 5 Gbps, scales to 100 Gbps automatically\n→ NOT free: $0.045/hour + $0.045/GB data processed\n\nCOST TRAP:\nNAT Gateway: $0.045/hour = $32.40/month (just for existing!)\n+ $0.045/GB of data processed\n→ 1 TB/month through NAT = $32.40 + $46.08 = $78.48/month\n→ Large workloads: NAT can cost $500-2000/month\n\nNAT GATEWAY HIGH AVAILABILITY:\n→ One NAT Gateway per AZ\n→ If AZ-a NAT fails and private subnets in AZ-b route through it → outage\n→ CREATE ONE NAT PER AZ in production\n→ Each AZ's private subnets route to NAT in SAME AZ\n→ Cost: 3 NAT Gateways × $32.40 = $97.20/month (worth it for HA)\n\nNAT GATEWAY vs NAT INSTANCE:\nNAT Gateway: managed, auto-scales, HA, expensive, recommended\nNAT Instance: EC2 instance running NAT (t3.nano = $3.76/month)\n              Manual HA, limited throughput, you manage it\n              Only for: very low traffic, cost-critical dev environments"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Route Tables"
+        },
+        {
+          "type": "diagram",
+          "content": "ROUTE TABLE = rules that decide WHERE traffic goes\n\nEvery subnet has exactly ONE route table.\nEvery route table can be associated with MULTIPLE subnets.\n\nROUTE TABLE RULES:\nDestination → Target\n\nLOCAL ROUTE (always present, cannot delete):\n10.0.0.0/16 → local\n→ All traffic within VPC stays local (no gateway needed)\n\nPUBLIC SUBNET ROUTE TABLE:\n10.0.0.0/16 → local          (VPC traffic stays internal)\n0.0.0.0/0   → igw-xxxxxxxx  (everything else → internet gateway)\n\nPRIVATE SUBNET ROUTE TABLE:\n10.0.0.0/16 → local          (VPC traffic stays internal)\n0.0.0.0/0   → nat-xxxxxxxx  (outbound via NAT Gateway)\n\nDATABASE SUBNET ROUTE TABLE:\n10.0.0.0/16 → local          (only VPC-internal traffic)\n(no 0.0.0.0/0 route → NO internet access at all — databases don't need it)\n\nROUTE PRIORITY (longest prefix wins):\n10.0.1.0/24 → peering-connection   (more specific)\n10.0.0.0/16 → local                (less specific)\n0.0.0.0/0   → igw                  (default, least specific)\n→ Traffic to 10.0.1.50 uses the /24 route (most specific match)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Must use private IP ranges (RFC 1918):",
+        "→ Cannot overlap with other VPCs you want to connect (peering/TGW)",
+        "→ Choose /16 for new VPCs — gives you room to subdivide into many subnets",
+        "→ Cannot change CIDR after creation (plan carefully!)",
+        "→ /24 subnet = 256 IPs - 5 reserved = 251 usable",
+        "→ Its Route Table has a route: 0.0.0.0/0 → Internet Gateway",
+        "→ Resources in it have a public IP (or Elastic IP)",
+        "→ Security Group allows inbound from internet"
+      ]
+    },
+    {
+      "id": "network-security-sg-vs-nacl",
+      "title": "🔒 Network Security — SG vs NACL",
+      "type": "concept",
+      "rawMarkdown": "### Security Groups (Reviewed Deeply)\n\n```\nSTATEFUL FIREWALL — attached to instances/resources\n\nHOW STATEFUL WORKS:\nYou allow inbound port 443\n→ Response traffic on that connection is AUTOMATICALLY allowed outbound\n→ You do NOT need to add outbound rule for the response\n→ AWS tracks connection state\n\nRULES:\n→ ALLOW only (no deny rules)\n→ All rules evaluated (no order/priority)\n→ Default: all inbound blocked, all outbound allowed\n→ Reference other SGs as source (dynamic, not IP-based)\n→ Change takes effect immediately (no reboot)\n→ ONE instance can have MULTIPLE security groups (union of all rules)\n\nCHAINING SECURITY GROUPS:\nALB SG:   inbound 443 from 0.0.0.0/0\nApp SG:   inbound 3000 from ALB SG (sg-alb-id)\nDB SG:    inbound 5432 from App SG (sg-app-id)\n\n→ Database ONLY accessible from App servers\n→ App servers ONLY accessible from Load Balancer\n→ Even if attacker gets into public subnet → cannot reach DB\n→ This is the correct production setup\n```\n\n### Network ACLs (NACLs)\n\n```\nSTATELESS FIREWALL — attached to subnets\n\nHOW STATELESS WORKS:\nYou allow inbound port 443\n→ Response traffic (ephemeral ports 1024-65535) must ALSO be explicitly allowed outbound\n→ AWS does NOT track connection state\n\nRULES:\n→ ALLOW and DENY rules (unlike SG which only allows)\n→ Rules evaluated in NUMBER ORDER (lowest first)\n→ First matching rule wins — STOP evaluating\n→ Default rule at end: DENY all (rule #*)\n\nDEFAULT NACL (when VPC created):\n→ Allows all inbound, allows all outbound (permissive)\n\nCUSTOM NACL (when you create one):\n→ Denies everything by default (restrictive)\n→ Must explicitly add rules\n\nNACL EXAMPLE (web server subnet):\nInbound:\n100  Allow  TCP  443   0.0.0.0/0   HTTPS from internet\n110  Allow  TCP  80    0.0.0.0/0   HTTP from internet\n120  Allow  TCP  1024-65535 0.0.0.0/0  Ephemeral ports (return traffic)\n*    Deny   All  All   0.0.0.0/0   Default deny\n\nOutbound:\n100  Allow  TCP  443   0.0.0.0/0   HTTPS to internet\n110  Allow  TCP  1024-65535 0.0.0.0/0  Return traffic to clients\n*    Deny   All  All   0.0.0.0/0   Default deny\n\nNOTE: You MUST allow ephemeral ports (1024-65535) for stateless!\nThis is the most common NACL mistake.\n\nSECURITY GROUP vs NACL:\nFeature          Security Group        NACL\nLevel            Instance              Subnet\nStateful?        YES                   NO\nRules            Allow only            Allow + Deny\nEvaluation       All rules (no order)  Ordered by number\nDefault          Block inbound         Depends (default: allow)\nUse for          Primary security      Extra layer, block IPs\n\nWHEN TO USE NACL:\n→ Block a specific bad IP at subnet level (DDoS mitigation)\n→ Extra compliance layer requirement\n→ Block traffic between subnets in same VPC\n→ Most teams: just use Security Groups, rarely touch NACLs\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Security Groups (Reviewed Deeply)"
+        },
+        {
+          "type": "diagram",
+          "content": "STATEFUL FIREWALL — attached to instances/resources\n\nHOW STATEFUL WORKS:\nYou allow inbound port 443\n→ Response traffic on that connection is AUTOMATICALLY allowed outbound\n→ You do NOT need to add outbound rule for the response\n→ AWS tracks connection state\n\nRULES:\n→ ALLOW only (no deny rules)\n→ All rules evaluated (no order/priority)\n→ Default: all inbound blocked, all outbound allowed\n→ Reference other SGs as source (dynamic, not IP-based)\n→ Change takes effect immediately (no reboot)\n→ ONE instance can have MULTIPLE security groups (union of all rules)\n\nCHAINING SECURITY GROUPS:\nALB SG:   inbound 443 from 0.0.0.0/0\nApp SG:   inbound 3000 from ALB SG (sg-alb-id)\nDB SG:    inbound 5432 from App SG (sg-app-id)\n\n→ Database ONLY accessible from App servers\n→ App servers ONLY accessible from Load Balancer\n→ Even if attacker gets into public subnet → cannot reach DB\n→ This is the correct production setup"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Network ACLs (NACLs)"
+        },
+        {
+          "type": "diagram",
+          "content": "STATELESS FIREWALL — attached to subnets\n\nHOW STATELESS WORKS:\nYou allow inbound port 443\n→ Response traffic (ephemeral ports 1024-65535) must ALSO be explicitly allowed outbound\n→ AWS does NOT track connection state\n\nRULES:\n→ ALLOW and DENY rules (unlike SG which only allows)\n→ Rules evaluated in NUMBER ORDER (lowest first)\n→ First matching rule wins — STOP evaluating\n→ Default rule at end: DENY all (rule #*)\n\nDEFAULT NACL (when VPC created):\n→ Allows all inbound, allows all outbound (permissive)\n\nCUSTOM NACL (when you create one):\n→ Denies everything by default (restrictive)\n→ Must explicitly add rules\n\nNACL EXAMPLE (web server subnet):\nInbound:\n100  Allow  TCP  443   0.0.0.0/0   HTTPS from internet\n110  Allow  TCP  80    0.0.0.0/0   HTTP from internet\n120  Allow  TCP  1024-65535 0.0.0.0/0  Ephemeral ports (return traffic)\n*    Deny   All  All   0.0.0.0/0   Default deny\n\nOutbound:\n100  Allow  TCP  443   0.0.0.0/0   HTTPS to internet\n110  Allow  TCP  1024-65535 0.0.0.0/0  Return traffic to clients\n*    Deny   All  All   0.0.0.0/0   Default deny\n\nNOTE: You MUST allow ephemeral ports (1024-65535) for stateless!\nThis is the most common NACL mistake.\n\nSECURITY GROUP vs NACL:\nFeature          Security Group        NACL\nLevel            Instance              Subnet\nStateful?        YES                   NO\nRules            Allow only            Allow + Deny\nEvaluation       All rules (no order)  Ordered by number\nDefault          Block inbound         Depends (default: allow)\nUse for          Primary security      Extra layer, block IPs\n\nWHEN TO USE NACL:\n→ Block a specific bad IP at subnet level (DDoS mitigation)\n→ Extra compliance layer requirement\n→ Block traffic between subnets in same VPC\n→ Most teams: just use Security Groups, rarely touch NACLs"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Response traffic on that connection is AUTOMATICALLY allowed outbound",
+        "→ You do NOT need to add outbound rule for the response",
+        "→ AWS tracks connection state",
+        "→ ALLOW only (no deny rules)",
+        "→ All rules evaluated (no order/priority)",
+        "→ Default: all inbound blocked, all outbound allowed",
+        "→ Reference other SGs as source (dynamic, not IP-based)",
+        "→ Change takes effect immediately (no reboot)"
+      ]
+    },
+    {
+      "id": "vpc-connectivity-options",
+      "title": "🔌 VPC Connectivity Options",
+      "type": "concept",
+      "rawMarkdown": "### VPC Peering\n\n```\nVPC Peering = private connection between two VPCs\nTraffic stays on AWS network (never touches internet)\n\nWORKS BETWEEN:\n→ Two VPCs in same account, same region\n→ Two VPCs in same account, different regions (inter-region peering)\n→ Two VPCs in different accounts (cross-account peering)\n\nSETUP:\nVPC A owner → creates peering request\nVPC B owner → accepts peering request\nBoth → add routes in their route tables:\n  VPC A route table: 10.1.0.0/16 → pcx-xxxxxxxxx (peering connection)\n  VPC B route table: 10.0.0.0/16 → pcx-xxxxxxxxx (peering connection)\nBoth → update security groups to allow traffic from peer VPC CIDR\n\nCRITICAL LIMITATION — NOT TRANSITIVE:\nVPC A ↔ VPC B (peered)\nVPC B ↔ VPC C (peered)\nDoes NOT mean VPC A ↔ VPC C!\nMust create separate A ↔ C peering connection\n\nWHEN PEERING BREAKS DOWN:\n10 VPCs → 10×9/2 = 45 peering connections to manage\n50 VPCs → 1,225 peering connections → impossible to manage\n→ Solution: Transit Gateway\n```\n\n### Transit Gateway (TGW)\n\n```\nTransit Gateway = hub-and-spoke network router for VPCs\n→ Connect hundreds of VPCs through ONE central hub\n→ No more mesh of peering connections\n\nARCHITECTURE:\nVPC A ──┐\nVPC B ──┤\nVPC C ──┤── Transit Gateway ──── On-Premise (via VPN or Direct Connect)\nVPC D ──┤\nVPC E ──┘\n\nALL VPCs can talk to each other through TGW\nALL VPCs can reach on-premise through TGW\nAdd new VPC? Just attach it to TGW. Done.\n\nROUTING:\n→ Each VPC attachment has its own route table in TGW\n→ You control which VPCs can reach which (isolation still possible)\n→ Example: Dev VPCs cannot reach Prod VPCs (different route tables)\n\nCOST:\n→ $0.05/hour per attachment (per VPC connection)\n→ $0.02/GB of data processed\n→ 10 VPCs: 10 × $0.05 = $0.50/hour = $360/month (just attachments)\n→ Worth it once you have 5+ VPCs (vs managing 10+ peering connections)\n\nUSE TGW WHEN:\n→ 5+ VPCs that need to communicate\n→ Connecting multiple VPCs to on-premise\n→ Need centralized network control\n→ Building hub-and-spoke architecture\n\nUSE VPC PEERING WHEN:\n→ 2-4 VPCs\n→ Simple one-to-one connection\n→ Cost-sensitive (peering itself is free, only data transfer cost)\n```\n\n### VPC Endpoints — Access AWS Services Without Internet\n\n```\nPROBLEM:\nLambda in private subnet needs to call S3\nRoute: Lambda → NAT Gateway ($0.045/GB) → Internet → S3\nCost: paying NAT for traffic that never really left AWS!\n\nSOLUTION: VPC Endpoints\nPrivate connection from your VPC to AWS services\nTraffic NEVER leaves Amazon's network. No internet. No NAT.\n\nGATEWAY ENDPOINTS (FREE):\n→ For: S3 and DynamoDB ONLY\n→ Add a route in your route table:\n  pl-68a54001 (S3 prefix list) → vpce-xxxxxxxxx\n→ Traffic to S3/DynamoDB now goes via endpoint, NOT NAT Gateway\n→ Cost: $0 for the endpoint\n→ Savings: potentially hundreds of dollars in NAT Gateway data charges\n\nINTERFACE ENDPOINTS ($0.01/hour per AZ + $0.01/GB):\n→ For: 100+ AWS services (SQS, SNS, SSM, CloudWatch, API Gateway, etc.)\n→ Creates an ENI (Elastic Network Interface) in your subnet\n→ ENI has a private IP in your subnet\n→ Traffic to that service goes to this ENI\n→ More expensive than Gateway but much cheaper than internet egress\n\nREAL COST EXAMPLE:\nLambda → SQS: 1 million messages/day, avg 1KB each = ~30 GB/month\nWithout Interface Endpoint: 30GB × $0.045 NAT = $1.35/month + NAT hourly\nWith Interface Endpoint: 30GB × $0.01 + $0.01/hour = $0.30 + $7.20 = $7.50/month\n→ At low volumes: endpoint costs MORE (fixed hourly)\n→ At high volumes (TB/month): endpoint saves significantly\n\nPRIVATE DNS:\n→ Interface endpoints support private DNS\n→ sqs.us-east-1.amazonaws.com → resolves to private IP in your VPC\n→ Your code doesn't change (same SDK calls)\n→ Traffic automatically uses private path\n```\n\n### AWS Direct Connect\n\n```\nDirect Connect = dedicated physical fiber connection from YOUR office/DC to AWS\n\nWHY NOT JUST USE INTERNET VPN?\n→ Internet is unpredictable: variable latency, congestion, packet loss\n→ VPN over internet: ~150ms latency, 500 Mbps max practical\n→ Direct Connect: consistent 1-10ms latency, 1-100 Gbps\n\nSETUP:\nYour data center → (physical fiber) → Direct Connect location (colocation)\n→ AWS Direct Connect port → your VPC\n\nSPEEDS: 1 Gbps, 10 Gbps, 100 Gbps\n\nUSE CASES:\n→ Hybrid cloud (on-premise + AWS workloads)\n→ Large data transfers (petabytes — much cheaper than internet)\n→ Low-latency requirements (financial trading, real-time manufacturing)\n→ Compliance: data cannot travel over public internet\n\nCOST: varies by location and bandwidth\n→ Port fee: $0.30/hour for 1 Gbps ($216/month just for port)\n→ Data transfer: $0.02/GB outbound from AWS (vs $0.09 for internet)\n→ Plus: cross-connect fee at colocation facility\n\nDIRECT CONNECT + VPN (backup):\n→ Direct Connect as primary (fast, reliable)\n→ VPN as failover (if Direct Connect fails)\n→ BGP routing automatically fails over between them\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### VPC Peering"
+        },
+        {
+          "type": "diagram",
+          "content": "VPC Peering = private connection between two VPCs\nTraffic stays on AWS network (never touches internet)\n\nWORKS BETWEEN:\n→ Two VPCs in same account, same region\n→ Two VPCs in same account, different regions (inter-region peering)\n→ Two VPCs in different accounts (cross-account peering)\n\nSETUP:\nVPC A owner → creates peering request\nVPC B owner → accepts peering request\nBoth → add routes in their route tables:\n  VPC A route table: 10.1.0.0/16 → pcx-xxxxxxxxx (peering connection)\n  VPC B route table: 10.0.0.0/16 → pcx-xxxxxxxxx (peering connection)\nBoth → update security groups to allow traffic from peer VPC CIDR\n\nCRITICAL LIMITATION — NOT TRANSITIVE:\nVPC A ↔ VPC B (peered)\nVPC B ↔ VPC C (peered)\nDoes NOT mean VPC A ↔ VPC C!\nMust create separate A ↔ C peering connection\n\nWHEN PEERING BREAKS DOWN:\n10 VPCs → 10×9/2 = 45 peering connections to manage\n50 VPCs → 1,225 peering connections → impossible to manage\n→ Solution: Transit Gateway"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Transit Gateway (TGW)"
+        },
+        {
+          "type": "diagram",
+          "content": "Transit Gateway = hub-and-spoke network router for VPCs\n→ Connect hundreds of VPCs through ONE central hub\n→ No more mesh of peering connections\n\nARCHITECTURE:\nVPC A ──┐\nVPC B ──┤\nVPC C ──┤── Transit Gateway ──── On-Premise (via VPN or Direct Connect)\nVPC D ──┤\nVPC E ──┘\n\nALL VPCs can talk to each other through TGW\nALL VPCs can reach on-premise through TGW\nAdd new VPC? Just attach it to TGW. Done.\n\nROUTING:\n→ Each VPC attachment has its own route table in TGW\n→ You control which VPCs can reach which (isolation still possible)\n→ Example: Dev VPCs cannot reach Prod VPCs (different route tables)\n\nCOST:\n→ $0.05/hour per attachment (per VPC connection)\n→ $0.02/GB of data processed\n→ 10 VPCs: 10 × $0.05 = $0.50/hour = $360/month (just attachments)\n→ Worth it once you have 5+ VPCs (vs managing 10+ peering connections)\n\nUSE TGW WHEN:\n→ 5+ VPCs that need to communicate\n→ Connecting multiple VPCs to on-premise\n→ Need centralized network control\n→ Building hub-and-spoke architecture\n\nUSE VPC PEERING WHEN:\n→ 2-4 VPCs\n→ Simple one-to-one connection\n→ Cost-sensitive (peering itself is free, only data transfer cost)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### VPC Endpoints — Access AWS Services Without Internet"
+        },
+        {
+          "type": "diagram",
+          "content": "PROBLEM:\nLambda in private subnet needs to call S3\nRoute: Lambda → NAT Gateway ($0.045/GB) → Internet → S3\nCost: paying NAT for traffic that never really left AWS!\n\nSOLUTION: VPC Endpoints\nPrivate connection from your VPC to AWS services\nTraffic NEVER leaves Amazon's network. No internet. No NAT.\n\nGATEWAY ENDPOINTS (FREE):\n→ For: S3 and DynamoDB ONLY\n→ Add a route in your route table:\n  pl-68a54001 (S3 prefix list) → vpce-xxxxxxxxx\n→ Traffic to S3/DynamoDB now goes via endpoint, NOT NAT Gateway\n→ Cost: $0 for the endpoint\n→ Savings: potentially hundreds of dollars in NAT Gateway data charges\n\nINTERFACE ENDPOINTS ($0.01/hour per AZ + $0.01/GB):\n→ For: 100+ AWS services (SQS, SNS, SSM, CloudWatch, API Gateway, etc.)\n→ Creates an ENI (Elastic Network Interface) in your subnet\n→ ENI has a private IP in your subnet\n→ Traffic to that service goes to this ENI\n→ More expensive than Gateway but much cheaper than internet egress\n\nREAL COST EXAMPLE:\nLambda → SQS: 1 million messages/day, avg 1KB each = ~30 GB/month\nWithout Interface Endpoint: 30GB × $0.045 NAT = $1.35/month + NAT hourly\nWith Interface Endpoint: 30GB × $0.01 + $0.01/hour = $0.30 + $7.20 = $7.50/month\n→ At low volumes: endpoint costs MORE (fixed hourly)\n→ At high volumes (TB/month): endpoint saves significantly\n\nPRIVATE DNS:\n→ Interface endpoints support private DNS\n→ sqs.us-east-1.amazonaws.com → resolves to private IP in your VPC\n→ Your code doesn't change (same SDK calls)\n→ Traffic automatically uses private path"
+        },
+        {
+          "type": "paragraph",
+          "content": "### AWS Direct Connect"
+        },
+        {
+          "type": "diagram",
+          "content": "Direct Connect = dedicated physical fiber connection from YOUR office/DC to AWS\n\nWHY NOT JUST USE INTERNET VPN?\n→ Internet is unpredictable: variable latency, congestion, packet loss\n→ VPN over internet: ~150ms latency, 500 Mbps max practical\n→ Direct Connect: consistent 1-10ms latency, 1-100 Gbps\n\nSETUP:\nYour data center → (physical fiber) → Direct Connect location (colocation)\n→ AWS Direct Connect port → your VPC\n\nSPEEDS: 1 Gbps, 10 Gbps, 100 Gbps\n\nUSE CASES:\n→ Hybrid cloud (on-premise + AWS workloads)\n→ Large data transfers (petabytes — much cheaper than internet)\n→ Low-latency requirements (financial trading, real-time manufacturing)\n→ Compliance: data cannot travel over public internet\n\nCOST: varies by location and bandwidth\n→ Port fee: $0.30/hour for 1 Gbps ($216/month just for port)\n→ Data transfer: $0.02/GB outbound from AWS (vs $0.09 for internet)\n→ Plus: cross-connect fee at colocation facility\n\nDIRECT CONNECT + VPN (backup):\n→ Direct Connect as primary (fast, reliable)\n→ VPN as failover (if Direct Connect fails)\n→ BGP routing automatically fails over between them"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Two VPCs in same account, same region",
+        "→ Two VPCs in same account, different regions (inter-region peering)",
+        "→ Two VPCs in different accounts (cross-account peering)",
+        "→ Solution: Transit Gateway",
+        "→ Connect hundreds of VPCs through ONE central hub",
+        "→ No more mesh of peering connections",
+        "→ Each VPC attachment has its own route table in TGW",
+        "→ You control which VPCs can reach which (isolation still possible)"
+      ]
+    },
+    {
+      "id": "vpc-design-production-reference-architecture",
+      "title": "📐 VPC Design — Production Reference Architecture",
+      "type": "concept",
+      "rawMarkdown": "```\nSTANDARD 3-TIER ARCHITECTURE:\n\n┌─────────────────────────────────────────────────────────────────────┐\n│                         VPC: 10.0.0.0/16                          │\n│                                                                     │\n│  ┌─────────────────────────────────────────────────────────────┐  │\n│  │                    PUBLIC SUBNETS                           │  │\n│  │  10.0.1.0/24 (AZ-a)  10.0.2.0/24 (AZ-b)  10.0.3.0/24(AZ-c)│  │\n│  │  ┌──────────┐        ┌──────────┐         ┌──────────┐    │  │\n│  │  │   ALB    │        │   ALB    │         │   ALB    │    │  │\n│  │  │  NAT-GW  │        │  NAT-GW  │         │  NAT-GW  │    │  │\n│  │  └──────────┘        └──────────┘         └──────────┘    │  │\n│  └─────────────────────────────────────────────────────────────┘  │\n│                              │ (ALB routes traffic down)          │\n│  ┌─────────────────────────────────────────────────────────────┐  │\n│  │                    PRIVATE SUBNETS                          │  │\n│  │  10.0.11.0/24(AZ-a) 10.0.12.0/24(AZ-b) 10.0.13.0/24(AZ-c)│  │\n│  │  ┌──────────┐        ┌──────────┐        ┌──────────┐     │  │\n│  │  │ ECS/EC2  │        │ ECS/EC2  │        │ ECS/EC2  │     │  │\n│  │  │ App Layer│        │ App Layer│        │ App Layer│     │  │\n│  │  └──────────┘        └──────────┘        └──────────┘     │  │\n│  └─────────────────────────────────────────────────────────────┘  │\n│                              │ (app connects to DB)               │\n│  ┌─────────────────────────────────────────────────────────────┐  │\n│  │                   DATABASE SUBNETS                          │  │\n│  │  10.0.21.0/24(AZ-a) 10.0.22.0/24(AZ-b) 10.0.23.0/24(AZ-c)│  │\n│  │  ┌──────────┐        ┌──────────┐        ┌──────────┐     │  │\n│  │  │  Aurora  │        │ ElastiC  │        │ Aurora   │     │  │\n│  │  │ Primary  │        │  Cache   │        │ Standby  │     │  │\n│  │  └──────────┘        └──────────┘        └──────────┘     │  │\n│  └─────────────────────────────────────────────────────────────┘  │\n└─────────────────────────────────────────────────────────────────────┘\n                 │ (Internet Gateway attached to VPC)\n              INTERNET\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "STANDARD 3-TIER ARCHITECTURE:\n\n┌─────────────────────────────────────────────────────────────────────┐\n│                         VPC: 10.0.0.0/16                          │\n│                                                                     │\n│  ┌─────────────────────────────────────────────────────────────┐  │\n│  │                    PUBLIC SUBNETS                           │  │\n│  │  10.0.1.0/24 (AZ-a)  10.0.2.0/24 (AZ-b)  10.0.3.0/24(AZ-c)│  │\n│  │  ┌──────────┐        ┌──────────┐         ┌──────────┐    │  │\n│  │  │   ALB    │        │   ALB    │         │   ALB    │    │  │\n│  │  │  NAT-GW  │        │  NAT-GW  │         │  NAT-GW  │    │  │\n│  │  └──────────┘        └──────────┘         └──────────┘    │  │\n│  └─────────────────────────────────────────────────────────────┘  │\n│                              │ (ALB routes traffic down)          │\n│  ┌─────────────────────────────────────────────────────────────┐  │\n│  │                    PRIVATE SUBNETS                          │  │\n│  │  10.0.11.0/24(AZ-a) 10.0.12.0/24(AZ-b) 10.0.13.0/24(AZ-c)│  │\n│  │  ┌──────────┐        ┌──────────┐        ┌──────────┐     │  │\n│  │  │ ECS/EC2  │        │ ECS/EC2  │        │ ECS/EC2  │     │  │\n│  │  │ App Layer│        │ App Layer│        │ App Layer│     │  │\n│  │  └──────────┘        └──────────┘        └──────────┘     │  │\n│  └─────────────────────────────────────────────────────────────┘  │\n│                              │ (app connects to DB)               │\n│  ┌─────────────────────────────────────────────────────────────┐  │\n│  │                   DATABASE SUBNETS                          │  │\n│  │  10.0.21.0/24(AZ-a) 10.0.22.0/24(AZ-b) 10.0.23.0/24(AZ-c)│  │\n│  │  ┌──────────┐        ┌──────────┐        ┌──────────┐     │  │\n│  │  │  Aurora  │        │ ElastiC  │        │ Aurora   │     │  │\n│  │  │ Primary  │        │  Cache   │        │ Standby  │     │  │\n│  │  └──────────┘        └──────────┘        └──────────┘     │  │\n│  └─────────────────────────────────────────────────────────────┘  │\n└─────────────────────────────────────────────────────────────────────┘\n                 │ (Internet Gateway attached to VPC)\n              INTERNET"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "┌─────────────────────────────────────────────────────────────────────┐"
+      ]
+    },
+    {
+      "id": "interview-qa-vpc",
+      "title": "🎯 Interview Q&A — VPC",
+      "type": "qa",
+      "rawMarkdown": "**Q: Walk me through what happens when a user requests your web app.**\n```\n\"Starting from the internet:\n\n1. User's browser resolves domain via Route 53 → gets ALB's IP\n2. HTTPS request reaches ALB in public subnet (port 443)\n3. ALB has SSL certificate (ACM) → terminates TLS, inspects HTTP headers\n4. ALB checks routing rules → matches /* → forwards to Target Group\n5. ALB health-checks confirm target is healthy → picks one ECS task\n6. ALB forwards request to ECS task on port 3000 (private subnet)\n   Security Group on ECS task: allows port 3000 from ALB Security Group only\n7. App processes request → needs user data from Aurora\n8. App connects to Aurora cluster endpoint (private subnet, port 5432)\n   Security Group on Aurora: allows port 5432 from App Security Group only\n9. Aurora returns data → app formats response → sends back to ALB\n10. ALB returns response to user\n\nTraffic never touches public internet after entering the ALB.\nApp servers and databases have NO public IPs.\nDatabases accept connections only from app servers (via SG reference).\nEverything encrypted in transit (HTTPS + TLS to Aurora).\"\n```\n\n**Q: Our Lambda can't connect to our RDS database. How do you debug?**\n```\n\"Step by step diagnosis:\n\n1. Is Lambda in a VPC?\n   Lambda without VPC config cannot reach VPC resources.\n   Check Lambda configuration: must have VPC, subnets, SG configured.\n\n2. Are Lambda and RDS in the SAME VPC?\n   Different VPCs → can't connect unless peered + routes configured.\n\n3. Are they in the right subnets?\n   Lambda should be in PRIVATE subnet (so it can use NAT for internet too).\n   RDS should be in DATABASE subnet.\n   Both in same VPC → they can communicate if SG rules allow.\n\n4. Security Group on RDS:\n   Does it allow port 5432 (PostgreSQL) or 3306 (MySQL) \n   from Lambda's Security Group?\n   Check: RDS SG inbound rules → source should be Lambda SG ID.\n\n5. Security Group on Lambda:\n   Does it allow outbound to port 5432/3306?\n   Default: all outbound allowed → probably fine.\n   If outbound restricted: add rule for DB port.\n\n6. Route Tables:\n   Lambda subnet route table: does it have route to RDS subnet?\n   Both in same VPC → 'local' route covers all VPC traffic → should work.\n\n7. If Lambda also needs internet (for external APIs):\n   Lambda in private subnet → route table needs NAT Gateway route.\n   Lambda in public subnet → needs public IP (not ideal for security).\n\n8. Timeout:\n   If connecting but slow/failing: check DB connection limit.\n   Lambda can create many parallel connections → use RDS Proxy!\n   RDS Proxy pools connections → solves Lambda connection storm problem.\n\nMost common cause: Lambda not in VPC, or SG on RDS not allowing Lambda SG.\"\n```\n\n**Q: How do you reduce NAT Gateway costs?**\n```\n\"NAT Gateway costs come from two sources: hourly ($0.045/hr) and data ($0.045/GB).\nAttack the data charge first — that's usually the bigger number.\n\nStep 1: VPC Flow Logs → analyze what traffic goes through NAT Gateway.\nEnable: VPC → Flow Logs → CloudWatch or S3.\nQuery with Athena or CloudWatch Insights: which destinations, how much data.\n\nStep 2: Add S3 Gateway Endpoint (FREE).\nIf Lambda/EC2 calls S3 → currently goes through NAT → $0.045/GB.\nAdd S3 Gateway Endpoint → traffic goes directly → $0 for transfer.\nOne-time setup, zero ongoing cost. Often saves $50-500/month.\n\nStep 3: Add DynamoDB Gateway Endpoint (FREE).\nSame story — DynamoDB traffic through NAT is wasteful.\n\nStep 4: Interface Endpoints for high-volume services.\nSQS, SNS, CloudWatch, Systems Manager → if high volume, evaluate cost.\nAt low volume: interface endpoint costs MORE than NAT (fixed hourly).\nAt high volume (hundreds of GB): interface endpoint saves money.\n\nStep 5: Check for unnecessary internet calls.\nApplication calling external API for every request? Cache the response.\nSending logs to internet destination? Switch to CloudWatch (internal).\n\nStep 6: Dev/test environments — one NAT Gateway only.\nProduction: one per AZ (HA). Dev: one total is fine (save ~$65/month).\n\nTypical result: 40-70% reduction in NAT Gateway costs with these steps.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: Walk me through what happens when a user requests your web app.**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Starting from the internet:\n\n1. User's browser resolves domain via Route 53 → gets ALB's IP\n2. HTTPS request reaches ALB in public subnet (port 443)\n3. ALB has SSL certificate (ACM) → terminates TLS, inspects HTTP headers\n4. ALB checks routing rules → matches /* → forwards to Target Group\n5. ALB health-checks confirm target is healthy → picks one ECS task\n6. ALB forwards request to ECS task on port 3000 (private subnet)\n   Security Group on ECS task: allows port 3000 from ALB Security Group only\n7. App processes request → needs user data from Aurora\n8. App connects to Aurora cluster endpoint (private subnet, port 5432)\n   Security Group on Aurora: allows port 5432 from App Security Group only\n9. Aurora returns data → app formats response → sends back to ALB\n10. ALB returns response to user\n\nTraffic never touches public internet after entering the ALB.\nApp servers and databases have NO public IPs.\nDatabases accept connections only from app servers (via SG reference).\nEverything encrypted in transit (HTTPS + TLS to Aurora).\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Our Lambda can't connect to our RDS database. How do you debug?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Step by step diagnosis:\n\n1. Is Lambda in a VPC?\n   Lambda without VPC config cannot reach VPC resources.\n   Check Lambda configuration: must have VPC, subnets, SG configured.\n\n2. Are Lambda and RDS in the SAME VPC?\n   Different VPCs → can't connect unless peered + routes configured.\n\n3. Are they in the right subnets?\n   Lambda should be in PRIVATE subnet (so it can use NAT for internet too).\n   RDS should be in DATABASE subnet.\n   Both in same VPC → they can communicate if SG rules allow.\n\n4. Security Group on RDS:\n   Does it allow port 5432 (PostgreSQL) or 3306 (MySQL) \n   from Lambda's Security Group?\n   Check: RDS SG inbound rules → source should be Lambda SG ID.\n\n5. Security Group on Lambda:\n   Does it allow outbound to port 5432/3306?\n   Default: all outbound allowed → probably fine.\n   If outbound restricted: add rule for DB port.\n\n6. Route Tables:\n   Lambda subnet route table: does it have route to RDS subnet?\n   Both in same VPC → 'local' route covers all VPC traffic → should work.\n\n7. If Lambda also needs internet (for external APIs):\n   Lambda in private subnet → route table needs NAT Gateway route.\n   Lambda in public subnet → needs public IP (not ideal for security).\n\n8. Timeout:\n   If connecting but slow/failing: check DB connection limit.\n   Lambda can create many parallel connections → use RDS Proxy!\n   RDS Proxy pools connections → solves Lambda connection storm problem.\n\nMost common cause: Lambda not in VPC, or SG on RDS not allowing Lambda SG.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How do you reduce NAT Gateway costs?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"NAT Gateway costs come from two sources: hourly ($0.045/hr) and data ($0.045/GB).\nAttack the data charge first — that's usually the bigger number.\n\nStep 1: VPC Flow Logs → analyze what traffic goes through NAT Gateway.\nEnable: VPC → Flow Logs → CloudWatch or S3.\nQuery with Athena or CloudWatch Insights: which destinations, how much data.\n\nStep 2: Add S3 Gateway Endpoint (FREE).\nIf Lambda/EC2 calls S3 → currently goes through NAT → $0.045/GB.\nAdd S3 Gateway Endpoint → traffic goes directly → $0 for transfer.\nOne-time setup, zero ongoing cost. Often saves $50-500/month.\n\nStep 3: Add DynamoDB Gateway Endpoint (FREE).\nSame story — DynamoDB traffic through NAT is wasteful.\n\nStep 4: Interface Endpoints for high-volume services.\nSQS, SNS, CloudWatch, Systems Manager → if high volume, evaluate cost.\nAt low volume: interface endpoint costs MORE than NAT (fixed hourly).\nAt high volume (hundreds of GB): interface endpoint saves money.\n\nStep 5: Check for unnecessary internet calls.\nApplication calling external API for every request? Cache the response.\nSending logs to internet destination? Switch to CloudWatch (internal).\n\nStep 6: Dev/test environments — one NAT Gateway only.\nProduction: one per AZ (HA). Dev: one total is fine (save ~$65/month).\n\nTypical result: 40-70% reduction in NAT Gateway costs with these steps.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "08-vpc-virtual-private-cloud-q1",
+          "question": "Walk me through what happens when a user requests your web app.",
+          "answer": "\"Starting from the internet:\n\n1. User's browser resolves domain via Route 53 → gets ALB's IP\n2. HTTPS request reaches ALB in public subnet (port 443)\n3. ALB has SSL certificate (ACM) → terminates TLS, inspects HTTP headers\n4. ALB checks routing rules → matches /* → forwards to Target Group\n5. ALB health-checks confirm target is healthy → picks one ECS task\n6. ALB forwards request to ECS task on port 3000 (private subnet)\n   Security Group on ECS task: allows port 3000 from ALB Security Group only\n7. App processes request → needs user data from Aurora\n8. App connects to Aurora cluster endpoint (private subnet, port 5432)\n   Security Group on Aurora: allows port 5432 from App Security Group only\n9. Aurora returns data → app formats response → sends back to ALB\n10. ALB returns response to user\n\nTraffic never touches public internet after entering the ALB.\nApp servers and databases have NO public IPs.\nDatabases accept connections only from app servers (via SG reference).\nEverything encrypted in transit (HTTPS + TLS to Aurora).\"",
+          "topicNumber": 8,
+          "topicSlug": "08-vpc-virtual-private-cloud",
+          "topic": "VPC (Virtual Private Cloud)"
+        },
+        {
+          "id": "08-vpc-virtual-private-cloud-q2",
+          "question": "Our Lambda can't connect to our RDS database. How do you debug?",
+          "answer": "\"Step by step diagnosis:\n\n1. Is Lambda in a VPC?\n   Lambda without VPC config cannot reach VPC resources.\n   Check Lambda configuration: must have VPC, subnets, SG configured.\n\n2. Are Lambda and RDS in the SAME VPC?\n   Different VPCs → can't connect unless peered + routes configured.\n\n3. Are they in the right subnets?\n   Lambda should be in PRIVATE subnet (so it can use NAT for internet too).\n   RDS should be in DATABASE subnet.\n   Both in same VPC → they can communicate if SG rules allow.\n\n4. Security Group on RDS:\n   Does it allow port 5432 (PostgreSQL) or 3306 (MySQL) \n   from Lambda's Security Group?\n   Check: RDS SG inbound rules → source should be Lambda SG ID.\n\n5. Security Group on Lambda:\n   Does it allow outbound to port 5432/3306?\n   Default: all outbound allowed → probably fine.\n   If outbound restricted: add rule for DB port.\n\n6. Route Tables:\n   Lambda subnet route table: does it have route to RDS subnet?\n   Both in same VPC → 'local' route covers all VPC traffic → should work.\n\n7. If Lambda also needs internet (for external APIs):\n   Lambda in private subnet → route table needs NAT Gateway route.\n   Lambda in public subnet → needs public IP (not ideal for security).\n\n8. Timeout:\n   If connecting but slow/failing: check DB connection limit.\n   Lambda can create many parallel connections → use RDS Proxy!\n   RDS Proxy pools connections → solves Lambda connection storm problem.\n\nMost common cause: Lambda not in VPC, or SG on RDS not allowing Lambda SG.\"",
+          "topicNumber": 8,
+          "topicSlug": "08-vpc-virtual-private-cloud",
+          "topic": "VPC (Virtual Private Cloud)"
+        },
+        {
+          "id": "08-vpc-virtual-private-cloud-q3",
+          "question": "How do you reduce NAT Gateway costs?",
+          "answer": "\"NAT Gateway costs come from two sources: hourly ($0.045/hr) and data ($0.045/GB).\nAttack the data charge first — that's usually the bigger number.\n\nStep 1: VPC Flow Logs → analyze what traffic goes through NAT Gateway.\nEnable: VPC → Flow Logs → CloudWatch or S3.\nQuery with Athena or CloudWatch Insights: which destinations, how much data.\n\nStep 2: Add S3 Gateway Endpoint (FREE).\nIf Lambda/EC2 calls S3 → currently goes through NAT → $0.045/GB.\nAdd S3 Gateway Endpoint → traffic goes directly → $0 for transfer.\nOne-time setup, zero ongoing cost. Often saves $50-500/month.\n\nStep 3: Add DynamoDB Gateway Endpoint (FREE).\nSame story — DynamoDB traffic through NAT is wasteful.\n\nStep 4: Interface Endpoints for high-volume services.\nSQS, SNS, CloudWatch, Systems Manager → if high volume, evaluate cost.\nAt low volume: interface endpoint costs MORE than NAT (fixed hourly).\nAt high volume (hundreds of GB): interface endpoint saves money.\n\nStep 5: Check for unnecessary internet calls.\nApplication calling external API for every request? Cache the response.\nSending logs to internet destination? Switch to CloudWatch (internal).\n\nStep 6: Dev/test environments — one NAT Gateway only.\nProduction: one per AZ (HA). Dev: one total is fine (save ~$65/month).\n\nTypical result: 40-70% reduction in NAT Gateway costs with these steps.\"",
+          "topicNumber": 8,
+          "topicSlug": "08-vpc-virtual-private-cloud",
+          "topic": "VPC (Virtual Private Cloud)"
+        }
+      ],
+      "revisionPoints": [
+        "**Q: Walk me through what happens when a user requests your web app.**"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nVPC → everything: EC2, RDS, Lambda (VPC mode), ECS, ElastiCache all live here\nVPC ← Internet Gateway: public internet access\nVPC ← NAT Gateway: private subnet outbound internet\nVPC ← Route Tables: traffic routing rules\nVPC ← Security Groups: instance-level firewall\nVPC ← NACLs: subnet-level firewall\nVPC ↔ VPC: Peering or Transit Gateway\nVPC ← Direct Connect/VPN: on-premise connectivity\nVPC → VPC Endpoints: private AWS service access\n\nNEXT: Route 53 — DNS\nHow domain names resolve to your AWS resources, and how to build\nglobally resilient routing with health checks and failover.\n```\n\n---\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "VPC → everything: EC2, RDS, Lambda (VPC mode), ECS, ElastiCache all live here\nVPC ← Internet Gateway: public internet access\nVPC ← NAT Gateway: private subnet outbound internet\nVPC ← Route Tables: traffic routing rules\nVPC ← Security Groups: instance-level firewall\nVPC ← NACLs: subnet-level firewall\nVPC ↔ VPC: Peering or Transit Gateway\nVPC ← Direct Connect/VPN: on-premise connectivity\nVPC → VPC Endpoints: private AWS service access\n\nNEXT: Route 53 — DNS\nHow domain names resolve to your AWS resources, and how to build\nglobally resilient routing with health checks and failover."
+        },
+        {
+          "type": "paragraph",
+          "content": "---\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "VPC → everything: EC2, RDS, Lambda (VPC mode), ECS, ElastiCache all live here"
+      ]
+    }
+  ]
+}

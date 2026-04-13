@@ -1,0 +1,319 @@
+{
+  "number": 11,
+  "slug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+  "title": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)",
+  "sections": [
+    {
+      "id": "the-story-why-decoupling-matters",
+      "title": "🧒 The Story — Why Decoupling Matters",
+      "type": "story",
+      "rawMarkdown": "```\nTIGHTLY COUPLED (bad):\nOrder Service → directly calls → Payment Service\n                              → directly calls → Email Service\n                              → directly calls → Inventory Service\n\nPROBLEM:\n→ Payment Service is slow → Order Service waits → users wait\n→ Email Service crashes → Order Service gets error → order fails?\n→ Add new service → change Order Service code\n→ Spike: 1000 orders → all 3 services overwhelmed simultaneously\n\nLOOSELY COUPLED (good):\nOrder Service → puts message → SQS Queue\n                              → SNS Topic\n                              → EventBridge\n\nEach service reads at its OWN PACE.\nEmail crashes → message waits in queue → email processes later → no order lost.\nAdd new service → just subscribe to the queue → Order Service unchanged.\nSpike: 1000 orders → queue buffers → each service processes at capacity.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "TIGHTLY COUPLED (bad):\nOrder Service → directly calls → Payment Service\n                              → directly calls → Email Service\n                              → directly calls → Inventory Service\n\nPROBLEM:\n→ Payment Service is slow → Order Service waits → users wait\n→ Email Service crashes → Order Service gets error → order fails?\n→ Add new service → change Order Service code\n→ Spike: 1000 orders → all 3 services overwhelmed simultaneously\n\nLOOSELY COUPLED (good):\nOrder Service → puts message → SQS Queue\n                              → SNS Topic\n                              → EventBridge\n\nEach service reads at its OWN PACE.\nEmail crashes → message waits in queue → email processes later → no order lost.\nAdd new service → just subscribe to the queue → Order Service unchanged.\nSpike: 1000 orders → queue buffers → each service processes at capacity."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Payment Service is slow → Order Service waits → users wait",
+        "→ Email Service crashes → Order Service gets error → order fails?",
+        "→ Add new service → change Order Service code",
+        "→ Spike: 1000 orders → all 3 services overwhelmed simultaneously"
+      ]
+    },
+    {
+      "id": "sqs-simple-queue-service",
+      "title": "📬 SQS — Simple Queue Service",
+      "type": "concept",
+      "rawMarkdown": "### Core Concepts\n```\nSQS = a message queue\nProducer sends messages → Queue holds them → Consumer reads + deletes them\n\nANATOMY OF AN SQS MESSAGE:\n→ Body: your data (JSON, text, XML — up to 256 KB)\n→ Message ID: unique identifier\n→ Receipt Handle: token needed to delete the message\n→ Attributes: metadata (timestamp, type, deduplication ID)\n→ Message Group ID: for FIFO ordering (FIFO queues only)\n\nLARGE MESSAGES (> 256 KB):\n→ Store payload in S3\n→ Put S3 reference in SQS message\n→ Consumer reads message → fetches actual data from S3\n→ Library: SQS Extended Client (handles this automatically)\n```\n\n### Visibility Timeout — Critical Concept\n\n```\nWHAT IT IS:\nWhen consumer reads a message → message becomes INVISIBLE to other consumers\n→ Consumer has [visibility timeout] seconds to process + delete\n→ If not deleted in time → message becomes visible again → another consumer picks it up\n\nGOAL: prevent two consumers from processing the same message simultaneously\n\nDEFAULT: 30 seconds\n\nTOO SHORT:\n→ Processing takes 40 seconds\n→ Visibility timeout = 30 seconds\n→ Message reappears after 30 seconds\n→ ANOTHER consumer picks it up\n→ Same message processed TWICE → duplicate processing bug\n\nTOO LONG:\n→ Consumer crashes after 5 seconds of processing\n→ Visibility timeout = 10 minutes\n→ Message hidden for 10 minutes before others can try\n→ Slow recovery from consumer failures\n\nSET IT TO: 1.5x your expected processing time\nIf processing takes 2 minutes → set visibility timeout to 3 minutes\nConsumer can also extend visibility timeout while processing if needed\n\nReceiveMessage call: up to 10 messages at once (batch reading)\nDeleteMessage: must call after processing (with receipt handle)\nChangeMessageVisibility: extend timeout while processing long jobs\n```\n\n### Standard vs FIFO Queue\n\n```\nSTANDARD QUEUE:\n→ Nearly unlimited throughput (thousands/second)\n→ At-least-once delivery (may receive same message more than once!)\n→ Best-effort ordering (not guaranteed — messages may arrive out of order)\n→ USE FOR: high-throughput, order doesn't matter, can handle duplicates\n\nHANDLING DUPLICATES (standard queue):\n→ Make your processing IDEMPOTENT\n→ \"Process payment for order123\" received twice → only charge once\n→ Check: \"did I already process order123?\" before processing\n→ Use DynamoDB: if order123 exists in processed table → skip\n\nFIFO QUEUE:\n→ Exactly-once processing (no duplicates guaranteed by SQS)\n→ First-in, first-out ordering guaranteed\n→ Lower throughput: 300 messages/second (or 3,000 with batching)\n→ Name must end with .fifo: MyQueue.fifo\n→ MORE EXPENSIVE than standard\n→ USE FOR: financial transactions, ordered workflows, when duplicates cause problems\n\nFIFO DEDUPLICATION:\n→ Deduplication ID: if you send same ID within 5 minutes → SQS deduplicates\n→ Content-based deduplication: SQS hashes message body → auto deduplication\n```\n\n### Dead Letter Queue (DLQ)\n\n```\nWHAT IT IS:\nMessages that fail processing repeatedly → moved to DLQ (a separate queue)\n\nHOW IT WORKS:\n1. Consumer reads message → processing fails → doesn't delete message\n2. Message becomes visible again → another attempt\n3. After maxReceiveCount attempts (e.g., 3) → moved to DLQ automatically\n\nWHY IT MATTERS:\nWithout DLQ:\n→ Bad message → processing fails → retries infinitely → blocks queue → disaster\n\nWith DLQ:\n→ Bad message → 3 failures → DLQ\n→ Main queue continues processing other messages\n→ You can inspect DLQ: \"why did these messages fail?\"\n→ Fix the bug → redrive from DLQ to main queue → reprocess\n\nBEST PRACTICES:\n→ ALWAYS configure DLQ for production queues (non-negotiable)\n→ Set CloudWatch alarm on DLQ message count > 0\n   (any messages in DLQ = something is failing → alert!)\n→ DLQ should have LONGER retention than main queue\n   Main: 4 days default. DLQ: 14 days (max)\n→ DLQ type must MATCH main queue type (Standard DLQ for Standard, FIFO DLQ for FIFO)\n```\n\n### Long Polling vs Short Polling\n\n```\nSHORT POLLING (bad default):\n→ SQS.receiveMessage() → immediately returns (even if queue empty)\n→ Empty response → your code loops → calls again → empty → loops...\n→ Burning API calls, burning money, burning CPU\n\nLONG POLLING (always use this):\n→ SQS.receiveMessage({ WaitTimeSeconds: 20 })\n→ If queue empty → SQS waits up to 20 seconds for message\n→ Message arrives → returns immediately\n→ No message in 20 seconds → returns empty response\n→ Reduces API calls by 10-20x\n→ Reduces cost significantly\n→ Reduces CPU usage in consumer\n\nSET LONG POLLING: either per-request (WaitTimeSeconds) or per-queue\nRecommended: WaitTimeSeconds = 20 (maximum)\n```\n\n### SQS Pricing\n```\nStandard: $0.40 per million requests (first 1M free/month)\nFIFO:     $0.50 per million requests (no free tier)\nData: FREE within same region\n→ SQS is extremely cheap — rarely a cost concern\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Core Concepts"
+        },
+        {
+          "type": "diagram",
+          "content": "SQS = a message queue\nProducer sends messages → Queue holds them → Consumer reads + deletes them\n\nANATOMY OF AN SQS MESSAGE:\n→ Body: your data (JSON, text, XML — up to 256 KB)\n→ Message ID: unique identifier\n→ Receipt Handle: token needed to delete the message\n→ Attributes: metadata (timestamp, type, deduplication ID)\n→ Message Group ID: for FIFO ordering (FIFO queues only)\n\nLARGE MESSAGES (> 256 KB):\n→ Store payload in S3\n→ Put S3 reference in SQS message\n→ Consumer reads message → fetches actual data from S3\n→ Library: SQS Extended Client (handles this automatically)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Visibility Timeout — Critical Concept"
+        },
+        {
+          "type": "diagram",
+          "content": "WHAT IT IS:\nWhen consumer reads a message → message becomes INVISIBLE to other consumers\n→ Consumer has [visibility timeout] seconds to process + delete\n→ If not deleted in time → message becomes visible again → another consumer picks it up\n\nGOAL: prevent two consumers from processing the same message simultaneously\n\nDEFAULT: 30 seconds\n\nTOO SHORT:\n→ Processing takes 40 seconds\n→ Visibility timeout = 30 seconds\n→ Message reappears after 30 seconds\n→ ANOTHER consumer picks it up\n→ Same message processed TWICE → duplicate processing bug\n\nTOO LONG:\n→ Consumer crashes after 5 seconds of processing\n→ Visibility timeout = 10 minutes\n→ Message hidden for 10 minutes before others can try\n→ Slow recovery from consumer failures\n\nSET IT TO: 1.5x your expected processing time\nIf processing takes 2 minutes → set visibility timeout to 3 minutes\nConsumer can also extend visibility timeout while processing if needed\n\nReceiveMessage call: up to 10 messages at once (batch reading)\nDeleteMessage: must call after processing (with receipt handle)\nChangeMessageVisibility: extend timeout while processing long jobs"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Standard vs FIFO Queue"
+        },
+        {
+          "type": "diagram",
+          "content": "STANDARD QUEUE:\n→ Nearly unlimited throughput (thousands/second)\n→ At-least-once delivery (may receive same message more than once!)\n→ Best-effort ordering (not guaranteed — messages may arrive out of order)\n→ USE FOR: high-throughput, order doesn't matter, can handle duplicates\n\nHANDLING DUPLICATES (standard queue):\n→ Make your processing IDEMPOTENT\n→ \"Process payment for order123\" received twice → only charge once\n→ Check: \"did I already process order123?\" before processing\n→ Use DynamoDB: if order123 exists in processed table → skip\n\nFIFO QUEUE:\n→ Exactly-once processing (no duplicates guaranteed by SQS)\n→ First-in, first-out ordering guaranteed\n→ Lower throughput: 300 messages/second (or 3,000 with batching)\n→ Name must end with .fifo: MyQueue.fifo\n→ MORE EXPENSIVE than standard\n→ USE FOR: financial transactions, ordered workflows, when duplicates cause problems\n\nFIFO DEDUPLICATION:\n→ Deduplication ID: if you send same ID within 5 minutes → SQS deduplicates\n→ Content-based deduplication: SQS hashes message body → auto deduplication"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Dead Letter Queue (DLQ)"
+        },
+        {
+          "type": "diagram",
+          "content": "WHAT IT IS:\nMessages that fail processing repeatedly → moved to DLQ (a separate queue)\n\nHOW IT WORKS:\n1. Consumer reads message → processing fails → doesn't delete message\n2. Message becomes visible again → another attempt\n3. After maxReceiveCount attempts (e.g., 3) → moved to DLQ automatically\n\nWHY IT MATTERS:\nWithout DLQ:\n→ Bad message → processing fails → retries infinitely → blocks queue → disaster\n\nWith DLQ:\n→ Bad message → 3 failures → DLQ\n→ Main queue continues processing other messages\n→ You can inspect DLQ: \"why did these messages fail?\"\n→ Fix the bug → redrive from DLQ to main queue → reprocess\n\nBEST PRACTICES:\n→ ALWAYS configure DLQ for production queues (non-negotiable)\n→ Set CloudWatch alarm on DLQ message count > 0\n   (any messages in DLQ = something is failing → alert!)\n→ DLQ should have LONGER retention than main queue\n   Main: 4 days default. DLQ: 14 days (max)\n→ DLQ type must MATCH main queue type (Standard DLQ for Standard, FIFO DLQ for FIFO)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Long Polling vs Short Polling"
+        },
+        {
+          "type": "diagram",
+          "content": "SHORT POLLING (bad default):\n→ SQS.receiveMessage() → immediately returns (even if queue empty)\n→ Empty response → your code loops → calls again → empty → loops...\n→ Burning API calls, burning money, burning CPU\n\nLONG POLLING (always use this):\n→ SQS.receiveMessage({ WaitTimeSeconds: 20 })\n→ If queue empty → SQS waits up to 20 seconds for message\n→ Message arrives → returns immediately\n→ No message in 20 seconds → returns empty response\n→ Reduces API calls by 10-20x\n→ Reduces cost significantly\n→ Reduces CPU usage in consumer\n\nSET LONG POLLING: either per-request (WaitTimeSeconds) or per-queue\nRecommended: WaitTimeSeconds = 20 (maximum)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### SQS Pricing"
+        },
+        {
+          "type": "diagram",
+          "content": "Standard: $0.40 per million requests (first 1M free/month)\nFIFO:     $0.50 per million requests (no free tier)\nData: FREE within same region\n→ SQS is extremely cheap — rarely a cost concern"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Body: your data (JSON, text, XML — up to 256 KB)",
+        "→ Message ID: unique identifier",
+        "→ Receipt Handle: token needed to delete the message",
+        "→ Attributes: metadata (timestamp, type, deduplication ID)",
+        "→ Message Group ID: for FIFO ordering (FIFO queues only)",
+        "→ Store payload in S3",
+        "→ Put S3 reference in SQS message",
+        "→ Consumer reads message → fetches actual data from S3"
+      ]
+    },
+    {
+      "id": "sns-simple-notification-service",
+      "title": "📢 SNS — Simple Notification Service",
+      "type": "concept",
+      "rawMarkdown": "### What is SNS?\n```\nSNS = pub/sub messaging (publish/subscribe)\n\nSQS: one-to-one (producer → queue → one consumer)\nSNS: one-to-many (publisher → topic → ALL subscribers simultaneously)\n\nANALOGY:\nSQS = numbered ticket queue at a deli counter (one person serves one ticket)\nSNS = PA system announcement (everyone hears it at the same time)\n```\n\n### SNS Components\n\n```\nTOPIC:\n→ A named channel for messages\n→ Publishers send TO the topic\n→ Subscribers receive FROM the topic\n\nPUBLISHER:\n→ Any AWS service or your code\n→ CloudWatch Alarm → SNS (alert everyone)\n→ S3 Event → SNS (new file uploaded)\n→ Your code → SNS (order placed)\n\nSUBSCRIBER (multiple per topic):\n→ SQS Queue (most reliable — message persists)\n→ Lambda Function (process immediately)\n→ HTTP/HTTPS endpoint (webhook to external service)\n→ Email (direct email to person)\n→ SMS (text message — very expensive per message!)\n→ Mobile Push (iOS/Android push notification)\n→ Kinesis Data Firehose (streaming to S3/Redshift)\n\nDELIVERY:\n→ SNS attempts delivery to ALL subscribers simultaneously\n→ If subscriber is unavailable: retries (SQS never loses, HTTP/Lambda might)\n→ For reliability: use SNS → SQS (fan-out pattern) not SNS → Lambda directly\n```\n\n### SNS + SQS Fan-Out Pattern\n\n```\nBEST PRACTICE PATTERN:\n\nPublisher → SNS Topic\n            → SQS Queue A (Email Service consumer)\n            → SQS Queue B (Inventory Service consumer)\n            → SQS Queue C (Analytics Service consumer)\n\nWHY SQS in the middle (not Lambda directly)?\n→ SQS persists messages → if Email Service is down → message waits\n→ Email Service restarts → reads from queue → no message lost\n→ Each service processes at its own pace independently\n→ Easy to add new subscriber (new SQS queue) without changing publisher\n→ DLQ per queue → independent failure handling per service\n\nORDER PLACED EXAMPLE:\nOrder placed → SNS\n  → SQS (Payment service): process payment\n  → SQS (Inventory service): reduce stock count\n  → SQS (Email service): send confirmation email\n  → SQS (Analytics service): record conversion event\n\nEach runs independently. Payment failure doesn't affect email sending.\n```\n\n### SNS Message Filtering\n\n```\nWithout filtering: EVERY subscriber receives EVERY message.\nWith filtering: subscriber only receives messages matching its filter.\n\nFilter Policy (JSON on the subscription):\n{\n  \"status\": [\"SHIPPED\", \"DELIVERED\"],\n  \"region\": [\"us-east-1\"]\n}\n→ This subscriber only receives messages where status is SHIPPED or DELIVERED\n   AND region is us-east-1\n\nUSE CASE:\nShipping events → SNS\n→ SQS (Tracking service): filter: status=[\"SHIPPED\", \"IN_TRANSIT\", \"DELIVERED\"]\n→ SQS (Customer email): filter: status=[\"SHIPPED\", \"DELIVERED\"] only (not IN_TRANSIT)\n→ SQS (Analytics): no filter (receives all events)\n\n→ Shipping service doesn't send separate messages per subscriber\n→ Each subscriber gets exactly what it needs\n→ Reduces noise, reduces processing cost\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### What is SNS?"
+        },
+        {
+          "type": "diagram",
+          "content": "SNS = pub/sub messaging (publish/subscribe)\n\nSQS: one-to-one (producer → queue → one consumer)\nSNS: one-to-many (publisher → topic → ALL subscribers simultaneously)\n\nANALOGY:\nSQS = numbered ticket queue at a deli counter (one person serves one ticket)\nSNS = PA system announcement (everyone hears it at the same time)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### SNS Components"
+        },
+        {
+          "type": "diagram",
+          "content": "TOPIC:\n→ A named channel for messages\n→ Publishers send TO the topic\n→ Subscribers receive FROM the topic\n\nPUBLISHER:\n→ Any AWS service or your code\n→ CloudWatch Alarm → SNS (alert everyone)\n→ S3 Event → SNS (new file uploaded)\n→ Your code → SNS (order placed)\n\nSUBSCRIBER (multiple per topic):\n→ SQS Queue (most reliable — message persists)\n→ Lambda Function (process immediately)\n→ HTTP/HTTPS endpoint (webhook to external service)\n→ Email (direct email to person)\n→ SMS (text message — very expensive per message!)\n→ Mobile Push (iOS/Android push notification)\n→ Kinesis Data Firehose (streaming to S3/Redshift)\n\nDELIVERY:\n→ SNS attempts delivery to ALL subscribers simultaneously\n→ If subscriber is unavailable: retries (SQS never loses, HTTP/Lambda might)\n→ For reliability: use SNS → SQS (fan-out pattern) not SNS → Lambda directly"
+        },
+        {
+          "type": "paragraph",
+          "content": "### SNS + SQS Fan-Out Pattern"
+        },
+        {
+          "type": "diagram",
+          "content": "BEST PRACTICE PATTERN:\n\nPublisher → SNS Topic\n            → SQS Queue A (Email Service consumer)\n            → SQS Queue B (Inventory Service consumer)\n            → SQS Queue C (Analytics Service consumer)\n\nWHY SQS in the middle (not Lambda directly)?\n→ SQS persists messages → if Email Service is down → message waits\n→ Email Service restarts → reads from queue → no message lost\n→ Each service processes at its own pace independently\n→ Easy to add new subscriber (new SQS queue) without changing publisher\n→ DLQ per queue → independent failure handling per service\n\nORDER PLACED EXAMPLE:\nOrder placed → SNS\n  → SQS (Payment service): process payment\n  → SQS (Inventory service): reduce stock count\n  → SQS (Email service): send confirmation email\n  → SQS (Analytics service): record conversion event\n\nEach runs independently. Payment failure doesn't affect email sending."
+        },
+        {
+          "type": "paragraph",
+          "content": "### SNS Message Filtering"
+        },
+        {
+          "type": "diagram",
+          "content": "Without filtering: EVERY subscriber receives EVERY message.\nWith filtering: subscriber only receives messages matching its filter.\n\nFilter Policy (JSON on the subscription):\n{\n  \"status\": [\"SHIPPED\", \"DELIVERED\"],\n  \"region\": [\"us-east-1\"]\n}\n→ This subscriber only receives messages where status is SHIPPED or DELIVERED\n   AND region is us-east-1\n\nUSE CASE:\nShipping events → SNS\n→ SQS (Tracking service): filter: status=[\"SHIPPED\", \"IN_TRANSIT\", \"DELIVERED\"]\n→ SQS (Customer email): filter: status=[\"SHIPPED\", \"DELIVERED\"] only (not IN_TRANSIT)\n→ SQS (Analytics): no filter (receives all events)\n\n→ Shipping service doesn't send separate messages per subscriber\n→ Each subscriber gets exactly what it needs\n→ Reduces noise, reduces processing cost"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ A named channel for messages",
+        "→ Publishers send TO the topic",
+        "→ Subscribers receive FROM the topic",
+        "→ Any AWS service or your code",
+        "→ CloudWatch Alarm → SNS (alert everyone)",
+        "→ S3 Event → SNS (new file uploaded)",
+        "→ Your code → SNS (order placed)",
+        "→ SQS Queue (most reliable — message persists)"
+      ]
+    },
+    {
+      "id": "eventbridge-event-bus",
+      "title": "🚌 EventBridge — Event Bus",
+      "type": "concept",
+      "rawMarkdown": "### What is EventBridge?\n```\nEventBridge = serverless event bus that connects AWS services, SaaS apps, and your apps\n\nMORE POWERFUL THAN SNS:\n→ Rule-based routing with complex pattern matching\n→ 100+ event sources (all AWS services, Salesforce, Zendesk, GitHub, etc.)\n→ Schema registry (discover and document event shapes)\n→ Event replay (archive and replay past events)\n→ Cross-account, cross-region event routing\n\nSNS: publisher explicitly sends to topic\nEventBridge: events happen → bus routes them based on rules\n\nANALOGY:\nSNS = walkie-talkie (you send to specific channel, all listeners hear it)\nEventBridge = smart router (events flow in, rules decide who gets what)\n```\n\n### EventBridge Components\n\n```\nEVENT BUS:\n→ Default bus: receives events from AWS services (EC2 state change, S3 events, etc.)\n→ Custom bus: your application events\n→ Partner bus: SaaS events (Salesforce, Zendesk, GitHub, etc.)\n\nEVENT:\n→ JSON object describing something that happened\n→ Source: \"aws.ec2\" or \"myapp.orders\"\n→ detail-type: \"EC2 Instance State-change Notification\"\n→ detail: { instance-id: \"i-abc\", state: \"terminated\" }\n\nRULE:\n→ Pattern to match events → target to route them to\n→ Pattern examples:\n  { \"source\": [\"aws.ec2\"], \"detail\": { \"state\": [\"terminated\"] } }\n  → Match: any EC2 termination event\n\nTARGETS (10+ per rule):\n→ Lambda (most common — process the event)\n→ SQS (queue it for async processing)\n→ SNS (fan-out from here)\n→ Step Functions (start a workflow)\n→ ECS task (run a container task)\n→ API Gateway (call HTTP endpoint)\n→ Another event bus (cross-account routing)\n→ Kinesis (stream to data pipeline)\n```\n\n### EventBridge vs SNS vs SQS\n\n```\nUSE SQS WHEN:\n→ One producer, one consumer type (or small fan-out via SNS)\n→ Need to buffer/throttle workload\n→ Consumer must process at its own pace\n→ Need retries, DLQ for failures\n→ Simple async decoupling\n\nUSE SNS WHEN:\n→ Fan-out: one event → multiple consumers simultaneously\n→ Push notifications (mobile, SMS, email)\n→ Simple pub/sub without complex routing\n\nUSE EVENTBRIDGE WHEN:\n→ Complex event routing (content-based routing with patterns)\n→ Events from AWS services, SaaS, or multiple producers\n→ Cross-account or cross-region event routing\n→ Need schema registry (document event shapes)\n→ Need event replay (replay past events for new subscribers)\n→ Scheduled events (cron-like: \"every Monday 9am → run this\")\n→ Building event-driven microservices architecture\n\nEVENTBRIDGE SCHEDULER (separate from event bus):\n→ Cron-like scheduling: invoke Lambda, ECS task, API at specific times\n→ One-time or recurring\n→ More reliable than Lambda + CloudWatch Events (old way)\n→ Use for: nightly batch jobs, weekly reports, scheduled API calls\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### What is EventBridge?"
+        },
+        {
+          "type": "diagram",
+          "content": "EventBridge = serverless event bus that connects AWS services, SaaS apps, and your apps\n\nMORE POWERFUL THAN SNS:\n→ Rule-based routing with complex pattern matching\n→ 100+ event sources (all AWS services, Salesforce, Zendesk, GitHub, etc.)\n→ Schema registry (discover and document event shapes)\n→ Event replay (archive and replay past events)\n→ Cross-account, cross-region event routing\n\nSNS: publisher explicitly sends to topic\nEventBridge: events happen → bus routes them based on rules\n\nANALOGY:\nSNS = walkie-talkie (you send to specific channel, all listeners hear it)\nEventBridge = smart router (events flow in, rules decide who gets what)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### EventBridge Components"
+        },
+        {
+          "type": "diagram",
+          "content": "EVENT BUS:\n→ Default bus: receives events from AWS services (EC2 state change, S3 events, etc.)\n→ Custom bus: your application events\n→ Partner bus: SaaS events (Salesforce, Zendesk, GitHub, etc.)\n\nEVENT:\n→ JSON object describing something that happened\n→ Source: \"aws.ec2\" or \"myapp.orders\"\n→ detail-type: \"EC2 Instance State-change Notification\"\n→ detail: { instance-id: \"i-abc\", state: \"terminated\" }\n\nRULE:\n→ Pattern to match events → target to route them to\n→ Pattern examples:\n  { \"source\": [\"aws.ec2\"], \"detail\": { \"state\": [\"terminated\"] } }\n  → Match: any EC2 termination event\n\nTARGETS (10+ per rule):\n→ Lambda (most common — process the event)\n→ SQS (queue it for async processing)\n→ SNS (fan-out from here)\n→ Step Functions (start a workflow)\n→ ECS task (run a container task)\n→ API Gateway (call HTTP endpoint)\n→ Another event bus (cross-account routing)\n→ Kinesis (stream to data pipeline)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### EventBridge vs SNS vs SQS"
+        },
+        {
+          "type": "diagram",
+          "content": "USE SQS WHEN:\n→ One producer, one consumer type (or small fan-out via SNS)\n→ Need to buffer/throttle workload\n→ Consumer must process at its own pace\n→ Need retries, DLQ for failures\n→ Simple async decoupling\n\nUSE SNS WHEN:\n→ Fan-out: one event → multiple consumers simultaneously\n→ Push notifications (mobile, SMS, email)\n→ Simple pub/sub without complex routing\n\nUSE EVENTBRIDGE WHEN:\n→ Complex event routing (content-based routing with patterns)\n→ Events from AWS services, SaaS, or multiple producers\n→ Cross-account or cross-region event routing\n→ Need schema registry (document event shapes)\n→ Need event replay (replay past events for new subscribers)\n→ Scheduled events (cron-like: \"every Monday 9am → run this\")\n→ Building event-driven microservices architecture\n\nEVENTBRIDGE SCHEDULER (separate from event bus):\n→ Cron-like scheduling: invoke Lambda, ECS task, API at specific times\n→ One-time or recurring\n→ More reliable than Lambda + CloudWatch Events (old way)\n→ Use for: nightly batch jobs, weekly reports, scheduled API calls"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Rule-based routing with complex pattern matching",
+        "→ 100+ event sources (all AWS services, Salesforce, Zendesk, GitHub, etc.)",
+        "→ Schema registry (discover and document event shapes)",
+        "→ Event replay (archive and replay past events)",
+        "→ Cross-account, cross-region event routing",
+        "→ Default bus: receives events from AWS services (EC2 state change, S3 events, etc.)",
+        "→ Custom bus: your application events",
+        "→ Partner bus: SaaS events (Salesforce, Zendesk, GitHub, etc.)"
+      ]
+    },
+    {
+      "id": "step-functions-workflow-orchestration",
+      "title": "🔄 Step Functions — Workflow Orchestration",
+      "type": "concept",
+      "rawMarkdown": "### What is Step Functions?\n```\nStep Functions = visual workflow orchestration for distributed applications\n\nPROBLEM IT SOLVES:\nComplex multi-step processes:\n1. Validate order\n2. Check inventory\n3. Process payment\n4. Reserve inventory\n5. Send confirmation email\n6. Schedule delivery\n\nWITHOUT Step Functions:\n→ Lambda A calls Lambda B calls Lambda C...\n→ Error handling: manual try/catch in each Lambda\n→ State tracking: where is this order in the process?\n→ Retry logic: if step 4 fails, retry 3 times then...\n→ Visibility: impossible to see what's happening\n→ Modifications: change one step → change all downstream code\n\nWITH Step Functions:\n→ Visual state machine (you can literally see the workflow)\n→ Each step is a state\n→ Built-in error handling (catch, retry with exponential backoff)\n→ State persisted automatically\n→ CloudWatch integration (see execution history)\n→ Change workflow in one place\n```\n\n### State Machine Concepts\n\n```\nSTATE MACHINE = the workflow definition (JSON or visual)\n\nSTATE TYPES:\nTask State:\n→ Do something: invoke Lambda, call API, run ECS task, call DynamoDB\n→ Wait for result → proceed to next state\n\nChoice State:\n→ If/else branching based on data\n→ If order.amount > 1000 → high-value path\n→ Else → standard path\n\nWait State:\n→ Pause for time OR until timestamp\n→ \"Wait 1 hour then send follow-up email\"\n\nParallel State:\n→ Execute multiple branches simultaneously\n→ Wait for ALL to complete → continue\n→ \"While processing payment AND reserving inventory → both complete → next\"\n\nMap State:\n→ Iterate over array, process each item\n→ \"For each item in cart → check inventory\"\n\nSucceed/Fail State:\n→ Terminal states — workflow complete or failed\n\nPass State:\n→ Pass input to output, optionally transform\n→ Useful for testing, data transformation\n\nEXAMPLE FLOW:\nOrderPlaced → ValidateOrder\nValidateOrder → Choice:\n  Order valid → ProcessPayment\n  Order invalid → SendRejection → Fail\n\nProcessPayment → Choice:\n  Payment success → Parallel[ReserveInventory, SendConfirmation]\n  Payment failed → RetryPayment (retry 3 times, 30s backoff) → Fail\n\nParallel finishes → ScheduleDelivery → Succeed\n```\n\n### Express vs Standard Workflows\n\n```\nSTANDARD WORKFLOWS:\n→ Duration: up to 1 year\n→ At-least-once execution (may duplicate on failure)\n→ Execution history: 90 days (visible in console)\n→ Pricing: $0.025 per 1,000 state transitions\n→ USE FOR: long-running, critical workflows (order processing, approval flows)\n\nEXPRESS WORKFLOWS:\n→ Duration: up to 5 minutes\n→ At-least-once execution\n→ No execution history UI (use CloudWatch)\n→ Pricing: $1.00 per million executions + duration\n→ USE FOR: high-volume, short-duration workflows (IoT data processing, streaming)\n\nSYNCHRONOUS EXPRESS:\n→ Caller waits for result (request/response pattern)\n→ API Gateway → Step Functions → wait → return result\n→ Useful for: multi-step APIs that look synchronous to the caller\n\nASYNCHRONOUS EXPRESS:\n→ Fire and forget\n→ Caller gets execution ID, polls for result\n→ Useful for: long background tasks\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### What is Step Functions?"
+        },
+        {
+          "type": "diagram",
+          "content": "Step Functions = visual workflow orchestration for distributed applications\n\nPROBLEM IT SOLVES:\nComplex multi-step processes:\n1. Validate order\n2. Check inventory\n3. Process payment\n4. Reserve inventory\n5. Send confirmation email\n6. Schedule delivery\n\nWITHOUT Step Functions:\n→ Lambda A calls Lambda B calls Lambda C...\n→ Error handling: manual try/catch in each Lambda\n→ State tracking: where is this order in the process?\n→ Retry logic: if step 4 fails, retry 3 times then...\n→ Visibility: impossible to see what's happening\n→ Modifications: change one step → change all downstream code\n\nWITH Step Functions:\n→ Visual state machine (you can literally see the workflow)\n→ Each step is a state\n→ Built-in error handling (catch, retry with exponential backoff)\n→ State persisted automatically\n→ CloudWatch integration (see execution history)\n→ Change workflow in one place"
+        },
+        {
+          "type": "paragraph",
+          "content": "### State Machine Concepts"
+        },
+        {
+          "type": "diagram",
+          "content": "STATE MACHINE = the workflow definition (JSON or visual)\n\nSTATE TYPES:\nTask State:\n→ Do something: invoke Lambda, call API, run ECS task, call DynamoDB\n→ Wait for result → proceed to next state\n\nChoice State:\n→ If/else branching based on data\n→ If order.amount > 1000 → high-value path\n→ Else → standard path\n\nWait State:\n→ Pause for time OR until timestamp\n→ \"Wait 1 hour then send follow-up email\"\n\nParallel State:\n→ Execute multiple branches simultaneously\n→ Wait for ALL to complete → continue\n→ \"While processing payment AND reserving inventory → both complete → next\"\n\nMap State:\n→ Iterate over array, process each item\n→ \"For each item in cart → check inventory\"\n\nSucceed/Fail State:\n→ Terminal states — workflow complete or failed\n\nPass State:\n→ Pass input to output, optionally transform\n→ Useful for testing, data transformation\n\nEXAMPLE FLOW:\nOrderPlaced → ValidateOrder\nValidateOrder → Choice:\n  Order valid → ProcessPayment\n  Order invalid → SendRejection → Fail\n\nProcessPayment → Choice:\n  Payment success → Parallel[ReserveInventory, SendConfirmation]\n  Payment failed → RetryPayment (retry 3 times, 30s backoff) → Fail\n\nParallel finishes → ScheduleDelivery → Succeed"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Express vs Standard Workflows"
+        },
+        {
+          "type": "diagram",
+          "content": "STANDARD WORKFLOWS:\n→ Duration: up to 1 year\n→ At-least-once execution (may duplicate on failure)\n→ Execution history: 90 days (visible in console)\n→ Pricing: $0.025 per 1,000 state transitions\n→ USE FOR: long-running, critical workflows (order processing, approval flows)\n\nEXPRESS WORKFLOWS:\n→ Duration: up to 5 minutes\n→ At-least-once execution\n→ No execution history UI (use CloudWatch)\n→ Pricing: $1.00 per million executions + duration\n→ USE FOR: high-volume, short-duration workflows (IoT data processing, streaming)\n\nSYNCHRONOUS EXPRESS:\n→ Caller waits for result (request/response pattern)\n→ API Gateway → Step Functions → wait → return result\n→ Useful for: multi-step APIs that look synchronous to the caller\n\nASYNCHRONOUS EXPRESS:\n→ Fire and forget\n→ Caller gets execution ID, polls for result\n→ Useful for: long background tasks"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Lambda A calls Lambda B calls Lambda C...",
+        "→ Error handling: manual try/catch in each Lambda",
+        "→ State tracking: where is this order in the process?",
+        "→ Retry logic: if step 4 fails, retry 3 times then...",
+        "→ Visibility: impossible to see what's happening",
+        "→ Modifications: change one step → change all downstream code",
+        "→ Visual state machine (you can literally see the workflow)",
+        "→ Each step is a state"
+      ]
+    },
+    {
+      "id": "interview-qa-messaging",
+      "title": "🎯 Interview Q&A — Messaging",
+      "type": "qa",
+      "rawMarkdown": "**Q: SQS vs SNS vs EventBridge — explain the difference and when to use each.**\n```\n\"Three different messaging patterns for different needs.\n\nSQS is a point-to-point queue. One producer sends messages, one type of\nconsumer processes them. The queue buffers messages so consumers can work\nat their own pace. Use it when you need to decouple and buffer work between\ntwo services, and when retries and DLQ matter (payment processing, file processing).\n\nSNS is pub/sub fan-out. One message goes to ALL subscribers simultaneously.\nUse it when one event needs to trigger multiple services at the same time —\norder placed needs to trigger payment, inventory, email, analytics all at once.\nFan-out pattern: SNS + multiple SQS queues is the most reliable version.\n\nEventBridge is an intelligent event bus with content-based routing.\nEvents flow in from 100+ sources, rules match patterns, and route to targets.\nUse when you need complex routing logic, events from AWS services (EC2 state\nchanges, S3 events), SaaS integrations, or event replay capabilities.\n\nIn practice: SQS for buffering between two services, SNS for fan-out,\nEventBridge for complex event-driven architectures and AWS service events.\nOften used together: EventBridge routes events to SNS which fans out to SQS.\"\n```\n\n**Q: How would you handle a situation where SQS messages are failing repeatedly?**\n```\n\"That's exactly what Dead Letter Queues are for — and they're mandatory in production.\n\nConfigure DLQ on the main queue with maxReceiveCount = 3.\nAfter 3 failed processing attempts, SQS moves the message to the DLQ.\nSet a CloudWatch alarm: ApproximateNumberOfMessagesVisible on DLQ > 0.\nThe moment a message lands in DLQ → alarm fires → team is notified.\n\nInvestigation: read the DLQ message → look at the payload → find the problem.\nCommon causes: malformed JSON, unexpected data format, dependency service down,\ncode exception that wasn't caught.\n\nFix the consumer code. Then use SQS redrive: move messages from DLQ back to\nmain queue. Consumer processes them successfully this time.\n\nWithout DLQ: bad messages would retry infinitely, block the queue, and a single\nmalformed message could bring down your entire processing pipeline.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: SQS vs SNS vs EventBridge — explain the difference and when to use each.**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Three different messaging patterns for different needs.\n\nSQS is a point-to-point queue. One producer sends messages, one type of\nconsumer processes them. The queue buffers messages so consumers can work\nat their own pace. Use it when you need to decouple and buffer work between\ntwo services, and when retries and DLQ matter (payment processing, file processing).\n\nSNS is pub/sub fan-out. One message goes to ALL subscribers simultaneously.\nUse it when one event needs to trigger multiple services at the same time —\norder placed needs to trigger payment, inventory, email, analytics all at once.\nFan-out pattern: SNS + multiple SQS queues is the most reliable version.\n\nEventBridge is an intelligent event bus with content-based routing.\nEvents flow in from 100+ sources, rules match patterns, and route to targets.\nUse when you need complex routing logic, events from AWS services (EC2 state\nchanges, S3 events), SaaS integrations, or event replay capabilities.\n\nIn practice: SQS for buffering between two services, SNS for fan-out,\nEventBridge for complex event-driven architectures and AWS service events.\nOften used together: EventBridge routes events to SNS which fans out to SQS.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How would you handle a situation where SQS messages are failing repeatedly?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"That's exactly what Dead Letter Queues are for — and they're mandatory in production.\n\nConfigure DLQ on the main queue with maxReceiveCount = 3.\nAfter 3 failed processing attempts, SQS moves the message to the DLQ.\nSet a CloudWatch alarm: ApproximateNumberOfMessagesVisible on DLQ > 0.\nThe moment a message lands in DLQ → alarm fires → team is notified.\n\nInvestigation: read the DLQ message → look at the payload → find the problem.\nCommon causes: malformed JSON, unexpected data format, dependency service down,\ncode exception that wasn't caught.\n\nFix the consumer code. Then use SQS redrive: move messages from DLQ back to\nmain queue. Consumer processes them successfully this time.\n\nWithout DLQ: bad messages would retry infinitely, block the queue, and a single\nmalformed message could bring down your entire processing pipeline.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-q1",
+          "question": "SQS vs SNS vs EventBridge — explain the difference and when to use each.",
+          "answer": "\"Three different messaging patterns for different needs.\n\nSQS is a point-to-point queue. One producer sends messages, one type of\nconsumer processes them. The queue buffers messages so consumers can work\nat their own pace. Use it when you need to decouple and buffer work between\ntwo services, and when retries and DLQ matter (payment processing, file processing).\n\nSNS is pub/sub fan-out. One message goes to ALL subscribers simultaneously.\nUse it when one event needs to trigger multiple services at the same time —\norder placed needs to trigger payment, inventory, email, analytics all at once.\nFan-out pattern: SNS + multiple SQS queues is the most reliable version.\n\nEventBridge is an intelligent event bus with content-based routing.\nEvents flow in from 100+ sources, rules match patterns, and route to targets.\nUse when you need complex routing logic, events from AWS services (EC2 state\nchanges, S3 events), SaaS integrations, or event replay capabilities.\n\nIn practice: SQS for buffering between two services, SNS for fan-out,\nEventBridge for complex event-driven architectures and AWS service events.\nOften used together: EventBridge routes events to SNS which fans out to SQS.\"",
+          "topicNumber": 11,
+          "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+          "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
+        },
+        {
+          "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-q2",
+          "question": "How would you handle a situation where SQS messages are failing repeatedly?",
+          "answer": "\"That's exactly what Dead Letter Queues are for — and they're mandatory in production.\n\nConfigure DLQ on the main queue with maxReceiveCount = 3.\nAfter 3 failed processing attempts, SQS moves the message to the DLQ.\nSet a CloudWatch alarm: ApproximateNumberOfMessagesVisible on DLQ > 0.\nThe moment a message lands in DLQ → alarm fires → team is notified.\n\nInvestigation: read the DLQ message → look at the payload → find the problem.\nCommon causes: malformed JSON, unexpected data format, dependency service down,\ncode exception that wasn't caught.\n\nFix the consumer code. Then use SQS redrive: move messages from DLQ back to\nmain queue. Consumer processes them successfully this time.\n\nWithout DLQ: bad messages would retry infinitely, block the queue, and a single\nmalformed message could bring down your entire processing pipeline.\"",
+          "topicNumber": 11,
+          "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+          "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
+        }
+      ],
+      "revisionPoints": [
+        "**Q: SQS vs SNS vs EventBridge — explain the difference and when to use each.**"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nSQS ← EC2/Lambda/ECS: consumers read from SQS\nSQS ← SNS: SNS delivers to SQS (fan-out pattern)\nSQS ← EventBridge: EventBridge routes events to SQS\nSQS → Lambda: Lambda trigger (SQS event source mapping)\nSQS → CloudWatch: queue depth alarms, DLQ alarms\n\nSNS ← Your code/AWS services: publishers\nSNS → SQS: fan-out to multiple queues\nSNS → Lambda: direct invocation\nSNS → Email/SMS/Push: human notifications\nSNS → HTTP: webhooks\n\nEventBridge ← All AWS services: event sources (default bus)\nEventBridge ← Your app: custom events (custom bus)\nEventBridge → Lambda/SQS/SNS/Step Functions/ECS: targets\nEventBridge → Scheduler: cron-like job scheduling\n\nStep Functions → Lambda: invoke function as state\nStep Functions → ECS: run container task as state\nStep Functions → DynamoDB/SQS/SNS: direct SDK integrations\nStep Functions ← API Gateway: synchronous workflow trigger\n\nNEXT: Lambda — Serverless Compute (Deep Dive)\nEverything about Lambda — cold starts, concurrency, VPC, error handling, and more.\n```\n\n---\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "SQS ← EC2/Lambda/ECS: consumers read from SQS\nSQS ← SNS: SNS delivers to SQS (fan-out pattern)\nSQS ← EventBridge: EventBridge routes events to SQS\nSQS → Lambda: Lambda trigger (SQS event source mapping)\nSQS → CloudWatch: queue depth alarms, DLQ alarms\n\nSNS ← Your code/AWS services: publishers\nSNS → SQS: fan-out to multiple queues\nSNS → Lambda: direct invocation\nSNS → Email/SMS/Push: human notifications\nSNS → HTTP: webhooks\n\nEventBridge ← All AWS services: event sources (default bus)\nEventBridge ← Your app: custom events (custom bus)\nEventBridge → Lambda/SQS/SNS/Step Functions/ECS: targets\nEventBridge → Scheduler: cron-like job scheduling\n\nStep Functions → Lambda: invoke function as state\nStep Functions → ECS: run container task as state\nStep Functions → DynamoDB/SQS/SNS: direct SDK integrations\nStep Functions ← API Gateway: synchronous workflow trigger\n\nNEXT: Lambda — Serverless Compute (Deep Dive)\nEverything about Lambda — cold starts, concurrency, VPC, error handling, and more."
+        },
+        {
+          "type": "paragraph",
+          "content": "---\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "SQS ← EC2/Lambda/ECS: consumers read from SQS"
+      ]
+    }
+  ]
+}

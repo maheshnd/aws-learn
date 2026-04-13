@@ -1,0 +1,281 @@
+{
+  "number": 5,
+  "slug": "05-ami-auto-scaling-group-load-balancing",
+  "title": "AMI + Auto Scaling Group + Load Balancing",
+  "sections": [
+    {
+      "id": "ami-amazon-machine-image",
+      "title": "🖼️ AMI — Amazon Machine Image",
+      "type": "concept",
+      "rawMarkdown": "### What is an AMI?\n```\nAMI = the template used to launch EC2 instances\nContains:\n→ Operating system (Amazon Linux, Ubuntu, Windows)\n→ Pre-installed software (nginx, Node.js, Java, your app)\n→ Configuration files\n→ EBS volume mappings (which volumes to attach, what size)\n\nANALOGY:\nAMI = a master copy (like a ghost image) of a computer\nLaunch 100 EC2 instances from same AMI → all 100 are identical clones\nPerfect for: Auto Scaling groups, consistent deployments\n\nWITHOUT CUSTOM AMI:\nLaunch EC2 → run User Data script → install everything → takes 2–5 minutes\n→ Auto Scaling event → new instance → waits 2–5 min before serving traffic\n\nWITH CUSTOM AMI (golden image):\nPre-bake everything into AMI → launch → ready in 30–60 seconds\n→ Auto Scaling event → new instance ready 3–4x faster\n```\n\n### AMI Types\n\n```\nAWS MARKETPLACE AMIs:\n→ Pre-built by vendors (Bitnami, CentOS, etc.)\n→ Some free, some paid (per-hour software license fee)\n→ Examples: WordPress pre-configured, Jenkins ready, SAP HANA\n\nAWS-PROVIDED AMIs:\n→ Amazon Linux 2023 (most optimized for AWS, free, recommended)\n→ Ubuntu 22.04/20.04 LTS\n→ Windows Server 2022/2019\n→ Red Hat Enterprise Linux (license fee)\n\nCOMMUNITY AMIs:\n→ Shared publicly by other AWS users\n→ FREE to use\n→ ⚠️ SECURITY RISK: do not use from unknown sources\n→ Could contain malware, backdoors\n→ Only use from trusted, known publishers\n\nYOUR CUSTOM AMIs:\n→ Create from your running EC2 instance\n→ Includes: OS + your software + your config\n→ Stored in your account (private by default)\n→ Can share with specific accounts or make public\n→ Region-specific: must copy to other regions to use there\n```\n\n### Creating a Custom AMI (Golden Image Pattern)\n\n```\nPROCESS:\n1. Launch base EC2 (e.g., Amazon Linux 2023)\n2. Install everything: nginx, Node.js 18, PM2, your app\n3. Configure: nginx config, environment, systemd services\n4. Test: verify app starts correctly\n5. Create AMI: EC2 Console → Actions → Image and Templates → Create image\n   → This stops the instance briefly, takes snapshots of all EBS volumes\n   → Creates AMI with those snapshots\n\nRESULT:\n→ AMI ID: ami-0abc123456789xyz\n→ Use this AMI in your Launch Template\n→ Auto Scaling Group uses Launch Template → all instances identical\n\nGOLDEN IMAGE BEST PRACTICES:\n→ Bake in security patches (update OS before creating AMI)\n→ Don't bake in secrets (use Secrets Manager at runtime)\n→ Version your AMIs: \"myapp-v1.2.3-2024-01-15\"\n→ Automate AMI creation with CI/CD pipeline (EC2 Image Builder)\n→ Deprecate old AMIs (but keep snapshots for rollback)\n→ Share AMI to multiple regions via AWS RAM or copy\n\nEC2 IMAGE BUILDER:\n→ AWS service to automate AMI creation pipeline\n→ Define: base image → software components → tests → distribute\n→ Schedules automatic rebuilds (weekly OS patches)\n→ Runs tests before publishing AMI\n→ Distributes to multiple regions automatically\n→ Free (pay only for EC2 instances used during build)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### What is an AMI?"
+        },
+        {
+          "type": "diagram",
+          "content": "AMI = the template used to launch EC2 instances\nContains:\n→ Operating system (Amazon Linux, Ubuntu, Windows)\n→ Pre-installed software (nginx, Node.js, Java, your app)\n→ Configuration files\n→ EBS volume mappings (which volumes to attach, what size)\n\nANALOGY:\nAMI = a master copy (like a ghost image) of a computer\nLaunch 100 EC2 instances from same AMI → all 100 are identical clones\nPerfect for: Auto Scaling groups, consistent deployments\n\nWITHOUT CUSTOM AMI:\nLaunch EC2 → run User Data script → install everything → takes 2–5 minutes\n→ Auto Scaling event → new instance → waits 2–5 min before serving traffic\n\nWITH CUSTOM AMI (golden image):\nPre-bake everything into AMI → launch → ready in 30–60 seconds\n→ Auto Scaling event → new instance ready 3–4x faster"
+        },
+        {
+          "type": "paragraph",
+          "content": "### AMI Types"
+        },
+        {
+          "type": "diagram",
+          "content": "AWS MARKETPLACE AMIs:\n→ Pre-built by vendors (Bitnami, CentOS, etc.)\n→ Some free, some paid (per-hour software license fee)\n→ Examples: WordPress pre-configured, Jenkins ready, SAP HANA\n\nAWS-PROVIDED AMIs:\n→ Amazon Linux 2023 (most optimized for AWS, free, recommended)\n→ Ubuntu 22.04/20.04 LTS\n→ Windows Server 2022/2019\n→ Red Hat Enterprise Linux (license fee)\n\nCOMMUNITY AMIs:\n→ Shared publicly by other AWS users\n→ FREE to use\n→ ⚠️ SECURITY RISK: do not use from unknown sources\n→ Could contain malware, backdoors\n→ Only use from trusted, known publishers\n\nYOUR CUSTOM AMIs:\n→ Create from your running EC2 instance\n→ Includes: OS + your software + your config\n→ Stored in your account (private by default)\n→ Can share with specific accounts or make public\n→ Region-specific: must copy to other regions to use there"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Creating a Custom AMI (Golden Image Pattern)"
+        },
+        {
+          "type": "diagram",
+          "content": "PROCESS:\n1. Launch base EC2 (e.g., Amazon Linux 2023)\n2. Install everything: nginx, Node.js 18, PM2, your app\n3. Configure: nginx config, environment, systemd services\n4. Test: verify app starts correctly\n5. Create AMI: EC2 Console → Actions → Image and Templates → Create image\n   → This stops the instance briefly, takes snapshots of all EBS volumes\n   → Creates AMI with those snapshots\n\nRESULT:\n→ AMI ID: ami-0abc123456789xyz\n→ Use this AMI in your Launch Template\n→ Auto Scaling Group uses Launch Template → all instances identical\n\nGOLDEN IMAGE BEST PRACTICES:\n→ Bake in security patches (update OS before creating AMI)\n→ Don't bake in secrets (use Secrets Manager at runtime)\n→ Version your AMIs: \"myapp-v1.2.3-2024-01-15\"\n→ Automate AMI creation with CI/CD pipeline (EC2 Image Builder)\n→ Deprecate old AMIs (but keep snapshots for rollback)\n→ Share AMI to multiple regions via AWS RAM or copy\n\nEC2 IMAGE BUILDER:\n→ AWS service to automate AMI creation pipeline\n→ Define: base image → software components → tests → distribute\n→ Schedules automatic rebuilds (weekly OS patches)\n→ Runs tests before publishing AMI\n→ Distributes to multiple regions automatically\n→ Free (pay only for EC2 instances used during build)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Operating system (Amazon Linux, Ubuntu, Windows)",
+        "→ Pre-installed software (nginx, Node.js, Java, your app)",
+        "→ Configuration files",
+        "→ EBS volume mappings (which volumes to attach, what size)",
+        "→ Auto Scaling event → new instance → waits 2–5 min before serving traffic",
+        "→ Auto Scaling event → new instance ready 3–4x faster",
+        "→ Pre-built by vendors (Bitnami, CentOS, etc.)",
+        "→ Some free, some paid (per-hour software license fee)"
+      ]
+    },
+    {
+      "id": "load-balancing-elb",
+      "title": "⚖️ Load Balancing — ELB",
+      "type": "concept",
+      "rawMarkdown": "### Why Load Balancing?\n```\nWITHOUT LOAD BALANCER:\nUsers → your-app.com → ONE EC2 instance (single point of failure)\n→ Instance goes down → ALL users get error\n→ Traffic spike → one instance overwhelmed → slow/crashes\n→ Deploy new version → take instance down → downtime\n\nWITH LOAD BALANCER:\nUsers → your-app.com → Load Balancer → multiple EC2 instances\n→ Instance goes down → LB routes to healthy instances automatically\n→ Traffic spike → LB distributes across all instances\n→ Deploy → roll one instance at a time → zero downtime\n→ Scale out → add instances → LB discovers them automatically\n```\n\n### The 3 Types of AWS Load Balancers\n\n```\nALB — Application Load Balancer (Layer 7)\nNLB — Network Load Balancer (Layer 4)\nGLB — Gateway Load Balancer (Layer 3)\n```\n\n### ALB — Application Load Balancer (Most Common)\n\n```\nLAYER 7 = HTTP/HTTPS layer — understands the content of requests\n\nWHAT ALB CAN DO (NLB cannot):\n→ Route based on URL path:\n   /api/*  → Target Group 1 (API servers)\n   /admin/* → Target Group 2 (Admin servers)\n   /*       → Target Group 3 (Frontend servers)\n\n→ Route based on hostname:\n   api.myapp.com   → API servers\n   admin.myapp.com → Admin servers\n   www.myapp.com   → Web servers\n\n→ Route based on HTTP headers, query strings, method\n\n→ Redirect: HTTP → HTTPS (no code change needed)\n→ Return fixed response (403, 200 with custom body)\n→ Authenticate users via Cognito or OIDC before routing\n\n→ WebSocket support\n→ HTTP/2 support\n→ gRPC support\n\nCOMPONENTS:\nListener    → checks for connections on a port (80, 443)\nRule        → if condition → forward to target group\nTarget Group → set of targets (EC2, Lambda, IP, ECS tasks)\nHealth Check → pings targets, removes unhealthy ones\n\nHEALTH CHECKS:\n→ ALB pings each target on specified path (e.g., GET /health)\n→ Expected response: 200 OK\n→ If target fails N consecutive checks → marked unhealthy → removed from rotation\n→ When healthy again → added back automatically\n→ Your app MUST have a /health endpoint that returns 200\n\nPRICING:\n→ $0.008/hour per ALB (~$5.76/month)\n→ + $0.008 per LCU-hour (Load Capacity Unit — based on connections/requests)\n→ ~$15–50/month for moderate traffic\n\nUSE ALB FOR:\n✅ Web applications (HTTP/HTTPS)\n✅ Microservices with path-based routing\n✅ Container-based apps (ECS, EKS)\n✅ WebSocket applications\n✅ When you need request-level features (headers, auth, redirect)\n```\n\n### NLB — Network Load Balancer\n\n```\nLAYER 4 = TCP/UDP layer — doesn't look inside packets, just routes them\n\nCHARACTERISTICS:\n→ Extreme performance: handles millions of requests per second\n→ Ultra-low latency: microseconds (vs milliseconds for ALB)\n→ Static IP address per AZ (ALB doesn't have static IP)\n→ Preserves client source IP (ALB replaces with its own IP)\n→ Supports: TCP, UDP, TLS, TCP_UDP\n→ NO path-based routing (doesn't understand HTTP)\n→ NO host-based routing\n\nUSE NLB FOR:\n✅ Gaming (UDP, ultra-low latency)\n✅ IoT (millions of concurrent connections)\n✅ Real-time financial trading (microsecond latency critical)\n✅ When you need static IP (for whitelisting on client firewalls)\n✅ TCP/UDP applications (not HTTP)\n✅ Extremely high throughput requirements\n\nPRICING:\n→ $0.006/hour per NLB (~$4.32/month)\n→ + per NLCU-hour (similar to ALB)\n```\n\n### GLB — Gateway Load Balancer\n\n```\nLAYER 3 = IP packet level\n\nDeploys, scales, and manages third-party virtual network appliances:\n→ Firewalls (Palo Alto, Fortinet, Check Point)\n→ Intrusion detection/prevention systems (IDS/IPS)\n→ Deep packet inspection\n\nUSE CASE:\nAll traffic → GLB → send to firewall appliance → inspect → GLB → destination\nIf you don't know what GLB is → you don't need it yet (enterprise use)\n```\n\n### ALB Target Groups\n\n```\nA Target Group = the set of servers ALB sends traffic to\n\nTARGET TYPES:\nInstances   → EC2 instances (register by instance ID)\nIP addresses → Any IP (EC2, on-premise, containers with specific IPs)\nLambda      → Serverless functions (HTTP trigger via ALB)\nALB         → Another ALB (rare, for special architectures)\n\nHEALTH CHECK SETTINGS:\nProtocol:         HTTP or HTTPS\nPath:             /health (your endpoint)\nHealthy threshold: 3 (consecutive successes to mark healthy)\nUnhealthy threshold: 3 (consecutive failures to mark unhealthy)\nTimeout:          5 seconds (how long to wait for response)\nInterval:         30 seconds (how often to check)\n\nALGORITHM:\nRound Robin (default): requests distributed evenly\nLeast Outstanding Requests: send to instance with fewest active requests\n                            (better for varied request durations)\n\nSTICKINESS (Session Affinity):\n→ Route same user to same instance every time\n→ Uses cookie (ALB-generated or application-generated)\n→ Duration: 1 second to 7 days\n→ Useful for: apps that store session in memory (not recommended — use Redis instead)\n→ Breaks even distribution during scaling events\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Why Load Balancing?"
+        },
+        {
+          "type": "diagram",
+          "content": "WITHOUT LOAD BALANCER:\nUsers → your-app.com → ONE EC2 instance (single point of failure)\n→ Instance goes down → ALL users get error\n→ Traffic spike → one instance overwhelmed → slow/crashes\n→ Deploy new version → take instance down → downtime\n\nWITH LOAD BALANCER:\nUsers → your-app.com → Load Balancer → multiple EC2 instances\n→ Instance goes down → LB routes to healthy instances automatically\n→ Traffic spike → LB distributes across all instances\n→ Deploy → roll one instance at a time → zero downtime\n→ Scale out → add instances → LB discovers them automatically"
+        },
+        {
+          "type": "paragraph",
+          "content": "### The 3 Types of AWS Load Balancers"
+        },
+        {
+          "type": "text-panel",
+          "content": "ALB — Application Load Balancer (Layer 7)\nNLB — Network Load Balancer (Layer 4)\nGLB — Gateway Load Balancer (Layer 3)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### ALB — Application Load Balancer (Most Common)"
+        },
+        {
+          "type": "diagram",
+          "content": "LAYER 7 = HTTP/HTTPS layer — understands the content of requests\n\nWHAT ALB CAN DO (NLB cannot):\n→ Route based on URL path:\n   /api/*  → Target Group 1 (API servers)\n   /admin/* → Target Group 2 (Admin servers)\n   /*       → Target Group 3 (Frontend servers)\n\n→ Route based on hostname:\n   api.myapp.com   → API servers\n   admin.myapp.com → Admin servers\n   www.myapp.com   → Web servers\n\n→ Route based on HTTP headers, query strings, method\n\n→ Redirect: HTTP → HTTPS (no code change needed)\n→ Return fixed response (403, 200 with custom body)\n→ Authenticate users via Cognito or OIDC before routing\n\n→ WebSocket support\n→ HTTP/2 support\n→ gRPC support\n\nCOMPONENTS:\nListener    → checks for connections on a port (80, 443)\nRule        → if condition → forward to target group\nTarget Group → set of targets (EC2, Lambda, IP, ECS tasks)\nHealth Check → pings targets, removes unhealthy ones\n\nHEALTH CHECKS:\n→ ALB pings each target on specified path (e.g., GET /health)\n→ Expected response: 200 OK\n→ If target fails N consecutive checks → marked unhealthy → removed from rotation\n→ When healthy again → added back automatically\n→ Your app MUST have a /health endpoint that returns 200\n\nPRICING:\n→ $0.008/hour per ALB (~$5.76/month)\n→ + $0.008 per LCU-hour (Load Capacity Unit — based on connections/requests)\n→ ~$15–50/month for moderate traffic\n\nUSE ALB FOR:\n✅ Web applications (HTTP/HTTPS)\n✅ Microservices with path-based routing\n✅ Container-based apps (ECS, EKS)\n✅ WebSocket applications\n✅ When you need request-level features (headers, auth, redirect)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### NLB — Network Load Balancer"
+        },
+        {
+          "type": "diagram",
+          "content": "LAYER 4 = TCP/UDP layer — doesn't look inside packets, just routes them\n\nCHARACTERISTICS:\n→ Extreme performance: handles millions of requests per second\n→ Ultra-low latency: microseconds (vs milliseconds for ALB)\n→ Static IP address per AZ (ALB doesn't have static IP)\n→ Preserves client source IP (ALB replaces with its own IP)\n→ Supports: TCP, UDP, TLS, TCP_UDP\n→ NO path-based routing (doesn't understand HTTP)\n→ NO host-based routing\n\nUSE NLB FOR:\n✅ Gaming (UDP, ultra-low latency)\n✅ IoT (millions of concurrent connections)\n✅ Real-time financial trading (microsecond latency critical)\n✅ When you need static IP (for whitelisting on client firewalls)\n✅ TCP/UDP applications (not HTTP)\n✅ Extremely high throughput requirements\n\nPRICING:\n→ $0.006/hour per NLB (~$4.32/month)\n→ + per NLCU-hour (similar to ALB)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### GLB — Gateway Load Balancer"
+        },
+        {
+          "type": "diagram",
+          "content": "LAYER 3 = IP packet level\n\nDeploys, scales, and manages third-party virtual network appliances:\n→ Firewalls (Palo Alto, Fortinet, Check Point)\n→ Intrusion detection/prevention systems (IDS/IPS)\n→ Deep packet inspection\n\nUSE CASE:\nAll traffic → GLB → send to firewall appliance → inspect → GLB → destination\nIf you don't know what GLB is → you don't need it yet (enterprise use)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### ALB Target Groups"
+        },
+        {
+          "type": "diagram",
+          "content": "A Target Group = the set of servers ALB sends traffic to\n\nTARGET TYPES:\nInstances   → EC2 instances (register by instance ID)\nIP addresses → Any IP (EC2, on-premise, containers with specific IPs)\nLambda      → Serverless functions (HTTP trigger via ALB)\nALB         → Another ALB (rare, for special architectures)\n\nHEALTH CHECK SETTINGS:\nProtocol:         HTTP or HTTPS\nPath:             /health (your endpoint)\nHealthy threshold: 3 (consecutive successes to mark healthy)\nUnhealthy threshold: 3 (consecutive failures to mark unhealthy)\nTimeout:          5 seconds (how long to wait for response)\nInterval:         30 seconds (how often to check)\n\nALGORITHM:\nRound Robin (default): requests distributed evenly\nLeast Outstanding Requests: send to instance with fewest active requests\n                            (better for varied request durations)\n\nSTICKINESS (Session Affinity):\n→ Route same user to same instance every time\n→ Uses cookie (ALB-generated or application-generated)\n→ Duration: 1 second to 7 days\n→ Useful for: apps that store session in memory (not recommended — use Redis instead)\n→ Breaks even distribution during scaling events"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Instance goes down → ALL users get error",
+        "→ Traffic spike → one instance overwhelmed → slow/crashes",
+        "→ Deploy new version → take instance down → downtime",
+        "→ Instance goes down → LB routes to healthy instances automatically",
+        "→ Traffic spike → LB distributes across all instances",
+        "→ Deploy → roll one instance at a time → zero downtime",
+        "→ Scale out → add instances → LB discovers them automatically",
+        "→ Route based on URL path:"
+      ]
+    },
+    {
+      "id": "auto-scaling-group-asg",
+      "title": "📈 Auto Scaling Group (ASG)",
+      "type": "concept",
+      "rawMarkdown": "### What is an ASG?\n```\nASG = a group of EC2 instances that scales automatically based on demand\n\nYOU DEFINE:\n→ Minimum instances (always running, floor)\n→ Maximum instances (never exceed, ceiling)  \n→ Desired capacity (target number right now)\n→ Launch Template (which AMI, instance type, SG, IAM role)\n→ Scaling policies (when to add/remove instances)\n\nASG DOES:\n→ Maintains desired capacity (if instance dies → launches replacement)\n→ Scales out (adds instances) when load increases\n→ Scales in (removes instances) when load decreases\n→ Registers new instances with ALB automatically\n→ Spreads instances across AZs automatically (for HA)\n\nANALOGY:\nASG = a smart staffing agency for your servers\nTell it: \"I need 2–10 servers. Add more when CPU > 70%. Remove when CPU < 30%\"\nAgency automatically hires/fires servers as needed. 24/7.\n```\n\n### Launch Template vs Launch Configuration\n\n```\nLAUNCH CONFIGURATION (OLD — deprecated):\n→ Cannot modify after creation (must create new one)\n→ Cannot use mixed instance types\n→ Cannot use T unlimited\n→ AWS is phasing this out\n\nLAUNCH TEMPLATE (NEW — always use this):\n→ Can have multiple versions\n→ Supports mixed instances (Spot + On-Demand in same ASG)\n→ Supports all instance features\n→ Reusable across ASGs\n→ Inheritance: create child template from parent (override only what changes)\n\nLAUNCH TEMPLATE CONTAINS:\n→ AMI ID\n→ Instance type (or multiple types for mixed)\n→ Key pair\n→ Security groups\n→ IAM instance profile\n→ User data script\n→ EBS volume configuration\n→ Network configuration\n→ Tags\n```\n\n### Scaling Policies — 3 Types\n\n```\n1. TARGET TRACKING SCALING (SIMPLEST — USE THIS FIRST)\n   ┌─────────────────────────────────────────────────────────┐\n   │ \"Keep average CPU at 50%\"                              │\n   │ ASG automatically adds/removes instances to reach 50%  │\n   │                                                         │\n   │ Pre-built metrics:                                      │\n   │ → Average CPU utilization                              │\n   │ → Average network in/out                               │\n   │ → ALB request count per target                        │\n   │                                                         │\n   │ Custom metric example:                                  │\n   │ → \"Keep SQS queue depth at 100 messages per instance\"  │\n   └─────────────────────────────────────────────────────────┘\n\n2. STEP SCALING (MORE CONTROL)\n   ┌─────────────────────────────────────────────────────────┐\n   │ Based on CloudWatch alarm breaches:                    │\n   │                                                         │\n   │ CPU > 70% → add 2 instances                           │\n   │ CPU > 90% → add 5 instances (bigger emergency step)   │\n   │ CPU < 30% → remove 1 instance                         │\n   │ CPU < 20% → remove 2 instances                        │\n   │                                                         │\n   │ Good for: well-understood traffic patterns             │\n   └─────────────────────────────────────────────────────────┘\n\n3. SCHEDULED SCALING (PREDICTABLE PATTERNS)\n   ┌─────────────────────────────────────────────────────────┐\n   │ \"Every weekday at 8am → set desired to 10\"            │\n   │ \"Every weekday at 8pm → set desired to 2\"             │\n   │ \"Every Black Friday → set desired to 50\"              │\n   │                                                         │\n   │ Good for: known traffic patterns, business hours apps  │\n   └─────────────────────────────────────────────────────────┘\n\nPREDICTIVE SCALING (ML-BASED — NEW):\n→ AWS analyzes last 2 weeks of load patterns\n→ Predicts future load using ML\n→ Proactively adds instances BEFORE load hits\n→ Avoids the lag between load spike and scale-out\n→ Combine with Target Tracking for best results\n```\n\n### ASG + ALB Integration\n\n```\nTHE STANDARD PRODUCTION PATTERN:\n\nInternet → ALB (public subnet, 2+ AZs)\n           ↓\n    Target Group (ASG registers instances here automatically)\n    ↓             ↓             ↓\nEC2 (AZ-a)   EC2 (AZ-b)   EC2 (AZ-c)\n(private subnet) (private subnet) (private subnet)\n           ↓\n         RDS (Multi-AZ, private DB subnet)\n\nHOW IT WORKS TOGETHER:\n1. ASG launches new EC2 instance (Auto Scaling event or desired change)\n2. EC2 runs User Data / boots from Golden AMI\n3. ASG registers instance with ALB Target Group\n4. ALB health check: GET /health → 200 OK\n5. ALB starts routing traffic to new instance\n6. Instance is now in full service\n\nSCALE-IN PROTECTION:\n→ Draining: before removing an instance, ALB stops sending NEW requests\n→ Existing requests complete (deregistration delay: 300s default)\n→ After drain period: instance terminated gracefully\n→ Zero dropped requests during scale-in\n\nWARM-UP PERIOD:\n→ After instance launches → don't count it in scaling metrics yet\n→ Give it N seconds to finish starting up\n→ Prevents premature scale-out triggered by new instances still booting\n→ Default 300s → set to actual startup time of your app\n```\n\n### ASG Lifecycle Hooks\n\n```\nLifecycle hooks let you PAUSE the instance during launch or termination\nto run custom actions.\n\nLAUNCH HOOK (Pending:Wait state):\n→ Instance starting → PAUSE before going live\n→ Run: install extra software, pull config from S3, register with monitoring\n→ Signal complete: aws autoscaling complete-lifecycle-action ...\n→ Then: instance goes InService, gets traffic\n\nTERMINATE HOOK (Terminating:Wait state):\n→ Instance being terminated → PAUSE before actual termination\n→ Run: drain connections, save state to S3, deregister from monitoring, publish metrics\n→ Signal complete: aws autoscaling complete-lifecycle-action ...\n→ Then: instance actually terminates\n\nTIMEOUT: if you don't signal within timeout (default 1 hour) → continues anyway\n\nUSE CASES:\n→ Custom health checks before accepting traffic\n→ Warm up application caches during launch hook\n→ Backup logs to S3 during terminate hook\n→ Notify monitoring system of scale events\n```\n\n### ASG Key Settings and Gotchas\n\n```\nCOOLDOWN PERIOD:\n→ After scaling activity → wait N seconds before next scale activity\n→ Prevents thrashing (scale out → scale in → scale out → ...)\n→ Default: 300 seconds (5 minutes)\n→ Target Tracking: manages this automatically (no cooldown needed)\n\nTERMINATION POLICY (which instance to remove on scale-in):\nDefault: \n  1. Balance across AZs (remove from AZ with most instances)\n  2. Remove oldest Launch Template (keep newest deployed version)\n  3. Remove instance closest to billing hour (save money)\n\nCustom options: OldestInstance, NewestInstance, ClosestToNextInstanceHour\n\nINSTANCE REFRESH (rolling deployment):\n→ Replace all instances in ASG with new Launch Template version\n→ Rolling: replaces % at a time (e.g., 20% at a time)\n→ Waits for health check before continuing\n→ Pause if too many unhealthy → investigate + resume/cancel\n→ USE THIS for deployments instead of manual instance replacement\n\nMIXED INSTANCES POLICY:\n→ ASG uses multiple instance types (not just one)\n→ Primary: m5.large → fallback: m5a.large, m4.large, m5.xlarge\n→ If primary Spot unavailable → use fallback → always have capacity\n→ Base: X On-Demand + rest Spot (maintain baseline with reliability)\n→ Huge cost savings for fault-tolerant workloads\n\nGOTCHA: ASG does NOT replace unhealthy based on YOUR app health\n→ By default: only replaces if EC2 fails EC2-level health check (ping fails)\n→ If your app crashes but EC2 is up → ASG doesn't know → won't replace\n→ FIX: enable ALB health check in ASG (if ALB marks unhealthy → ASG replaces)\n→ OR: use ASG health check grace period + custom health check scripts\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### What is an ASG?"
+        },
+        {
+          "type": "diagram",
+          "content": "ASG = a group of EC2 instances that scales automatically based on demand\n\nYOU DEFINE:\n→ Minimum instances (always running, floor)\n→ Maximum instances (never exceed, ceiling)  \n→ Desired capacity (target number right now)\n→ Launch Template (which AMI, instance type, SG, IAM role)\n→ Scaling policies (when to add/remove instances)\n\nASG DOES:\n→ Maintains desired capacity (if instance dies → launches replacement)\n→ Scales out (adds instances) when load increases\n→ Scales in (removes instances) when load decreases\n→ Registers new instances with ALB automatically\n→ Spreads instances across AZs automatically (for HA)\n\nANALOGY:\nASG = a smart staffing agency for your servers\nTell it: \"I need 2–10 servers. Add more when CPU > 70%. Remove when CPU < 30%\"\nAgency automatically hires/fires servers as needed. 24/7."
+        },
+        {
+          "type": "paragraph",
+          "content": "### Launch Template vs Launch Configuration"
+        },
+        {
+          "type": "diagram",
+          "content": "LAUNCH CONFIGURATION (OLD — deprecated):\n→ Cannot modify after creation (must create new one)\n→ Cannot use mixed instance types\n→ Cannot use T unlimited\n→ AWS is phasing this out\n\nLAUNCH TEMPLATE (NEW — always use this):\n→ Can have multiple versions\n→ Supports mixed instances (Spot + On-Demand in same ASG)\n→ Supports all instance features\n→ Reusable across ASGs\n→ Inheritance: create child template from parent (override only what changes)\n\nLAUNCH TEMPLATE CONTAINS:\n→ AMI ID\n→ Instance type (or multiple types for mixed)\n→ Key pair\n→ Security groups\n→ IAM instance profile\n→ User data script\n→ EBS volume configuration\n→ Network configuration\n→ Tags"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Scaling Policies — 3 Types"
+        },
+        {
+          "type": "diagram",
+          "content": "1. TARGET TRACKING SCALING (SIMPLEST — USE THIS FIRST)\n   ┌─────────────────────────────────────────────────────────┐\n   │ \"Keep average CPU at 50%\"                              │\n   │ ASG automatically adds/removes instances to reach 50%  │\n   │                                                         │\n   │ Pre-built metrics:                                      │\n   │ → Average CPU utilization                              │\n   │ → Average network in/out                               │\n   │ → ALB request count per target                        │\n   │                                                         │\n   │ Custom metric example:                                  │\n   │ → \"Keep SQS queue depth at 100 messages per instance\"  │\n   └─────────────────────────────────────────────────────────┘\n\n2. STEP SCALING (MORE CONTROL)\n   ┌─────────────────────────────────────────────────────────┐\n   │ Based on CloudWatch alarm breaches:                    │\n   │                                                         │\n   │ CPU > 70% → add 2 instances                           │\n   │ CPU > 90% → add 5 instances (bigger emergency step)   │\n   │ CPU < 30% → remove 1 instance                         │\n   │ CPU < 20% → remove 2 instances                        │\n   │                                                         │\n   │ Good for: well-understood traffic patterns             │\n   └─────────────────────────────────────────────────────────┘\n\n3. SCHEDULED SCALING (PREDICTABLE PATTERNS)\n   ┌─────────────────────────────────────────────────────────┐\n   │ \"Every weekday at 8am → set desired to 10\"            │\n   │ \"Every weekday at 8pm → set desired to 2\"             │\n   │ \"Every Black Friday → set desired to 50\"              │\n   │                                                         │\n   │ Good for: known traffic patterns, business hours apps  │\n   └─────────────────────────────────────────────────────────┘\n\nPREDICTIVE SCALING (ML-BASED — NEW):\n→ AWS analyzes last 2 weeks of load patterns\n→ Predicts future load using ML\n→ Proactively adds instances BEFORE load hits\n→ Avoids the lag between load spike and scale-out\n→ Combine with Target Tracking for best results"
+        },
+        {
+          "type": "paragraph",
+          "content": "### ASG + ALB Integration"
+        },
+        {
+          "type": "diagram",
+          "content": "THE STANDARD PRODUCTION PATTERN:\n\nInternet → ALB (public subnet, 2+ AZs)\n           ↓\n    Target Group (ASG registers instances here automatically)\n    ↓             ↓             ↓\nEC2 (AZ-a)   EC2 (AZ-b)   EC2 (AZ-c)\n(private subnet) (private subnet) (private subnet)\n           ↓\n         RDS (Multi-AZ, private DB subnet)\n\nHOW IT WORKS TOGETHER:\n1. ASG launches new EC2 instance (Auto Scaling event or desired change)\n2. EC2 runs User Data / boots from Golden AMI\n3. ASG registers instance with ALB Target Group\n4. ALB health check: GET /health → 200 OK\n5. ALB starts routing traffic to new instance\n6. Instance is now in full service\n\nSCALE-IN PROTECTION:\n→ Draining: before removing an instance, ALB stops sending NEW requests\n→ Existing requests complete (deregistration delay: 300s default)\n→ After drain period: instance terminated gracefully\n→ Zero dropped requests during scale-in\n\nWARM-UP PERIOD:\n→ After instance launches → don't count it in scaling metrics yet\n→ Give it N seconds to finish starting up\n→ Prevents premature scale-out triggered by new instances still booting\n→ Default 300s → set to actual startup time of your app"
+        },
+        {
+          "type": "paragraph",
+          "content": "### ASG Lifecycle Hooks"
+        },
+        {
+          "type": "diagram",
+          "content": "Lifecycle hooks let you PAUSE the instance during launch or termination\nto run custom actions.\n\nLAUNCH HOOK (Pending:Wait state):\n→ Instance starting → PAUSE before going live\n→ Run: install extra software, pull config from S3, register with monitoring\n→ Signal complete: aws autoscaling complete-lifecycle-action ...\n→ Then: instance goes InService, gets traffic\n\nTERMINATE HOOK (Terminating:Wait state):\n→ Instance being terminated → PAUSE before actual termination\n→ Run: drain connections, save state to S3, deregister from monitoring, publish metrics\n→ Signal complete: aws autoscaling complete-lifecycle-action ...\n→ Then: instance actually terminates\n\nTIMEOUT: if you don't signal within timeout (default 1 hour) → continues anyway\n\nUSE CASES:\n→ Custom health checks before accepting traffic\n→ Warm up application caches during launch hook\n→ Backup logs to S3 during terminate hook\n→ Notify monitoring system of scale events"
+        },
+        {
+          "type": "paragraph",
+          "content": "### ASG Key Settings and Gotchas"
+        },
+        {
+          "type": "diagram",
+          "content": "COOLDOWN PERIOD:\n→ After scaling activity → wait N seconds before next scale activity\n→ Prevents thrashing (scale out → scale in → scale out → ...)\n→ Default: 300 seconds (5 minutes)\n→ Target Tracking: manages this automatically (no cooldown needed)\n\nTERMINATION POLICY (which instance to remove on scale-in):\nDefault: \n  1. Balance across AZs (remove from AZ with most instances)\n  2. Remove oldest Launch Template (keep newest deployed version)\n  3. Remove instance closest to billing hour (save money)\n\nCustom options: OldestInstance, NewestInstance, ClosestToNextInstanceHour\n\nINSTANCE REFRESH (rolling deployment):\n→ Replace all instances in ASG with new Launch Template version\n→ Rolling: replaces % at a time (e.g., 20% at a time)\n→ Waits for health check before continuing\n→ Pause if too many unhealthy → investigate + resume/cancel\n→ USE THIS for deployments instead of manual instance replacement\n\nMIXED INSTANCES POLICY:\n→ ASG uses multiple instance types (not just one)\n→ Primary: m5.large → fallback: m5a.large, m4.large, m5.xlarge\n→ If primary Spot unavailable → use fallback → always have capacity\n→ Base: X On-Demand + rest Spot (maintain baseline with reliability)\n→ Huge cost savings for fault-tolerant workloads\n\nGOTCHA: ASG does NOT replace unhealthy based on YOUR app health\n→ By default: only replaces if EC2 fails EC2-level health check (ping fails)\n→ If your app crashes but EC2 is up → ASG doesn't know → won't replace\n→ FIX: enable ALB health check in ASG (if ALB marks unhealthy → ASG replaces)\n→ OR: use ASG health check grace period + custom health check scripts"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Minimum instances (always running, floor)",
+        "→ Maximum instances (never exceed, ceiling)",
+        "→ Desired capacity (target number right now)",
+        "→ Launch Template (which AMI, instance type, SG, IAM role)",
+        "→ Scaling policies (when to add/remove instances)",
+        "→ Maintains desired capacity (if instance dies → launches replacement)",
+        "→ Scales out (adds instances) when load increases",
+        "→ Scales in (removes instances) when load decreases"
+      ]
+    },
+    {
+      "id": "interview-qa-ami-asg-alb",
+      "title": "🎯 Interview Q&A — AMI + ASG + ALB",
+      "type": "qa",
+      "rawMarkdown": "**Q: How does Auto Scaling work with a Load Balancer?**\n```\n\"The ASG and ALB work together through Target Groups.\n\nWhen ASG launches a new instance, it automatically registers that instance\nwith the ALB's target group. The ALB then runs health checks — typically\nan HTTP GET to a /health endpoint. Once the instance passes the health check,\nthe ALB starts sending it traffic.\n\nWhen ASG decides to terminate an instance (scale-in), it first tells the ALB\nto deregister the instance. The ALB drains existing connections (default 300\nseconds) without sending new requests. After draining, ASG terminates the\ninstance. Zero requests are dropped.\n\nFor the ASG to know when to scale, you set scaling policies based on metrics\n— most commonly CPU utilization or ALB request count per target. Target\nTracking is the simplest: 'keep average CPU at 50%' and the ASG handles\nthe math of how many instances to add or remove.\"\n```\n\n**Q: Our app is having a Black Friday traffic spike. How do you prepare?**\n```\n\"Multi-layered approach:\n\n1. Before Black Friday (1 week ahead):\n   → Load test with expected peak traffic (Artillery, Locust, k6)\n   → Find the bottleneck: database? application? external API?\n   → Fix the bottleneck, not just scale around it\n\n2. Scheduled Scaling:\n   → 'November 29 6am UTC → set desired to 50 instances'\n   → Proactively have capacity ready BEFORE the spike hits\n   → Don't wait for Auto Scaling to react — be ahead of it\n\n3. Predictive Scaling (if already have historical data):\n   → Enable predictive scaling on the ASG\n   → Uses ML to proactively scale based on patterns\n\n4. Database preparation:\n   → Aurora Auto Scaling for read replicas (auto-adds replicas under load)\n   → Or pre-add read replicas manually\n   → Enable ElastiCache for frequently-read data\n   → Test database connection pooling limits\n\n5. CDN:\n   → Ensure CloudFront caching is properly configured\n   → Product images, JS/CSS — should be served from CloudFront, not EC2\n   → Reduces load on origin by 70-90%\n\n6. Pre-warming ALB:\n   → If expecting massive spike: request pre-warming from AWS support\n   → ALB scales automatically but has a warm-up period\n\n7. Set max capacity with cost protection:\n   → Max instances * instance_cost = maximum possible spend\n   → Set hard max to prevent runaway scaling (and runaway bill)\n\n8. War room: have team ready. Monitor CloudWatch dashboard in real-time.\"\n```\n\n**Q: What is the difference between ALB and NLB?**\n```\n\"Layer 7 vs Layer 4 — that's the core difference.\n\nALB understands HTTP: it can route based on URL path (/api vs /admin),\nhostname (api.myapp.com vs www.myapp.com), HTTP headers, query strings.\nIt can do redirects, return fixed responses, authenticate users via Cognito.\nLatency is in the low milliseconds. This is the right choice for 95% of\nweb applications.\n\nNLB operates at the TCP/UDP level — it doesn't look inside the packets,\njust routes them based on IP and port. The payoffs: millions of requests\nper second, microsecond latency, static IP addresses per AZ. Use NLB for\ngaming (UDP), real-time financial applications, IoT with millions of\ndevices, or any case where you need the absolute minimum latency or a\nstatic IP to whitelist on client firewalls.\n\nFor most web apps, APIs, and microservices: ALB. For extreme performance\nrequirements or non-HTTP protocols: NLB.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: How does Auto Scaling work with a Load Balancer?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"The ASG and ALB work together through Target Groups.\n\nWhen ASG launches a new instance, it automatically registers that instance\nwith the ALB's target group. The ALB then runs health checks — typically\nan HTTP GET to a /health endpoint. Once the instance passes the health check,\nthe ALB starts sending it traffic.\n\nWhen ASG decides to terminate an instance (scale-in), it first tells the ALB\nto deregister the instance. The ALB drains existing connections (default 300\nseconds) without sending new requests. After draining, ASG terminates the\ninstance. Zero requests are dropped.\n\nFor the ASG to know when to scale, you set scaling policies based on metrics\n— most commonly CPU utilization or ALB request count per target. Target\nTracking is the simplest: 'keep average CPU at 50%' and the ASG handles\nthe math of how many instances to add or remove.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Our app is having a Black Friday traffic spike. How do you prepare?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Multi-layered approach:\n\n1. Before Black Friday (1 week ahead):\n   → Load test with expected peak traffic (Artillery, Locust, k6)\n   → Find the bottleneck: database? application? external API?\n   → Fix the bottleneck, not just scale around it\n\n2. Scheduled Scaling:\n   → 'November 29 6am UTC → set desired to 50 instances'\n   → Proactively have capacity ready BEFORE the spike hits\n   → Don't wait for Auto Scaling to react — be ahead of it\n\n3. Predictive Scaling (if already have historical data):\n   → Enable predictive scaling on the ASG\n   → Uses ML to proactively scale based on patterns\n\n4. Database preparation:\n   → Aurora Auto Scaling for read replicas (auto-adds replicas under load)\n   → Or pre-add read replicas manually\n   → Enable ElastiCache for frequently-read data\n   → Test database connection pooling limits\n\n5. CDN:\n   → Ensure CloudFront caching is properly configured\n   → Product images, JS/CSS — should be served from CloudFront, not EC2\n   → Reduces load on origin by 70-90%\n\n6. Pre-warming ALB:\n   → If expecting massive spike: request pre-warming from AWS support\n   → ALB scales automatically but has a warm-up period\n\n7. Set max capacity with cost protection:\n   → Max instances * instance_cost = maximum possible spend\n   → Set hard max to prevent runaway scaling (and runaway bill)\n\n8. War room: have team ready. Monitor CloudWatch dashboard in real-time.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: What is the difference between ALB and NLB?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Layer 7 vs Layer 4 — that's the core difference.\n\nALB understands HTTP: it can route based on URL path (/api vs /admin),\nhostname (api.myapp.com vs www.myapp.com), HTTP headers, query strings.\nIt can do redirects, return fixed responses, authenticate users via Cognito.\nLatency is in the low milliseconds. This is the right choice for 95% of\nweb applications.\n\nNLB operates at the TCP/UDP level — it doesn't look inside the packets,\njust routes them based on IP and port. The payoffs: millions of requests\nper second, microsecond latency, static IP addresses per AZ. Use NLB for\ngaming (UDP), real-time financial applications, IoT with millions of\ndevices, or any case where you need the absolute minimum latency or a\nstatic IP to whitelist on client firewalls.\n\nFor most web apps, APIs, and microservices: ALB. For extreme performance\nrequirements or non-HTTP protocols: NLB.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "05-ami-auto-scaling-group-load-balancing-q1",
+          "question": "How does Auto Scaling work with a Load Balancer?",
+          "answer": "\"The ASG and ALB work together through Target Groups.\n\nWhen ASG launches a new instance, it automatically registers that instance\nwith the ALB's target group. The ALB then runs health checks — typically\nan HTTP GET to a /health endpoint. Once the instance passes the health check,\nthe ALB starts sending it traffic.\n\nWhen ASG decides to terminate an instance (scale-in), it first tells the ALB\nto deregister the instance. The ALB drains existing connections (default 300\nseconds) without sending new requests. After draining, ASG terminates the\ninstance. Zero requests are dropped.\n\nFor the ASG to know when to scale, you set scaling policies based on metrics\n— most commonly CPU utilization or ALB request count per target. Target\nTracking is the simplest: 'keep average CPU at 50%' and the ASG handles\nthe math of how many instances to add or remove.\"",
+          "topicNumber": 5,
+          "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+          "topic": "AMI + Auto Scaling Group + Load Balancing"
+        },
+        {
+          "id": "05-ami-auto-scaling-group-load-balancing-q2",
+          "question": "Our app is having a Black Friday traffic spike. How do you prepare?",
+          "answer": "\"Multi-layered approach:\n\n1. Before Black Friday (1 week ahead):\n   → Load test with expected peak traffic (Artillery, Locust, k6)\n   → Find the bottleneck: database? application? external API?\n   → Fix the bottleneck, not just scale around it\n\n2. Scheduled Scaling:\n   → 'November 29 6am UTC → set desired to 50 instances'\n   → Proactively have capacity ready BEFORE the spike hits\n   → Don't wait for Auto Scaling to react — be ahead of it\n\n3. Predictive Scaling (if already have historical data):\n   → Enable predictive scaling on the ASG\n   → Uses ML to proactively scale based on patterns\n\n4. Database preparation:\n   → Aurora Auto Scaling for read replicas (auto-adds replicas under load)\n   → Or pre-add read replicas manually\n   → Enable ElastiCache for frequently-read data\n   → Test database connection pooling limits\n\n5. CDN:\n   → Ensure CloudFront caching is properly configured\n   → Product images, JS/CSS — should be served from CloudFront, not EC2\n   → Reduces load on origin by 70-90%\n\n6. Pre-warming ALB:\n   → If expecting massive spike: request pre-warming from AWS support\n   → ALB scales automatically but has a warm-up period\n\n7. Set max capacity with cost protection:\n   → Max instances * instance_cost = maximum possible spend\n   → Set hard max to prevent runaway scaling (and runaway bill)\n\n8. War room: have team ready. Monitor CloudWatch dashboard in real-time.\"",
+          "topicNumber": 5,
+          "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+          "topic": "AMI + Auto Scaling Group + Load Balancing"
+        },
+        {
+          "id": "05-ami-auto-scaling-group-load-balancing-q3",
+          "question": "What is the difference between ALB and NLB?",
+          "answer": "\"Layer 7 vs Layer 4 — that's the core difference.\n\nALB understands HTTP: it can route based on URL path (/api vs /admin),\nhostname (api.myapp.com vs www.myapp.com), HTTP headers, query strings.\nIt can do redirects, return fixed responses, authenticate users via Cognito.\nLatency is in the low milliseconds. This is the right choice for 95% of\nweb applications.\n\nNLB operates at the TCP/UDP level — it doesn't look inside the packets,\njust routes them based on IP and port. The payoffs: millions of requests\nper second, microsecond latency, static IP addresses per AZ. Use NLB for\ngaming (UDP), real-time financial applications, IoT with millions of\ndevices, or any case where you need the absolute minimum latency or a\nstatic IP to whitelist on client firewalls.\n\nFor most web apps, APIs, and microservices: ALB. For extreme performance\nrequirements or non-HTTP protocols: NLB.\"",
+          "topicNumber": 5,
+          "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+          "topic": "AMI + Auto Scaling Group + Load Balancing"
+        }
+      ],
+      "revisionPoints": [
+        "**Q: How does Auto Scaling work with a Load Balancer?**"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nAMI → EC2: every instance launches from an AMI\nAMI → Auto Scaling Group: ASG uses Launch Template which references AMI\nAMI → EC2 Image Builder: automates AMI creation pipeline\n\nALB → EC2/ECS/Lambda: forwards traffic to targets\nALB → Target Groups: traffic routing rules\nALB → ACM: SSL/TLS certificate attachment (HTTPS termination)\nALB → WAF: attach WAF to inspect/filter HTTP traffic\nALB → Cognito: user authentication before reaching app\n\nASG → EC2: manages fleet of instances\nASG → ALB: registers/deregisters instances from target groups\nASG → CloudWatch: reads metrics to decide when to scale\nASG → SNS: notifications on scaling events\nASG → Spot Fleet: mixed On-Demand + Spot instances\n\nNEXT: S3 — Object Storage Deep Dive\nThe most used AWS service. More features than any other service.\n```\n\n---\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "AMI → EC2: every instance launches from an AMI\nAMI → Auto Scaling Group: ASG uses Launch Template which references AMI\nAMI → EC2 Image Builder: automates AMI creation pipeline\n\nALB → EC2/ECS/Lambda: forwards traffic to targets\nALB → Target Groups: traffic routing rules\nALB → ACM: SSL/TLS certificate attachment (HTTPS termination)\nALB → WAF: attach WAF to inspect/filter HTTP traffic\nALB → Cognito: user authentication before reaching app\n\nASG → EC2: manages fleet of instances\nASG → ALB: registers/deregisters instances from target groups\nASG → CloudWatch: reads metrics to decide when to scale\nASG → SNS: notifications on scaling events\nASG → Spot Fleet: mixed On-Demand + Spot instances\n\nNEXT: S3 — Object Storage Deep Dive\nThe most used AWS service. More features than any other service."
+        },
+        {
+          "type": "paragraph",
+          "content": "---\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "AMI → EC2: every instance launches from an AMI"
+      ]
+    }
+  ]
+}

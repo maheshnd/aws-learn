@@ -1,0 +1,131 @@
+{
+  "number": 12,
+  "slug": "12-lambda-serverless-compute-deep-dive",
+  "title": "Lambda (Serverless Compute Deep Dive)",
+  "sections": [
+    {
+      "id": "lambda-internals-how-it-actually-works",
+      "title": "⚙️ Lambda Internals — How it Actually Works",
+      "type": "concept",
+      "rawMarkdown": "```\nEXECUTION ENVIRONMENT:\nWhen Lambda runs your function, it creates an isolated execution environment:\n→ Micro-VM (firecracker — AWS's open-source VMM, starts in < 125ms)\n→ Has: CPU (proportional to memory), RAM (you choose), /tmp disk (512MB-10GB)\n→ Isolated: cannot see other Lambda executions\n→ Runs your function handler\n→ After handler returns: environment stays alive (frozen, not terminated)\n→ Next invocation: environment REUSED if within ~15 minutes of last use\n\nEXECUTION ENVIRONMENT LIFECYCLE:\nINIT PHASE (cold start):\n  → Download code package from S3 (< 50ms usually)\n  → Start firecracker VM\n  → Initialize runtime (Node.js, Python, Java JVM...)\n  → Run your INITIALIZATION CODE (outside handler)\n  → Ready to handle first invocation\n\nINVOKE PHASE:\n  → Run your handler function\n  → Return response\n  → Environment frozen (waiting for next invocation)\n\nSHUTDOWN PHASE:\n  → If no invocation for ~15 minutes → environment terminated\n  → Next invocation: full cold start again\n```\n\n### Cold Starts — Deep Understanding\n\n```\nCOLD START = the INIT phase happening before your code runs\nDuration by language:\n→ Python:   50–200ms\n→ Node.js:  50–300ms\n→ Java:     500ms–2s (JVM startup is slow)\n→ Go:       50–150ms\n→ .NET:     200–400ms\n→ Java with SnapStart: < 100ms (AWS pre-initializes JVM snapshot)\n\nWHAT CAUSES COLD STARTS:\n→ Function not invoked recently (environment shut down)\n→ Scaling: more concurrent invocations than warm environments\n→ Deployment: new code version deployed (old environments die)\n→ VPC Lambda: ENI creation adds 1-10 seconds (improved significantly in 2019)\n\nREDUCING COLD STARTS:\n1. Keep packages small → faster code download\n   → Don't bundle unnecessary dependencies\n   → Use Lambda Layers for large shared dependencies (pre-loaded)\n   → Python: remove boto3 from zip (already in runtime)\n\n2. Initialize expensive things OUTSIDE the handler:\n   // GOOD — runs once per environment (initialization code)\n   const dbClient = new DatabaseClient(process.env.DB_URL);\n   const s3Client = new S3Client({ region: 'us-east-1' });\n   \n   // RUNS ON EVERY INVOCATION (handler)\n   exports.handler = async (event) => {\n     // dbClient and s3Client already initialized!\n     const result = await dbClient.query(...);\n     return result;\n   };\n\n3. Provisioned Concurrency:\n   → Pre-initialize N execution environments\n   → They're ALWAYS warm (no cold start for those N)\n   → Cost: $0.000004646/GB-second (even when idle)\n   → Use for: latency-sensitive APIs that can't afford cold starts\n   \n4. Lambda SnapStart (Java only):\n   → AWS takes snapshot of initialized JVM\n   → Restore from snapshot instead of full init\n   → Cold start: 2000ms → < 100ms for Java\n\n5. Schedule warm-up pings (cheap but imperfect):\n   → EventBridge rule: every 5 minutes → invoke Lambda with \"warm\" event\n   → Handler: if event.source === 'warmup' → return immediately\n   → Keeps ONE environment warm (doesn't help during scaling)\n   → Provisioned Concurrency is better but costs money\n```\n\n### Concurrency — How Lambda Scales\n\n```\nCONCURRENCY = number of function instances running simultaneously\n\nCONCURRENT EXECUTIONS:\n→ 100 requests at same time → 100 Lambda instances running simultaneously\n→ Each instance is independent (separate execution environment)\n→ Account default limit: 1,000 concurrent executions per region\n→ Can request increase (no hard maximum for most regions)\n\nSCALING BEHAVIOR:\n→ Each new concurrent request that has no warm environment → cold start\n→ Scaling is very fast (hundreds per minute for synchronous invocations)\n→ SQS/Kinesis triggered Lambda: scales based on queue depth/shard count\n\nRESERVED CONCURRENCY:\n→ Guarantee X concurrent executions for THIS function\n→ Other functions cannot \"steal\" that capacity\n→ Also acts as throttle: if function tries to exceed X → throttled\n→ Use for: critical functions that need guaranteed capacity\n→ Use for: prevent one function from consuming all account concurrency\n\nPROVISIONED CONCURRENCY:\n→ Pre-initialize X environments (always warm)\n→ Guaranteed to handle X concurrent requests with zero cold start\n→ Cost: even when not handling requests\n→ Use for: latency-critical APIs (checkout, payments, real-time)\n→ Can combine with Auto Scaling for Provisioned Concurrency\n   (scale provisioned concurrency up/down based on schedule or metrics)\n\nTHROTTLING:\n→ Function hits concurrency limit → new invocations → throttled\n→ Synchronous: returns 429 TooManyRequestsException → caller handles\n→ Async (SQS/EventBridge): Lambda retries automatically (2 times for async)\n→ SQS: messages stay in queue, Lambda retries when concurrency available\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "EXECUTION ENVIRONMENT:\nWhen Lambda runs your function, it creates an isolated execution environment:\n→ Micro-VM (firecracker — AWS's open-source VMM, starts in < 125ms)\n→ Has: CPU (proportional to memory), RAM (you choose), /tmp disk (512MB-10GB)\n→ Isolated: cannot see other Lambda executions\n→ Runs your function handler\n→ After handler returns: environment stays alive (frozen, not terminated)\n→ Next invocation: environment REUSED if within ~15 minutes of last use\n\nEXECUTION ENVIRONMENT LIFECYCLE:\nINIT PHASE (cold start):\n  → Download code package from S3 (< 50ms usually)\n  → Start firecracker VM\n  → Initialize runtime (Node.js, Python, Java JVM...)\n  → Run your INITIALIZATION CODE (outside handler)\n  → Ready to handle first invocation\n\nINVOKE PHASE:\n  → Run your handler function\n  → Return response\n  → Environment frozen (waiting for next invocation)\n\nSHUTDOWN PHASE:\n  → If no invocation for ~15 minutes → environment terminated\n  → Next invocation: full cold start again"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Cold Starts — Deep Understanding"
+        },
+        {
+          "type": "diagram",
+          "content": "COLD START = the INIT phase happening before your code runs\nDuration by language:\n→ Python:   50–200ms\n→ Node.js:  50–300ms\n→ Java:     500ms–2s (JVM startup is slow)\n→ Go:       50–150ms\n→ .NET:     200–400ms\n→ Java with SnapStart: < 100ms (AWS pre-initializes JVM snapshot)\n\nWHAT CAUSES COLD STARTS:\n→ Function not invoked recently (environment shut down)\n→ Scaling: more concurrent invocations than warm environments\n→ Deployment: new code version deployed (old environments die)\n→ VPC Lambda: ENI creation adds 1-10 seconds (improved significantly in 2019)\n\nREDUCING COLD STARTS:\n1. Keep packages small → faster code download\n   → Don't bundle unnecessary dependencies\n   → Use Lambda Layers for large shared dependencies (pre-loaded)\n   → Python: remove boto3 from zip (already in runtime)\n\n2. Initialize expensive things OUTSIDE the handler:\n   // GOOD — runs once per environment (initialization code)\n   const dbClient = new DatabaseClient(process.env.DB_URL);\n   const s3Client = new S3Client({ region: 'us-east-1' });\n   \n   // RUNS ON EVERY INVOCATION (handler)\n   exports.handler = async (event) => {\n     // dbClient and s3Client already initialized!\n     const result = await dbClient.query(...);\n     return result;\n   };\n\n3. Provisioned Concurrency:\n   → Pre-initialize N execution environments\n   → They're ALWAYS warm (no cold start for those N)\n   → Cost: $0.000004646/GB-second (even when idle)\n   → Use for: latency-sensitive APIs that can't afford cold starts\n   \n4. Lambda SnapStart (Java only):\n   → AWS takes snapshot of initialized JVM\n   → Restore from snapshot instead of full init\n   → Cold start: 2000ms → < 100ms for Java\n\n5. Schedule warm-up pings (cheap but imperfect):\n   → EventBridge rule: every 5 minutes → invoke Lambda with \"warm\" event\n   → Handler: if event.source === 'warmup' → return immediately\n   → Keeps ONE environment warm (doesn't help during scaling)\n   → Provisioned Concurrency is better but costs money"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Concurrency — How Lambda Scales"
+        },
+        {
+          "type": "diagram",
+          "content": "CONCURRENCY = number of function instances running simultaneously\n\nCONCURRENT EXECUTIONS:\n→ 100 requests at same time → 100 Lambda instances running simultaneously\n→ Each instance is independent (separate execution environment)\n→ Account default limit: 1,000 concurrent executions per region\n→ Can request increase (no hard maximum for most regions)\n\nSCALING BEHAVIOR:\n→ Each new concurrent request that has no warm environment → cold start\n→ Scaling is very fast (hundreds per minute for synchronous invocations)\n→ SQS/Kinesis triggered Lambda: scales based on queue depth/shard count\n\nRESERVED CONCURRENCY:\n→ Guarantee X concurrent executions for THIS function\n→ Other functions cannot \"steal\" that capacity\n→ Also acts as throttle: if function tries to exceed X → throttled\n→ Use for: critical functions that need guaranteed capacity\n→ Use for: prevent one function from consuming all account concurrency\n\nPROVISIONED CONCURRENCY:\n→ Pre-initialize X environments (always warm)\n→ Guaranteed to handle X concurrent requests with zero cold start\n→ Cost: even when not handling requests\n→ Use for: latency-critical APIs (checkout, payments, real-time)\n→ Can combine with Auto Scaling for Provisioned Concurrency\n   (scale provisioned concurrency up/down based on schedule or metrics)\n\nTHROTTLING:\n→ Function hits concurrency limit → new invocations → throttled\n→ Synchronous: returns 429 TooManyRequestsException → caller handles\n→ Async (SQS/EventBridge): Lambda retries automatically (2 times for async)\n→ SQS: messages stay in queue, Lambda retries when concurrency available"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Micro-VM (firecracker — AWS's open-source VMM, starts in < 125ms)",
+        "→ Has: CPU (proportional to memory), RAM (you choose), /tmp disk (512MB-10GB)",
+        "→ Isolated: cannot see other Lambda executions",
+        "→ Runs your function handler",
+        "→ After handler returns: environment stays alive (frozen, not terminated)",
+        "→ Next invocation: environment REUSED if within ~15 minutes of last use",
+        "→ Python:   50–200ms",
+        "→ Node.js:  50–300ms"
+      ]
+    },
+    {
+      "id": "lambda-triggers-event-sources",
+      "title": "🔌 Lambda Triggers (Event Sources)",
+      "type": "concept",
+      "rawMarkdown": "```\nSYNCHRONOUS INVOCATIONS (caller waits for response):\n→ ALB: HTTP request → Lambda processes → returns HTTP response\n→ API Gateway: same pattern\n→ Lambda → Lambda: one function invokes another directly\n→ Cognito: custom auth during user auth flow\n→ CloudFront: Lambda@Edge\n\nASYNCHRONOUS INVOCATIONS (fire and forget):\n→ S3: object created/deleted → Lambda notified (can fail silently)\n→ SNS: message published → Lambda notified\n→ EventBridge: event matched rule → Lambda invoked\n→ CloudWatch Events/Logs: scheduled or log-based triggers\n→ Async: Lambda retries 2 times on failure, then → DLQ if configured\n\nEVENT SOURCE MAPPING (Lambda manages polling):\n→ SQS: Lambda polls queue, gets batch → invokes with batch\n→ Kinesis: Lambda polls stream shards → invokes with records\n→ DynamoDB Streams: Lambda polls stream → invokes with changes\n→ MSK/Kafka: Lambda polls → invokes with messages\n→ Lambda manages the polling → you just handle the records\n\nSQS EVENT SOURCE MAPPING SETTINGS:\nBatch size: 1-10,000 messages per invocation\nBatch window: accumulate messages for up to N seconds before invoking (max 300s)\nConcurrency: Lambda scales based on number of messages in flight\nOn failure: send failed batches to DLQ or SNS\nPartial batch response: report which messages in batch succeeded (others retry)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "SYNCHRONOUS INVOCATIONS (caller waits for response):\n→ ALB: HTTP request → Lambda processes → returns HTTP response\n→ API Gateway: same pattern\n→ Lambda → Lambda: one function invokes another directly\n→ Cognito: custom auth during user auth flow\n→ CloudFront: Lambda@Edge\n\nASYNCHRONOUS INVOCATIONS (fire and forget):\n→ S3: object created/deleted → Lambda notified (can fail silently)\n→ SNS: message published → Lambda notified\n→ EventBridge: event matched rule → Lambda invoked\n→ CloudWatch Events/Logs: scheduled or log-based triggers\n→ Async: Lambda retries 2 times on failure, then → DLQ if configured\n\nEVENT SOURCE MAPPING (Lambda manages polling):\n→ SQS: Lambda polls queue, gets batch → invokes with batch\n→ Kinesis: Lambda polls stream shards → invokes with records\n→ DynamoDB Streams: Lambda polls stream → invokes with changes\n→ MSK/Kafka: Lambda polls → invokes with messages\n→ Lambda manages the polling → you just handle the records\n\nSQS EVENT SOURCE MAPPING SETTINGS:\nBatch size: 1-10,000 messages per invocation\nBatch window: accumulate messages for up to N seconds before invoking (max 300s)\nConcurrency: Lambda scales based on number of messages in flight\nOn failure: send failed batches to DLQ or SNS\nPartial batch response: report which messages in batch succeeded (others retry)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ ALB: HTTP request → Lambda processes → returns HTTP response",
+        "→ API Gateway: same pattern",
+        "→ Lambda → Lambda: one function invokes another directly",
+        "→ Cognito: custom auth during user auth flow",
+        "→ CloudFront: Lambda@Edge",
+        "→ S3: object created/deleted → Lambda notified (can fail silently)",
+        "→ SNS: message published → Lambda notified",
+        "→ EventBridge: event matched rule → Lambda invoked"
+      ]
+    },
+    {
+      "id": "lambda-in-vpc",
+      "title": "🌐 Lambda in VPC",
+      "type": "concept",
+      "rawMarkdown": "```\nBY DEFAULT: Lambda NOT in VPC\n→ Cannot reach VPC resources (RDS, ElastiCache, private EC2)\n→ CAN reach internet (API Gateway, S3, DynamoDB via public endpoints)\n\nWITH VPC CONFIGURATION:\n→ Lambda gets an ENI in your specified subnet\n→ CAN reach VPC resources (same VPC)\n→ CANNOT reach internet by default!\n   Need NAT Gateway in private subnet for internet access\n\nWHEN TO PUT LAMBDA IN VPC:\n✅ Lambda needs to connect to RDS (private subnet)\n✅ Lambda needs to connect to ElastiCache\n✅ Lambda needs to access private services in VPC\n\nWHEN NOT TO PUT LAMBDA IN VPC:\n❌ Lambda only calls AWS services (S3, DynamoDB, SQS) — use VPC endpoints instead\n❌ Lambda only calls public internet APIs — no VPC needed\n→ VPC Lambda: slightly higher cold starts (ENI management)\n→ Use VPC endpoints to keep AWS service calls private without VPC Lambda\n\nRDS CONNECTION PROBLEM WITH LAMBDA:\nLambda scales to 1,000 concurrent → 1,000 connections to RDS → connection pool exhausted!\nEach Lambda execution opens a new DB connection.\n\nSOLUTION: RDS Proxy\n→ RDS Proxy sits between Lambda and RDS\n→ Pools and reuses connections\n→ Lambda → RDS Proxy (multiplexes connections) → RDS\n→ 1,000 concurrent Lambdas → RDS Proxy → 20 actual DB connections\n→ RDS Proxy is in VPC (same subnet as Lambda)\n→ Supports: IAM authentication, Secrets Manager rotation\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "BY DEFAULT: Lambda NOT in VPC\n→ Cannot reach VPC resources (RDS, ElastiCache, private EC2)\n→ CAN reach internet (API Gateway, S3, DynamoDB via public endpoints)\n\nWITH VPC CONFIGURATION:\n→ Lambda gets an ENI in your specified subnet\n→ CAN reach VPC resources (same VPC)\n→ CANNOT reach internet by default!\n   Need NAT Gateway in private subnet for internet access\n\nWHEN TO PUT LAMBDA IN VPC:\n✅ Lambda needs to connect to RDS (private subnet)\n✅ Lambda needs to connect to ElastiCache\n✅ Lambda needs to access private services in VPC\n\nWHEN NOT TO PUT LAMBDA IN VPC:\n❌ Lambda only calls AWS services (S3, DynamoDB, SQS) — use VPC endpoints instead\n❌ Lambda only calls public internet APIs — no VPC needed\n→ VPC Lambda: slightly higher cold starts (ENI management)\n→ Use VPC endpoints to keep AWS service calls private without VPC Lambda\n\nRDS CONNECTION PROBLEM WITH LAMBDA:\nLambda scales to 1,000 concurrent → 1,000 connections to RDS → connection pool exhausted!\nEach Lambda execution opens a new DB connection.\n\nSOLUTION: RDS Proxy\n→ RDS Proxy sits between Lambda and RDS\n→ Pools and reuses connections\n→ Lambda → RDS Proxy (multiplexes connections) → RDS\n→ 1,000 concurrent Lambdas → RDS Proxy → 20 actual DB connections\n→ RDS Proxy is in VPC (same subnet as Lambda)\n→ Supports: IAM authentication, Secrets Manager rotation"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Cannot reach VPC resources (RDS, ElastiCache, private EC2)",
+        "→ CAN reach internet (API Gateway, S3, DynamoDB via public endpoints)",
+        "→ Lambda gets an ENI in your specified subnet",
+        "→ CAN reach VPC resources (same VPC)",
+        "→ CANNOT reach internet by default!",
+        "✅ Lambda needs to connect to RDS (private subnet)",
+        "✅ Lambda needs to connect to ElastiCache",
+        "✅ Lambda needs to access private services in VPC"
+      ]
+    },
+    {
+      "id": "lambda-best-practices",
+      "title": "💡 Lambda Best Practices",
+      "type": "checklist",
+      "rawMarkdown": "```\nCODE:\n✅ Handler should be small and focused (single responsibility)\n✅ Initialize SDK clients and DB connections OUTSIDE handler\n✅ Use environment variables for config (not hardcoded)\n✅ Retrieve secrets from Secrets Manager (cache in memory between invocations)\n✅ Set appropriate timeout (default 3s is too short for many tasks)\n✅ Return proper error format (don't swallow exceptions)\n\nSECURITY:\n✅ IAM execution role with LEAST privilege (not AdministratorAccess)\n✅ Never log sensitive data (PII, passwords, tokens) to CloudWatch\n✅ Use Secrets Manager for secrets (not env vars — visible in console)\n✅ Enable X-Ray tracing for debugging and performance insights\n✅ Layer code: don't put secrets or credentials in Lambda layers\n\nPERFORMANCE:\n✅ Right-size memory (more memory = more CPU = often faster AND cheaper)\n   Test: run at 256MB vs 512MB → if 512MB halves execution time → costs same!\n✅ Avoid recursion (Lambda calling itself can create infinite loop)\n✅ Use /tmp for temporary files (reused across invocations in warm env)\n✅ Avoid loading large files on every invocation — use /tmp caching\n\nERROR HANDLING:\n✅ Async invocations: configure DLQ or SNS on-failure destination\n✅ SQS event source: configure partial batch response (don't fail whole batch)\n✅ Wrap handler in try/catch, log error details, return appropriate response\n✅ Use exponential backoff when calling external services\n\nMONITORING:\n✅ Structured logging (JSON) → CloudWatch Logs Insights queries easily\n✅ Custom metrics: publish business metrics to CloudWatch\n✅ X-Ray tracing: see exactly where time is spent in function\n✅ Alarm: error rate, duration p99, throttles, concurrent executions\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "CODE:\n✅ Handler should be small and focused (single responsibility)\n✅ Initialize SDK clients and DB connections OUTSIDE handler\n✅ Use environment variables for config (not hardcoded)\n✅ Retrieve secrets from Secrets Manager (cache in memory between invocations)\n✅ Set appropriate timeout (default 3s is too short for many tasks)\n✅ Return proper error format (don't swallow exceptions)\n\nSECURITY:\n✅ IAM execution role with LEAST privilege (not AdministratorAccess)\n✅ Never log sensitive data (PII, passwords, tokens) to CloudWatch\n✅ Use Secrets Manager for secrets (not env vars — visible in console)\n✅ Enable X-Ray tracing for debugging and performance insights\n✅ Layer code: don't put secrets or credentials in Lambda layers\n\nPERFORMANCE:\n✅ Right-size memory (more memory = more CPU = often faster AND cheaper)\n   Test: run at 256MB vs 512MB → if 512MB halves execution time → costs same!\n✅ Avoid recursion (Lambda calling itself can create infinite loop)\n✅ Use /tmp for temporary files (reused across invocations in warm env)\n✅ Avoid loading large files on every invocation — use /tmp caching\n\nERROR HANDLING:\n✅ Async invocations: configure DLQ or SNS on-failure destination\n✅ SQS event source: configure partial batch response (don't fail whole batch)\n✅ Wrap handler in try/catch, log error details, return appropriate response\n✅ Use exponential backoff when calling external services\n\nMONITORING:\n✅ Structured logging (JSON) → CloudWatch Logs Insights queries easily\n✅ Custom metrics: publish business metrics to CloudWatch\n✅ X-Ray tracing: see exactly where time is spent in function\n✅ Alarm: error rate, duration p99, throttles, concurrent executions"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "✅ Handler should be small and focused (single responsibility)",
+        "✅ Initialize SDK clients and DB connections OUTSIDE handler",
+        "✅ Use environment variables for config (not hardcoded)",
+        "✅ Retrieve secrets from Secrets Manager (cache in memory between invocations)",
+        "✅ Set appropriate timeout (default 3s is too short for many tasks)",
+        "✅ Return proper error format (don't swallow exceptions)",
+        "✅ IAM execution role with LEAST privilege (not AdministratorAccess)",
+        "✅ Never log sensitive data (PII, passwords, tokens) to CloudWatch"
+      ]
+    }
+  ]
+}

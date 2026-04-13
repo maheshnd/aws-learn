@@ -12,11 +12,22 @@ npm run build:content   # parse notes → JSON (run this first!)
 npm run dev
 ```
 
+## Deployment Workflow
+The source notes in `content/aws_master_notes.md` stay local and are not pushed to GitHub.
+
+Before pushing content updates:
+```bash
+npm run build:content
+npm run build
+```
+
+Commit the generated files in `public/data/` along with your app changes, then push. GitHub Pages deploys from the committed JSON and does not rebuild from the private markdown source.
+
 ## Adding New Content
-1. Edit `content/aws_master_notes.md`
+1. Edit `content/aws_master_notes.md` locally
 2. Add new topic: `# 21 — ServiceName`
 3. `npm run build:content`
-4. `npm run build`
+4. Commit the updated `public/data/`
 5. `git push` → GitHub Pages auto-deploys
 
 ## Tech Stack

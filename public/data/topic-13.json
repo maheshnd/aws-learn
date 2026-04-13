@@ -1,0 +1,185 @@
+{
+  "number": 13,
+  "slug": "13-containers-ecs-ecr-eks",
+  "title": "Containers (ECS, ECR, EKS)",
+  "sections": [
+    {
+      "id": "docker-quick-review",
+      "title": "🐳 Docker Quick Review",
+      "type": "concept",
+      "rawMarkdown": "```\nCONTAINER = your app + its dependencies, packaged together\n→ Same container runs identically: developer laptop, CI/CD, production\n→ Isolated from other containers on same machine\n→ Lightweight (shares OS kernel — starts in seconds, not minutes like VMs)\n\nDOCKERFILE = instructions to build your container image\nFROM node:18-alpine              # Start from base image\nWORKDIR /app                     # Set working directory\nCOPY package*.json ./            # Copy package files\nRUN npm install --production     # Install dependencies (layer cached)\nCOPY . .                         # Copy your source code\nEXPOSE 3000                      # Document which port app uses\nCMD [\"node\", \"server.js\"]        # Command to start app\n\nDOCKER IMAGE = the built artifact (read-only template)\nDOCKER CONTAINER = running instance of an image\n\nIMAGE LAYERS:\n→ Each instruction in Dockerfile = new layer\n→ Layers are CACHED: if layer hasn't changed, Docker reuses cached layer\n→ OPTIMIZE: put things that change least (dependencies) early,\n             things that change most (your code) last\n→ Bad:  COPY . .  then  RUN npm install  (code change = reinstall everything)\n→ Good: COPY package*.json . → RUN npm install → COPY . .\n        (code change only invalidates last COPY layer)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "CONTAINER = your app + its dependencies, packaged together\n→ Same container runs identically: developer laptop, CI/CD, production\n→ Isolated from other containers on same machine\n→ Lightweight (shares OS kernel — starts in seconds, not minutes like VMs)\n\nDOCKERFILE = instructions to build your container image\nFROM node:18-alpine              # Start from base image\nWORKDIR /app                     # Set working directory\nCOPY package*.json ./            # Copy package files\nRUN npm install --production     # Install dependencies (layer cached)\nCOPY . .                         # Copy your source code\nEXPOSE 3000                      # Document which port app uses\nCMD [\"node\", \"server.js\"]        # Command to start app\n\nDOCKER IMAGE = the built artifact (read-only template)\nDOCKER CONTAINER = running instance of an image\n\nIMAGE LAYERS:\n→ Each instruction in Dockerfile = new layer\n→ Layers are CACHED: if layer hasn't changed, Docker reuses cached layer\n→ OPTIMIZE: put things that change least (dependencies) early,\n             things that change most (your code) last\n→ Bad:  COPY . .  then  RUN npm install  (code change = reinstall everything)\n→ Good: COPY package*.json . → RUN npm install → COPY . .\n        (code change only invalidates last COPY layer)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Same container runs identically: developer laptop, CI/CD, production",
+        "→ Isolated from other containers on same machine",
+        "→ Lightweight (shares OS kernel — starts in seconds, not minutes like VMs)",
+        "→ Each instruction in Dockerfile = new layer",
+        "→ Layers are CACHED: if layer hasn't changed, Docker reuses cached layer",
+        "→ OPTIMIZE: put things that change least (dependencies) early,",
+        "→ Bad:  COPY . .  then  RUN npm install  (code change = reinstall everything)",
+        "→ Good: COPY package*.json . → RUN npm install → COPY . ."
+      ]
+    },
+    {
+      "id": "ecr-elastic-container-registry",
+      "title": "📦 ECR — Elastic Container Registry",
+      "type": "concept",
+      "rawMarkdown": "```\nECR = private Docker image registry on AWS\n\nWHY ECR OVER DOCKER HUB:\n→ Private by default (Docker Hub public by default)\n→ IAM-controlled access (no separate login management)\n→ Same region as ECS → fast pulls → fast container startup\n→ No rate limiting (Docker Hub limits free pulls to 100/6hours)\n→ Vulnerability scanning built-in (scans on push or on demand)\n→ Image lifecycle policies (auto-delete old images to save cost)\n\nPUSHING IMAGE TO ECR:\n# Authenticate Docker to ECR\naws ecr get-login-password --region us-east-1 | \\\n  docker login --username AWS \\\n  --password-stdin 123456789.dkr.ecr.us-east-1.amazonaws.com\n\n# Build image\ndocker build -t myapp:v1.2.3 .\n\n# Tag for ECR\ndocker tag myapp:v1.2.3 \\\n  123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.2.3\n\n# Push to ECR\ndocker push 123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.2.3\n\nECR LIFECYCLE POLICIES:\n→ \"Keep only last 10 images tagged with 'release'\"\n→ \"Delete untagged images older than 7 days\"\n→ Prevents storage costs from accumulating (every CI/CD push = new image)\n→ $0.10/GB/month for storage\n\nIMAGE SCANNING:\n→ Enhanced scanning: powered by Amazon Inspector\n→ Scans: OS packages, language packages (npm, pip, gem)\n→ Reports: critical, high, medium, low severity CVEs\n→ Integrate with Security Hub: centralized finding management\n→ Scan on push (recommended) or on demand\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "ECR = private Docker image registry on AWS\n\nWHY ECR OVER DOCKER HUB:\n→ Private by default (Docker Hub public by default)\n→ IAM-controlled access (no separate login management)\n→ Same region as ECS → fast pulls → fast container startup\n→ No rate limiting (Docker Hub limits free pulls to 100/6hours)\n→ Vulnerability scanning built-in (scans on push or on demand)\n→ Image lifecycle policies (auto-delete old images to save cost)\n\nPUSHING IMAGE TO ECR:\n# Authenticate Docker to ECR\naws ecr get-login-password --region us-east-1 | \\\n  docker login --username AWS \\\n  --password-stdin 123456789.dkr.ecr.us-east-1.amazonaws.com\n\n# Build image\ndocker build -t myapp:v1.2.3 .\n\n# Tag for ECR\ndocker tag myapp:v1.2.3 \\\n  123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.2.3\n\n# Push to ECR\ndocker push 123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.2.3\n\nECR LIFECYCLE POLICIES:\n→ \"Keep only last 10 images tagged with 'release'\"\n→ \"Delete untagged images older than 7 days\"\n→ Prevents storage costs from accumulating (every CI/CD push = new image)\n→ $0.10/GB/month for storage\n\nIMAGE SCANNING:\n→ Enhanced scanning: powered by Amazon Inspector\n→ Scans: OS packages, language packages (npm, pip, gem)\n→ Reports: critical, high, medium, low severity CVEs\n→ Integrate with Security Hub: centralized finding management\n→ Scan on push (recommended) or on demand"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Private by default (Docker Hub public by default)",
+        "→ IAM-controlled access (no separate login management)",
+        "→ Same region as ECS → fast pulls → fast container startup",
+        "→ No rate limiting (Docker Hub limits free pulls to 100/6hours)",
+        "→ Vulnerability scanning built-in (scans on push or on demand)",
+        "→ Image lifecycle policies (auto-delete old images to save cost)",
+        "→ \"Keep only last 10 images tagged with 'release'\"",
+        "→ \"Delete untagged images older than 7 days\""
+      ]
+    },
+    {
+      "id": "ecs-elastic-container-service",
+      "title": "🚢 ECS — Elastic Container Service",
+      "type": "concept",
+      "rawMarkdown": "### Task Definition — The Blueprint\n\n```\nTASK DEFINITION = JSON config describing how to run your container\nThink: docker-compose.yml but for AWS\n\nKEY SETTINGS IN TASK DEFINITION:\nfamily:        \"myapp-api\"          # Name for this task definition\ncpu:           256                   # Total CPU units (256 = 0.25 vCPU)\nmemory:        512                   # Total memory in MB\nnetworkMode:   \"awsvpc\"             # Each task gets own ENI (required for Fargate)\nexecutionRole: \"ecsTaskExecutionRole\" # Pull from ECR, write logs to CloudWatch\ntaskRole:      \"myapp-task-role\"    # What your APP can access (S3, DynamoDB, etc.)\n\ncontainers:\n  - name:   \"myapp\"\n    image:  \"123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.2.3\"\n    cpu:    256\n    memory: 512\n    portMappings:\n      - containerPort: 3000\n    environment:\n      - name: NODE_ENV\n        value: production\n    secrets:                         # From Secrets Manager or Parameter Store\n      - name: DB_PASSWORD\n        valueFrom: \"arn:aws:secretsmanager:...\"\n    logConfiguration:\n      logDriver: awslogs\n      options:\n        awslogs-group: /ecs/myapp\n        awslogs-region: us-east-1\n\nTWO IAM ROLES IN TASK DEFINITION:\nexecutionRole: ECS agent uses this to:\n  → Pull image from ECR\n  → Write container logs to CloudWatch\n  → Read secrets from Secrets Manager / SSM Parameter Store\n\ntaskRole: Your CONTAINER code uses this to:\n  → Call S3, DynamoDB, SQS, etc.\n  → This is the \"IAM Role for EC2\" equivalent for containers\n  → Give it least-privilege permissions for what your app needs\n```\n\n### ECS Launch Types\n\n```\nEC2 LAUNCH TYPE:\n→ You manage a fleet of EC2 instances (the ECS cluster)\n→ ECS agent runs on each EC2\n→ Tasks placed ON your EC2 instances\n→ You handle: EC2 patching, scaling, right-sizing, AZ distribution\n→ More control, more complexity\n→ Use when: need specific hardware (GPU), or cost optimize at scale\n\nFARGATE LAUNCH TYPE (recommended):\n→ No EC2 instances to manage — AWS manages the underlying compute\n→ You define: image + CPU + memory + IAM role\n→ AWS handles: where to run it, patching, scaling infrastructure\n→ Pay per second of task runtime (vCPU + memory)\n→ Use for: most workloads, teams that want less operational overhead\n→ Slightly more expensive than EC2 per unit but zero ops cost\n\nFARGATE PRICING:\nvCPU: $0.04048/vCPU/hour\nMemory: $0.004445/GB/hour\n\nExample: 1 vCPU, 2 GB, running 24/7:\n($0.04048 + 2 × $0.004445) × 24 × 30 = $36.50/month\n\nvs On-Demand t3.medium (2 vCPU, 4GB): $29.95/month\n→ Fargate slightly pricier but zero server management cost\n```\n\n### ECS Service — Long-Running Apps\n\n```\nSERVICE = ECS component that maintains N running tasks\n→ Defines: task definition, desired count, deployment strategy\n→ If task crashes → Service restarts it automatically\n→ Integrates with ALB for HTTP traffic distribution\n→ Supports rolling updates and blue-green deployments\n\nECS SERVICE SETTINGS:\ndesiredCount: 3            # Always keep 3 tasks running\nminimumHealthyPercent: 50  # During deployment: at least 50% must be healthy\nmaximumPercent: 200        # During deployment: can have 200% (double) temporarily\n\nDEPLOYMENT STRATEGIES:\nRolling Update (default):\n→ Stops some tasks, starts new version tasks\n→ minimumHealthyPercent/maximumPercent control how many at once\n→ No additional infrastructure cost\n→ Rollback: redeploy previous task definition version\n\nBlue/Green (with CodeDeploy):\n→ Green = new version running alongside Blue (old version)\n→ ALB has: production listener (Blue) + test listener (Green)\n→ Shift traffic: immediate or canary (10% → 50% → 100%)\n→ Rollback: shift traffic back to Blue (seconds)\n→ More controlled, safer, but needs CodeDeploy setup\n\nSERVICE AUTO SCALING:\n→ Scale ECS service tasks based on CloudWatch metrics\n→ Target Tracking: \"keep average CPU at 50%\"\n→ Step Scaling: \"if CPU > 80% → add 2 tasks\"\n→ Scheduled: \"every weekday 8am → set desired to 10\"\n→ Integrates with ALB for request-count-based scaling\n```\n\n### ECS vs EKS\n\n```\nECS (Elastic Container Service):\n→ AWS-proprietary container orchestration\n→ Simpler: less configuration, AWS-native integration\n→ Deep integration: ALB, IAM, CloudWatch, CodeDeploy\n→ Fargate support: excellent\n→ Learning curve: gentle (if you know AWS, easy to learn ECS)\n→ Vendor lock-in: ECS is AWS-only\n→ Use when: new to containers, AWS-only, want simplicity\n\nEKS (Elastic Kubernetes Service):\n→ Managed Kubernetes (open-source, industry standard)\n→ More complex: Kubernetes is feature-rich but complex\n→ Portable: same Kubernetes config works on any cloud (GKE, AKS)\n→ Ecosystem: huge community, Helm charts, operators, tons of tooling\n→ Learning curve: steep (Kubernetes is complex)\n→ Cost: $0.10/hour for EKS control plane (~$72/month)\n→ Use when: team already knows K8s, need portability, complex workloads,\n  want to avoid vendor lock-in\n\nREALITY CHECK:\n→ Most companies building new on AWS → start with ECS (simpler, faster)\n→ Teams with existing K8s expertise → EKS (leverage existing knowledge)\n→ Large enterprises → EKS (portability, K8s ecosystem)\n→ \"Should I learn K8s?\" — Yes, it's the industry standard\n   \"Should I use EKS for my new startup?\" — Probably ECS first\n\nEKS PRICING:\n$0.10/hour control plane + EC2/Fargate for worker nodes\nECS: FREE control plane + EC2/Fargate for tasks\n→ EKS costs $72/month MORE than ECS just for control plane\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Task Definition — The Blueprint"
+        },
+        {
+          "type": "diagram",
+          "content": "TASK DEFINITION = JSON config describing how to run your container\nThink: docker-compose.yml but for AWS\n\nKEY SETTINGS IN TASK DEFINITION:\nfamily:        \"myapp-api\"          # Name for this task definition\ncpu:           256                   # Total CPU units (256 = 0.25 vCPU)\nmemory:        512                   # Total memory in MB\nnetworkMode:   \"awsvpc\"             # Each task gets own ENI (required for Fargate)\nexecutionRole: \"ecsTaskExecutionRole\" # Pull from ECR, write logs to CloudWatch\ntaskRole:      \"myapp-task-role\"    # What your APP can access (S3, DynamoDB, etc.)\n\ncontainers:\n  - name:   \"myapp\"\n    image:  \"123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.2.3\"\n    cpu:    256\n    memory: 512\n    portMappings:\n      - containerPort: 3000\n    environment:\n      - name: NODE_ENV\n        value: production\n    secrets:                         # From Secrets Manager or Parameter Store\n      - name: DB_PASSWORD\n        valueFrom: \"arn:aws:secretsmanager:...\"\n    logConfiguration:\n      logDriver: awslogs\n      options:\n        awslogs-group: /ecs/myapp\n        awslogs-region: us-east-1\n\nTWO IAM ROLES IN TASK DEFINITION:\nexecutionRole: ECS agent uses this to:\n  → Pull image from ECR\n  → Write container logs to CloudWatch\n  → Read secrets from Secrets Manager / SSM Parameter Store\n\ntaskRole: Your CONTAINER code uses this to:\n  → Call S3, DynamoDB, SQS, etc.\n  → This is the \"IAM Role for EC2\" equivalent for containers\n  → Give it least-privilege permissions for what your app needs"
+        },
+        {
+          "type": "paragraph",
+          "content": "### ECS Launch Types"
+        },
+        {
+          "type": "diagram",
+          "content": "EC2 LAUNCH TYPE:\n→ You manage a fleet of EC2 instances (the ECS cluster)\n→ ECS agent runs on each EC2\n→ Tasks placed ON your EC2 instances\n→ You handle: EC2 patching, scaling, right-sizing, AZ distribution\n→ More control, more complexity\n→ Use when: need specific hardware (GPU), or cost optimize at scale\n\nFARGATE LAUNCH TYPE (recommended):\n→ No EC2 instances to manage — AWS manages the underlying compute\n→ You define: image + CPU + memory + IAM role\n→ AWS handles: where to run it, patching, scaling infrastructure\n→ Pay per second of task runtime (vCPU + memory)\n→ Use for: most workloads, teams that want less operational overhead\n→ Slightly more expensive than EC2 per unit but zero ops cost\n\nFARGATE PRICING:\nvCPU: $0.04048/vCPU/hour\nMemory: $0.004445/GB/hour\n\nExample: 1 vCPU, 2 GB, running 24/7:\n($0.04048 + 2 × $0.004445) × 24 × 30 = $36.50/month\n\nvs On-Demand t3.medium (2 vCPU, 4GB): $29.95/month\n→ Fargate slightly pricier but zero server management cost"
+        },
+        {
+          "type": "paragraph",
+          "content": "### ECS Service — Long-Running Apps"
+        },
+        {
+          "type": "diagram",
+          "content": "SERVICE = ECS component that maintains N running tasks\n→ Defines: task definition, desired count, deployment strategy\n→ If task crashes → Service restarts it automatically\n→ Integrates with ALB for HTTP traffic distribution\n→ Supports rolling updates and blue-green deployments\n\nECS SERVICE SETTINGS:\ndesiredCount: 3            # Always keep 3 tasks running\nminimumHealthyPercent: 50  # During deployment: at least 50% must be healthy\nmaximumPercent: 200        # During deployment: can have 200% (double) temporarily\n\nDEPLOYMENT STRATEGIES:\nRolling Update (default):\n→ Stops some tasks, starts new version tasks\n→ minimumHealthyPercent/maximumPercent control how many at once\n→ No additional infrastructure cost\n→ Rollback: redeploy previous task definition version\n\nBlue/Green (with CodeDeploy):\n→ Green = new version running alongside Blue (old version)\n→ ALB has: production listener (Blue) + test listener (Green)\n→ Shift traffic: immediate or canary (10% → 50% → 100%)\n→ Rollback: shift traffic back to Blue (seconds)\n→ More controlled, safer, but needs CodeDeploy setup\n\nSERVICE AUTO SCALING:\n→ Scale ECS service tasks based on CloudWatch metrics\n→ Target Tracking: \"keep average CPU at 50%\"\n→ Step Scaling: \"if CPU > 80% → add 2 tasks\"\n→ Scheduled: \"every weekday 8am → set desired to 10\"\n→ Integrates with ALB for request-count-based scaling"
+        },
+        {
+          "type": "paragraph",
+          "content": "### ECS vs EKS"
+        },
+        {
+          "type": "diagram",
+          "content": "ECS (Elastic Container Service):\n→ AWS-proprietary container orchestration\n→ Simpler: less configuration, AWS-native integration\n→ Deep integration: ALB, IAM, CloudWatch, CodeDeploy\n→ Fargate support: excellent\n→ Learning curve: gentle (if you know AWS, easy to learn ECS)\n→ Vendor lock-in: ECS is AWS-only\n→ Use when: new to containers, AWS-only, want simplicity\n\nEKS (Elastic Kubernetes Service):\n→ Managed Kubernetes (open-source, industry standard)\n→ More complex: Kubernetes is feature-rich but complex\n→ Portable: same Kubernetes config works on any cloud (GKE, AKS)\n→ Ecosystem: huge community, Helm charts, operators, tons of tooling\n→ Learning curve: steep (Kubernetes is complex)\n→ Cost: $0.10/hour for EKS control plane (~$72/month)\n→ Use when: team already knows K8s, need portability, complex workloads,\n  want to avoid vendor lock-in\n\nREALITY CHECK:\n→ Most companies building new on AWS → start with ECS (simpler, faster)\n→ Teams with existing K8s expertise → EKS (leverage existing knowledge)\n→ Large enterprises → EKS (portability, K8s ecosystem)\n→ \"Should I learn K8s?\" — Yes, it's the industry standard\n   \"Should I use EKS for my new startup?\" — Probably ECS first\n\nEKS PRICING:\n$0.10/hour control plane + EC2/Fargate for worker nodes\nECS: FREE control plane + EC2/Fargate for tasks\n→ EKS costs $72/month MORE than ECS just for control plane"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ You manage a fleet of EC2 instances (the ECS cluster)",
+        "→ ECS agent runs on each EC2",
+        "→ Tasks placed ON your EC2 instances",
+        "→ You handle: EC2 patching, scaling, right-sizing, AZ distribution",
+        "→ More control, more complexity",
+        "→ Use when: need specific hardware (GPU), or cost optimize at scale",
+        "→ No EC2 instances to manage — AWS manages the underlying compute",
+        "→ You define: image + CPU + memory + IAM role"
+      ]
+    },
+    {
+      "id": "interview-qa-lambda-containers",
+      "title": "🎯 Interview Q&A — Lambda & Containers",
+      "type": "qa",
+      "rawMarkdown": "**Q: Lambda vs ECS Fargate — how do you decide?**\n```\n\"Primary question: is the workload event-driven or always-on?\n\nLambda wins for event-driven, short-duration work:\nTriggered by S3 upload, SQS message, HTTP request, schedule.\nRuns for milliseconds to minutes. Scales to zero (pay nothing when idle).\nNo infrastructure to manage. Perfect for: file processing, webhooks,\nscheduled jobs, API backends with variable traffic.\nLimitation: max 15 minutes, cold starts can add latency.\n\nECS Fargate wins for always-on services:\nLong-running processes, WebSocket connections, background workers consuming\nqueues continuously, services that benefit from persistent connections,\ntasks > 15 minutes (video transcoding, ML inference serving).\nCost: you pay for the full container runtime whether request is happening or not.\nNo cold starts. Predictable latency.\n\nThe practical rule: if it's triggered by events and runs for seconds/minutes\n→ Lambda. If it needs to run continuously or > 15 minutes → ECS Fargate.\n\nMany architectures use both: ECS for the main API (always-on, low latency),\nLambda for async processing (image resize on upload, email sending, etc.).\"\n```\n\n**Q: How do you manage secrets in ECS containers?**\n```\n\"Never put secrets in environment variables if they contain sensitive values,\nbecause they're visible in the ECS console, CloudWatch logs, and metadata service.\n\nCorrect approach: Secrets Manager or SSM Parameter Store.\n\nIn Task Definition, use the secrets field (not environment):\n{\n  'name': 'DB_PASSWORD',\n  'valueFrom': 'arn:aws:secretsmanager:us-east-1:123456:secret:prod/db-password'\n}\n\nECS agent fetches the secret at task startup and injects it as an environment\nvariable inside the container. The secret value never appears in the task\ndefinition. The ECS task execution role needs permission to read from Secrets Manager.\n\nFor rotation: Secrets Manager can auto-rotate (Lambda-based rotation).\nWhen rotated, ECS tasks read the new value on next restart. For immediate\nrotation: force new deployment of the ECS service (new tasks read new secret).\n\nFor configuration (non-sensitive): SSM Parameter Store Standard tier is free.\nFor sensitive secrets needing rotation: Secrets Manager ($0.40/secret/month).\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: Lambda vs ECS Fargate — how do you decide?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Primary question: is the workload event-driven or always-on?\n\nLambda wins for event-driven, short-duration work:\nTriggered by S3 upload, SQS message, HTTP request, schedule.\nRuns for milliseconds to minutes. Scales to zero (pay nothing when idle).\nNo infrastructure to manage. Perfect for: file processing, webhooks,\nscheduled jobs, API backends with variable traffic.\nLimitation: max 15 minutes, cold starts can add latency.\n\nECS Fargate wins for always-on services:\nLong-running processes, WebSocket connections, background workers consuming\nqueues continuously, services that benefit from persistent connections,\ntasks > 15 minutes (video transcoding, ML inference serving).\nCost: you pay for the full container runtime whether request is happening or not.\nNo cold starts. Predictable latency.\n\nThe practical rule: if it's triggered by events and runs for seconds/minutes\n→ Lambda. If it needs to run continuously or > 15 minutes → ECS Fargate.\n\nMany architectures use both: ECS for the main API (always-on, low latency),\nLambda for async processing (image resize on upload, email sending, etc.).\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How do you manage secrets in ECS containers?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Never put secrets in environment variables if they contain sensitive values,\nbecause they're visible in the ECS console, CloudWatch logs, and metadata service.\n\nCorrect approach: Secrets Manager or SSM Parameter Store.\n\nIn Task Definition, use the secrets field (not environment):\n{\n  'name': 'DB_PASSWORD',\n  'valueFrom': 'arn:aws:secretsmanager:us-east-1:123456:secret:prod/db-password'\n}\n\nECS agent fetches the secret at task startup and injects it as an environment\nvariable inside the container. The secret value never appears in the task\ndefinition. The ECS task execution role needs permission to read from Secrets Manager.\n\nFor rotation: Secrets Manager can auto-rotate (Lambda-based rotation).\nWhen rotated, ECS tasks read the new value on next restart. For immediate\nrotation: force new deployment of the ECS service (new tasks read new secret).\n\nFor configuration (non-sensitive): SSM Parameter Store Standard tier is free.\nFor sensitive secrets needing rotation: Secrets Manager ($0.40/secret/month).\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "13-containers-ecs-ecr-eks-q1",
+          "question": "Lambda vs ECS Fargate — how do you decide?",
+          "answer": "\"Primary question: is the workload event-driven or always-on?\n\nLambda wins for event-driven, short-duration work:\nTriggered by S3 upload, SQS message, HTTP request, schedule.\nRuns for milliseconds to minutes. Scales to zero (pay nothing when idle).\nNo infrastructure to manage. Perfect for: file processing, webhooks,\nscheduled jobs, API backends with variable traffic.\nLimitation: max 15 minutes, cold starts can add latency.\n\nECS Fargate wins for always-on services:\nLong-running processes, WebSocket connections, background workers consuming\nqueues continuously, services that benefit from persistent connections,\ntasks > 15 minutes (video transcoding, ML inference serving).\nCost: you pay for the full container runtime whether request is happening or not.\nNo cold starts. Predictable latency.\n\nThe practical rule: if it's triggered by events and runs for seconds/minutes\n→ Lambda. If it needs to run continuously or > 15 minutes → ECS Fargate.\n\nMany architectures use both: ECS for the main API (always-on, low latency),\nLambda for async processing (image resize on upload, email sending, etc.).\"",
+          "topicNumber": 13,
+          "topicSlug": "13-containers-ecs-ecr-eks",
+          "topic": "Containers (ECS, ECR, EKS)"
+        },
+        {
+          "id": "13-containers-ecs-ecr-eks-q2",
+          "question": "How do you manage secrets in ECS containers?",
+          "answer": "\"Never put secrets in environment variables if they contain sensitive values,\nbecause they're visible in the ECS console, CloudWatch logs, and metadata service.\n\nCorrect approach: Secrets Manager or SSM Parameter Store.\n\nIn Task Definition, use the secrets field (not environment):\n{\n  'name': 'DB_PASSWORD',\n  'valueFrom': 'arn:aws:secretsmanager:us-east-1:123456:secret:prod/db-password'\n}\n\nECS agent fetches the secret at task startup and injects it as an environment\nvariable inside the container. The secret value never appears in the task\ndefinition. The ECS task execution role needs permission to read from Secrets Manager.\n\nFor rotation: Secrets Manager can auto-rotate (Lambda-based rotation).\nWhen rotated, ECS tasks read the new value on next restart. For immediate\nrotation: force new deployment of the ECS service (new tasks read new secret).\n\nFor configuration (non-sensitive): SSM Parameter Store Standard tier is free.\nFor sensitive secrets needing rotation: Secrets Manager ($0.40/secret/month).\"",
+          "topicNumber": 13,
+          "topicSlug": "13-containers-ecs-ecr-eks",
+          "topic": "Containers (ECS, ECR, EKS)"
+        }
+      ],
+      "revisionPoints": [
+        "→ Lambda. If it needs to run continuously or > 15 minutes → ECS Fargate."
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nLambda ← S3/SQS/SNS/EventBridge/API Gateway/ALB: triggers\nLambda → DynamoDB/S3/RDS/SQS/SNS: what it calls\nLambda → VPC: optional, for private resource access\nLambda → RDS Proxy: for database connection pooling\nLambda → CloudWatch: logs + metrics + X-Ray traces\nLambda → Layers: shared code/libraries\n\nECR ← CI/CD pipeline: pushes images on deploy\nECR → ECS: ECS pulls images to run tasks\nECR → Lambda: container image Lambda functions\nECR → Inspector: vulnerability scanning\n\nECS ← ECR: pulls container images\nECS → ALB: service registers tasks as targets\nECS → CloudWatch: logs from containers (awslogs driver)\nECS → Secrets Manager/SSM: secrets injection at startup\nECS → Service Auto Scaling: scale tasks based on metrics\nECS ← CodeDeploy: blue/green deployments\n\nNEXT: API Gateway — REST and WebSocket APIs\nThe managed front door for your serverless and container backends.\n```\n\n---\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Lambda ← S3/SQS/SNS/EventBridge/API Gateway/ALB: triggers\nLambda → DynamoDB/S3/RDS/SQS/SNS: what it calls\nLambda → VPC: optional, for private resource access\nLambda → RDS Proxy: for database connection pooling\nLambda → CloudWatch: logs + metrics + X-Ray traces\nLambda → Layers: shared code/libraries\n\nECR ← CI/CD pipeline: pushes images on deploy\nECR → ECS: ECS pulls images to run tasks\nECR → Lambda: container image Lambda functions\nECR → Inspector: vulnerability scanning\n\nECS ← ECR: pulls container images\nECS → ALB: service registers tasks as targets\nECS → CloudWatch: logs from containers (awslogs driver)\nECS → Secrets Manager/SSM: secrets injection at startup\nECS → Service Auto Scaling: scale tasks based on metrics\nECS ← CodeDeploy: blue/green deployments\n\nNEXT: API Gateway — REST and WebSocket APIs\nThe managed front door for your serverless and container backends."
+        },
+        {
+          "type": "paragraph",
+          "content": "---\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "Lambda ← S3/SQS/SNS/EventBridge/API Gateway/ALB: triggers"
+      ]
+    }
+  ]
+}

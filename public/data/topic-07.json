@@ -1,0 +1,385 @@
+{
+  "number": 7,
+  "slug": "07-databases-rds-aurora-dynamodb-elasticache",
+  "title": "Databases (RDS, Aurora, DynamoDB, ElastiCache)",
+  "sections": [
+    {
+      "id": "the-story-choosing-the-right-database",
+      "title": "🧒 The Story — Choosing the Right Database",
+      "type": "story",
+      "rawMarkdown": "```\nWRONG approach (junior):\n\"Which database should we use?\"\n\"MySQL, it's what I know\"\n\nRIGHT approach (senior):\n\"What is the shape of our data and how will we query it?\"\n\nQuestions to ask:\n→ Is data structured (rows/columns) or flexible (documents)?\n→ Do we need complex queries (JOIN, GROUP BY, aggregations)?\n→ What scale? 1,000 users or 1,000,000,000 users?\n→ Do we need sub-millisecond reads?\n→ Is data relational (users → orders → products)?\n→ Do we need ACID transactions?\n→ Will schema change often?\n\nAnswers → right database choice\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "WRONG approach (junior):\n\"Which database should we use?\"\n\"MySQL, it's what I know\"\n\nRIGHT approach (senior):\n\"What is the shape of our data and how will we query it?\"\n\nQuestions to ask:\n→ Is data structured (rows/columns) or flexible (documents)?\n→ Do we need complex queries (JOIN, GROUP BY, aggregations)?\n→ What scale? 1,000 users or 1,000,000,000 users?\n→ Do we need sub-millisecond reads?\n→ Is data relational (users → orders → products)?\n→ Do we need ACID transactions?\n→ Will schema change often?\n\nAnswers → right database choice"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Is data structured (rows/columns) or flexible (documents)?",
+        "→ Do we need complex queries (JOIN, GROUP BY, aggregations)?",
+        "→ What scale? 1,000 users or 1,000,000,000 users?",
+        "→ Do we need sub-millisecond reads?",
+        "→ Is data relational (users → orders → products)?",
+        "→ Do we need ACID transactions?",
+        "→ Will schema change often?"
+      ]
+    },
+    {
+      "id": "rds-relational-database-service",
+      "title": "🗃️ RDS — Relational Database Service",
+      "type": "concept",
+      "rawMarkdown": "### What is RDS?\n```\nRDS = managed SQL database service\nAWS handles: OS patches, DB engine patches, backups, failover, monitoring\nYou handle: schema design, queries, who can access, data, backup retention settings\n\nSUPPORTED ENGINES:\n→ MySQL        (open source, most popular web database)\n→ PostgreSQL   (open source, most feature-rich SQL database)\n→ MariaDB      (MySQL fork, slightly different defaults)\n→ Oracle       (enterprise, expensive licensing)\n→ SQL Server   (Microsoft, for .NET applications)\n→ Aurora MySQL (AWS's MySQL-compatible, 5x faster)\n→ Aurora PostgreSQL (AWS's PostgreSQL-compatible, 3x faster)\n\nWHAT YOU STILL MANAGE:\n→ Database schema (tables, indexes, constraints)\n→ Database users and permissions (GRANT inside DB)\n→ What data you store\n→ Backup retention period setting (1–35 days)\n→ Which security group allows access\n→ Parameter groups (DB engine configuration)\n\nWHAT AWS MANAGES:\n→ EC2 instance the DB runs on (you never SSH into it)\n→ OS patches (zero downtime patching with Multi-AZ)\n→ Database engine patches (applied during maintenance window)\n→ Hardware failures (automatically provisions replacement)\n→ Multi-AZ failover (< 2 minutes typically)\n→ Automated backups to S3\n```\n\n### RDS Storage\n\n```\nRDS uses EBS under the hood (you don't see it directly):\n\ngp2: old default, IOPS tied to storage size\ngp3: new default, better perf + cheaper — ALWAYS choose this\nio1: provisioned IOPS for high-performance databases (Oracle, SQL Server)\n\nSTORAGE AUTO SCALING:\n→ Enable this! It automatically increases storage when filling up.\n→ Set maximum threshold (e.g., 500 GB max auto-scale limit)\n→ Triggers when: usage > 90% AND has been > 90% for 5 minutes AND\n                 6 hours since last autoscale\n→ Prevents emergency \"database disk full\" incidents\n→ FREE to enable (you just pay for additional storage used)\n\nWITHOUT AUTO SCALING:\n→ 3am: database disk is 95% full → app can't write → outage\n→ Emergency ticket → wait → DBA wakes up → manually resizes → downtime\n→ This happens to companies. Prevent it.\n```\n\n### Multi-AZ Deployment — High Availability\n\n```\nWHAT IT IS:\nPrimary DB in AZ-1 ←→ Standby DB in AZ-2 (SYNCHRONOUS replication)\n\nHOW IT WORKS:\n→ Every write to primary → immediately written to standby BEFORE confirming to app\n→ If primary fails → AWS detects in ~30 seconds\n→ DNS flips from primary endpoint to standby endpoint (same DNS, different IP)\n→ Your application reconnects (must handle connection retry)\n→ Total failover time: typically 1–2 minutes\n\nWHAT MULTI-AZ GIVES YOU:\n✅ High Availability (survives AZ failure)\n✅ Zero data loss on failover (synchronous = no lag)\n✅ Patching with minimal downtime (patch standby → failover → patch old primary)\n✅ NOT a performance improvement (standby doesn't serve reads!)\n\nWHAT MULTI-AZ DOES NOT GIVE YOU:\n❌ Read scaling (standby is passive — no reads, no traffic)\n❌ Cost savings\n❌ Elimination of maintenance downtime (reduces it)\n\nCOST: roughly doubles the RDS cost (two instances running)\n→ Worth it for production. Don't skip it.\n\nMULTI-AZ CLUSTER (newer feature):\n→ One primary + 2 readable standbys (cross-AZ)\n→ Standbys can serve reads (unlike traditional Multi-AZ)\n→ Failover < 35 seconds (faster than traditional)\n→ Available for MySQL 8.0+ and PostgreSQL 13+\n```\n\n### Read Replicas — Performance Scaling\n\n```\nWHAT IT IS:\nRead Replica = read-only copy of your database\n→ Primary DB sends writes to replica (ASYNCHRONOUS replication)\n→ Slight lag: usually < 1 second, can be more under heavy load\n→ App routes READ queries to read replica → offloads primary\n\nHOW MANY:\n→ Up to 5 read replicas per RDS instance\n→ Can have replicas of replicas (chain — increases lag)\n→ Replicas can be in different AZ (same region)\n→ Replicas can be in different region (cross-region)\n\nUSE CASES:\n✅ Reporting/analytics queries (heavy reads, don't touch primary)\n✅ Read-heavy apps (e.g., 90% reads, 10% writes)\n✅ Cross-region low-latency reads for global users\n✅ Disaster recovery (cross-region replica → promote if primary region fails)\n\nPROMOTE TO STANDALONE:\n→ Read replica can be promoted to its own independent DB\n→ Breaks replication link\n→ Use case: create a dev/test database from production data\n→ Use case: migrate to different region (promote cross-region replica)\n\nMULTI-AZ vs READ REPLICA — CLASSIC INTERVIEW QUESTION:\nMulti-AZ:     for HIGH AVAILABILITY. Synchronous. Standby doesn't serve traffic.\nRead Replica: for READ PERFORMANCE/SCALE. Asynchronous. Replica serves reads.\nUse both: Multi-AZ primary + read replicas for HA + read scaling together.\n```\n\n### RDS Backup\n\n```\nAUTOMATED BACKUPS:\n→ Daily full backup during backup window (configurable time)\n→ Transaction logs backed up every 5 minutes (enables point-in-time recovery)\n→ Retention: 1–35 days (default 7)\n→ Stored in S3 (you don't see the bucket)\n→ FREE storage up to DB instance size\n→ Deleted when DB instance is deleted (unless you take manual snapshot first)\n\nPOINT-IN-TIME RECOVERY:\n→ Restore to any point within retention period\n→ Granularity: 5 minutes\n→ Creates NEW DB instance (doesn't overwrite existing)\n→ Restore time: depends on DB size (30 min to several hours)\n\nMANUAL SNAPSHOTS:\n→ You initiate (not automated)\n→ NOT deleted when DB instance is deleted\n→ Kept until you explicitly delete\n→ Can copy to other regions (for DR)\n→ Can share with other AWS accounts\n→ Charged: $0.095/GB/month beyond free backup storage\n\nRESTORE PROCESS (important for interviews):\n→ Restoring creates a NEW RDS instance with new endpoint\n→ Your application must update connection string\n→ Cannot restore IN-PLACE to existing instance (it creates new)\n→ Plan for this in your DR runbook\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### What is RDS?"
+        },
+        {
+          "type": "diagram",
+          "content": "RDS = managed SQL database service\nAWS handles: OS patches, DB engine patches, backups, failover, monitoring\nYou handle: schema design, queries, who can access, data, backup retention settings\n\nSUPPORTED ENGINES:\n→ MySQL        (open source, most popular web database)\n→ PostgreSQL   (open source, most feature-rich SQL database)\n→ MariaDB      (MySQL fork, slightly different defaults)\n→ Oracle       (enterprise, expensive licensing)\n→ SQL Server   (Microsoft, for .NET applications)\n→ Aurora MySQL (AWS's MySQL-compatible, 5x faster)\n→ Aurora PostgreSQL (AWS's PostgreSQL-compatible, 3x faster)\n\nWHAT YOU STILL MANAGE:\n→ Database schema (tables, indexes, constraints)\n→ Database users and permissions (GRANT inside DB)\n→ What data you store\n→ Backup retention period setting (1–35 days)\n→ Which security group allows access\n→ Parameter groups (DB engine configuration)\n\nWHAT AWS MANAGES:\n→ EC2 instance the DB runs on (you never SSH into it)\n→ OS patches (zero downtime patching with Multi-AZ)\n→ Database engine patches (applied during maintenance window)\n→ Hardware failures (automatically provisions replacement)\n→ Multi-AZ failover (< 2 minutes typically)\n→ Automated backups to S3"
+        },
+        {
+          "type": "paragraph",
+          "content": "### RDS Storage"
+        },
+        {
+          "type": "diagram",
+          "content": "RDS uses EBS under the hood (you don't see it directly):\n\ngp2: old default, IOPS tied to storage size\ngp3: new default, better perf + cheaper — ALWAYS choose this\nio1: provisioned IOPS for high-performance databases (Oracle, SQL Server)\n\nSTORAGE AUTO SCALING:\n→ Enable this! It automatically increases storage when filling up.\n→ Set maximum threshold (e.g., 500 GB max auto-scale limit)\n→ Triggers when: usage > 90% AND has been > 90% for 5 minutes AND\n                 6 hours since last autoscale\n→ Prevents emergency \"database disk full\" incidents\n→ FREE to enable (you just pay for additional storage used)\n\nWITHOUT AUTO SCALING:\n→ 3am: database disk is 95% full → app can't write → outage\n→ Emergency ticket → wait → DBA wakes up → manually resizes → downtime\n→ This happens to companies. Prevent it."
+        },
+        {
+          "type": "paragraph",
+          "content": "### Multi-AZ Deployment — High Availability"
+        },
+        {
+          "type": "diagram",
+          "content": "WHAT IT IS:\nPrimary DB in AZ-1 ←→ Standby DB in AZ-2 (SYNCHRONOUS replication)\n\nHOW IT WORKS:\n→ Every write to primary → immediately written to standby BEFORE confirming to app\n→ If primary fails → AWS detects in ~30 seconds\n→ DNS flips from primary endpoint to standby endpoint (same DNS, different IP)\n→ Your application reconnects (must handle connection retry)\n→ Total failover time: typically 1–2 minutes\n\nWHAT MULTI-AZ GIVES YOU:\n✅ High Availability (survives AZ failure)\n✅ Zero data loss on failover (synchronous = no lag)\n✅ Patching with minimal downtime (patch standby → failover → patch old primary)\n✅ NOT a performance improvement (standby doesn't serve reads!)\n\nWHAT MULTI-AZ DOES NOT GIVE YOU:\n❌ Read scaling (standby is passive — no reads, no traffic)\n❌ Cost savings\n❌ Elimination of maintenance downtime (reduces it)\n\nCOST: roughly doubles the RDS cost (two instances running)\n→ Worth it for production. Don't skip it.\n\nMULTI-AZ CLUSTER (newer feature):\n→ One primary + 2 readable standbys (cross-AZ)\n→ Standbys can serve reads (unlike traditional Multi-AZ)\n→ Failover < 35 seconds (faster than traditional)\n→ Available for MySQL 8.0+ and PostgreSQL 13+"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Read Replicas — Performance Scaling"
+        },
+        {
+          "type": "diagram",
+          "content": "WHAT IT IS:\nRead Replica = read-only copy of your database\n→ Primary DB sends writes to replica (ASYNCHRONOUS replication)\n→ Slight lag: usually < 1 second, can be more under heavy load\n→ App routes READ queries to read replica → offloads primary\n\nHOW MANY:\n→ Up to 5 read replicas per RDS instance\n→ Can have replicas of replicas (chain — increases lag)\n→ Replicas can be in different AZ (same region)\n→ Replicas can be in different region (cross-region)\n\nUSE CASES:\n✅ Reporting/analytics queries (heavy reads, don't touch primary)\n✅ Read-heavy apps (e.g., 90% reads, 10% writes)\n✅ Cross-region low-latency reads for global users\n✅ Disaster recovery (cross-region replica → promote if primary region fails)\n\nPROMOTE TO STANDALONE:\n→ Read replica can be promoted to its own independent DB\n→ Breaks replication link\n→ Use case: create a dev/test database from production data\n→ Use case: migrate to different region (promote cross-region replica)\n\nMULTI-AZ vs READ REPLICA — CLASSIC INTERVIEW QUESTION:\nMulti-AZ:     for HIGH AVAILABILITY. Synchronous. Standby doesn't serve traffic.\nRead Replica: for READ PERFORMANCE/SCALE. Asynchronous. Replica serves reads.\nUse both: Multi-AZ primary + read replicas for HA + read scaling together."
+        },
+        {
+          "type": "paragraph",
+          "content": "### RDS Backup"
+        },
+        {
+          "type": "diagram",
+          "content": "AUTOMATED BACKUPS:\n→ Daily full backup during backup window (configurable time)\n→ Transaction logs backed up every 5 minutes (enables point-in-time recovery)\n→ Retention: 1–35 days (default 7)\n→ Stored in S3 (you don't see the bucket)\n→ FREE storage up to DB instance size\n→ Deleted when DB instance is deleted (unless you take manual snapshot first)\n\nPOINT-IN-TIME RECOVERY:\n→ Restore to any point within retention period\n→ Granularity: 5 minutes\n→ Creates NEW DB instance (doesn't overwrite existing)\n→ Restore time: depends on DB size (30 min to several hours)\n\nMANUAL SNAPSHOTS:\n→ You initiate (not automated)\n→ NOT deleted when DB instance is deleted\n→ Kept until you explicitly delete\n→ Can copy to other regions (for DR)\n→ Can share with other AWS accounts\n→ Charged: $0.095/GB/month beyond free backup storage\n\nRESTORE PROCESS (important for interviews):\n→ Restoring creates a NEW RDS instance with new endpoint\n→ Your application must update connection string\n→ Cannot restore IN-PLACE to existing instance (it creates new)\n→ Plan for this in your DR runbook"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ MySQL        (open source, most popular web database)",
+        "→ PostgreSQL   (open source, most feature-rich SQL database)",
+        "→ MariaDB      (MySQL fork, slightly different defaults)",
+        "→ Oracle       (enterprise, expensive licensing)",
+        "→ SQL Server   (Microsoft, for .NET applications)",
+        "→ Aurora MySQL (AWS's MySQL-compatible, 5x faster)",
+        "→ Aurora PostgreSQL (AWS's PostgreSQL-compatible, 3x faster)",
+        "→ Database schema (tables, indexes, constraints)"
+      ]
+    },
+    {
+      "id": "aurora-awss-premium-database",
+      "title": "⚡ Aurora — AWS's Premium Database",
+      "type": "concept",
+      "rawMarkdown": "### What Makes Aurora Different\n\n```\nAurora is NOT just RDS with better marketing.\nIt's a fundamentally different architecture.\n\nRDS MySQL architecture:\nEC2 → EBS volume (local to that EC2)\nSingle writer, data on one EBS\n\nAurora architecture:\nMultiple DB instances → shared distributed storage cluster\nStorage: 6 copies across 3 AZs (2 copies per AZ)\nSelf-healing: continuously scans, auto-repairs bad blocks\nAuto-scaling: 10 GB increments up to 128 TB\nNo storage provisioning needed!\n\nPERFORMANCE:\nAurora MySQL:      5x faster than RDS MySQL\nAurora PostgreSQL: 3x faster than RDS PostgreSQL\n\nWhy faster:\n→ Replication done at STORAGE layer (not DB layer) → faster writes\n→ Primary sends only redo logs to storage (not data pages)\n→ Read replicas read from same storage cluster (no replication lag!)\n→ Purpose-built distributed storage optimized for DB workloads\n```\n\n### Aurora Cluster Architecture\n\n```\nCLUSTER ENDPOINT (write):\n  → Always points to PRIMARY instance (the writer)\n  → Use for: all writes, reads that need freshest data\n\nREADER ENDPOINT (read):\n  → Load balances across all read replicas\n  → Use for: read-heavy queries, reports\n  → If no replicas: points to primary\n\nINDIVIDUAL ENDPOINTS:\n  → Each instance has its own endpoint\n  → Use for: pinning specific queries to specific instances\n  → Use for: testing specific replicas\n\nAURORA READ REPLICAS:\n→ Up to 15 read replicas (vs 5 for RDS)\n→ Replication lag: < 10 ms (vs up to 1 second for RDS)\n→ Replicas share same storage cluster → no replication overhead\n→ Failover to replica: < 30 seconds (vs ~2 min for RDS Multi-AZ)\n→ Aurora Auto Scaling: automatically adds/removes replicas based on CPU/connections\n```\n\n### Aurora Serverless\n\n```\nAURORA SERVERLESS V2 (current version):\n→ Database capacity scales instantly from 0.5 to 128 ACUs\n   (ACU = Aurora Capacity Unit ~ 2GB RAM + proportional CPU)\n→ Scales in increments as fine as 0.5 ACU\n→ Billing: per ACU-second (only for actual usage)\n→ Minimum: 0.5 ACUs even when idle (~$0.06/hour minimum)\n→ Does NOT scale to zero (v1 could, v2 cannot)\n\nUSE AURORA SERVERLESS V2 FOR:\n✅ Dev/test databases (variable load, often idle)\n✅ Apps with unpredictable or highly variable traffic\n✅ Multi-tenant SaaS (each tenant's DB)\n✅ Reporting databases (burst during business hours)\n\nDON'T USE FOR:\n❌ Steady, predictable high-throughput production (provisioned is cheaper)\n❌ Workloads needing zero-latency scaling (sub-second response to spikes)\n   (v2 scaling is fast but not instantaneous)\n\nAURORA SERVERLESS V1 (older):\n→ Scales to ZERO when idle (pause mode)\n→ Cold start when resuming: 20–30 seconds\n→ Only for truly idle databases that can accept cold starts\n→ Dev/test only, being sunset by AWS\n```\n\n### Aurora Global Database\n\n```\nONE PRIMARY REGION + UP TO 5 SECONDARY REGIONS:\n→ Primary: read + write\n→ Secondary: read-only (16 replicas each)\n→ Replication lag: < 1 second across regions (typically ~100ms)\n→ If primary region fails: promote secondary in < 1 minute\n→ RPO: < 1 second (almost no data loss)\n→ RTO: < 1 minute (very fast recovery)\n\nUSE CASES:\n→ Global application needing low-latency reads worldwide\n→ Disaster recovery with aggressive RTO/RPO targets\n→ Business continuity for critical systems\n\nPLANNED FAILOVER vs UNPLANNED:\nPlanned (maintenance): you initiate → no data loss → secondary becomes primary\nUnplanned (region outage): detach secondary → promote → small data loss possible\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### What Makes Aurora Different"
+        },
+        {
+          "type": "diagram",
+          "content": "Aurora is NOT just RDS with better marketing.\nIt's a fundamentally different architecture.\n\nRDS MySQL architecture:\nEC2 → EBS volume (local to that EC2)\nSingle writer, data on one EBS\n\nAurora architecture:\nMultiple DB instances → shared distributed storage cluster\nStorage: 6 copies across 3 AZs (2 copies per AZ)\nSelf-healing: continuously scans, auto-repairs bad blocks\nAuto-scaling: 10 GB increments up to 128 TB\nNo storage provisioning needed!\n\nPERFORMANCE:\nAurora MySQL:      5x faster than RDS MySQL\nAurora PostgreSQL: 3x faster than RDS PostgreSQL\n\nWhy faster:\n→ Replication done at STORAGE layer (not DB layer) → faster writes\n→ Primary sends only redo logs to storage (not data pages)\n→ Read replicas read from same storage cluster (no replication lag!)\n→ Purpose-built distributed storage optimized for DB workloads"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Aurora Cluster Architecture"
+        },
+        {
+          "type": "diagram",
+          "content": "CLUSTER ENDPOINT (write):\n  → Always points to PRIMARY instance (the writer)\n  → Use for: all writes, reads that need freshest data\n\nREADER ENDPOINT (read):\n  → Load balances across all read replicas\n  → Use for: read-heavy queries, reports\n  → If no replicas: points to primary\n\nINDIVIDUAL ENDPOINTS:\n  → Each instance has its own endpoint\n  → Use for: pinning specific queries to specific instances\n  → Use for: testing specific replicas\n\nAURORA READ REPLICAS:\n→ Up to 15 read replicas (vs 5 for RDS)\n→ Replication lag: < 10 ms (vs up to 1 second for RDS)\n→ Replicas share same storage cluster → no replication overhead\n→ Failover to replica: < 30 seconds (vs ~2 min for RDS Multi-AZ)\n→ Aurora Auto Scaling: automatically adds/removes replicas based on CPU/connections"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Aurora Serverless"
+        },
+        {
+          "type": "diagram",
+          "content": "AURORA SERVERLESS V2 (current version):\n→ Database capacity scales instantly from 0.5 to 128 ACUs\n   (ACU = Aurora Capacity Unit ~ 2GB RAM + proportional CPU)\n→ Scales in increments as fine as 0.5 ACU\n→ Billing: per ACU-second (only for actual usage)\n→ Minimum: 0.5 ACUs even when idle (~$0.06/hour minimum)\n→ Does NOT scale to zero (v1 could, v2 cannot)\n\nUSE AURORA SERVERLESS V2 FOR:\n✅ Dev/test databases (variable load, often idle)\n✅ Apps with unpredictable or highly variable traffic\n✅ Multi-tenant SaaS (each tenant's DB)\n✅ Reporting databases (burst during business hours)\n\nDON'T USE FOR:\n❌ Steady, predictable high-throughput production (provisioned is cheaper)\n❌ Workloads needing zero-latency scaling (sub-second response to spikes)\n   (v2 scaling is fast but not instantaneous)\n\nAURORA SERVERLESS V1 (older):\n→ Scales to ZERO when idle (pause mode)\n→ Cold start when resuming: 20–30 seconds\n→ Only for truly idle databases that can accept cold starts\n→ Dev/test only, being sunset by AWS"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Aurora Global Database"
+        },
+        {
+          "type": "diagram",
+          "content": "ONE PRIMARY REGION + UP TO 5 SECONDARY REGIONS:\n→ Primary: read + write\n→ Secondary: read-only (16 replicas each)\n→ Replication lag: < 1 second across regions (typically ~100ms)\n→ If primary region fails: promote secondary in < 1 minute\n→ RPO: < 1 second (almost no data loss)\n→ RTO: < 1 minute (very fast recovery)\n\nUSE CASES:\n→ Global application needing low-latency reads worldwide\n→ Disaster recovery with aggressive RTO/RPO targets\n→ Business continuity for critical systems\n\nPLANNED FAILOVER vs UNPLANNED:\nPlanned (maintenance): you initiate → no data loss → secondary becomes primary\nUnplanned (region outage): detach secondary → promote → small data loss possible"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Replication done at STORAGE layer (not DB layer) → faster writes",
+        "→ Primary sends only redo logs to storage (not data pages)",
+        "→ Read replicas read from same storage cluster (no replication lag!)",
+        "→ Purpose-built distributed storage optimized for DB workloads",
+        "→ Up to 15 read replicas (vs 5 for RDS)",
+        "→ Replication lag: < 10 ms (vs up to 1 second for RDS)",
+        "→ Replicas share same storage cluster → no replication overhead",
+        "→ Failover to replica: < 30 seconds (vs ~2 min for RDS Multi-AZ)"
+      ]
+    },
+    {
+      "id": "dynamodb-nosql-at-any-scale",
+      "title": "⚡ DynamoDB — NoSQL at Any Scale",
+      "type": "concept",
+      "rawMarkdown": "### Core Philosophy\n\n```\nDynamoDB is built on one key promise:\n\"Single-digit millisecond reads at ANY scale\"\n\nNo matter if you have:\n→ 1 item in the table\n→ 1 billion items in the table\n→ 1 request per day\n→ 1 million requests per second\n\nDynamoDB delivers the same millisecond response time.\nThis is fundamentally impossible for SQL databases to match at extreme scale.\n\nThe trade-off: to achieve this, DynamoDB limits how you can query data.\nYou must design your data model AROUND your access patterns.\nNot the other way around (as with SQL where you normalize then query flexibly).\n```\n\n### DynamoDB Fundamentals\n\n```\nTABLE:\n→ Collection of items (like a SQL table but schema-less)\n→ No joins between tables (by design)\n→ Each table can have unlimited items, unlimited storage\n\nITEM:\n→ One record (like a SQL row)\n→ Maximum 400 KB per item (important limit!)\n→ Must have primary key, all other attributes optional\n→ Different items in same table can have completely different attributes\n\nPRIMARY KEY (choose at creation — cannot change!):\nType 1: PARTITION KEY only (Simple PK)\n  → Single attribute, must be UNIQUE across all items\n  → Example: userId, productId, orderId\n\nType 2: PARTITION KEY + SORT KEY (Composite PK)\n  → Combination must be unique\n  → Items with same partition key grouped together, sorted by sort key\n  → Example: PK=userId, SK=timestamp → all user's events sorted by time\n  → Enables range queries: \"get all events for user123 in last 7 days\"\n\nPARTITION KEY DESIGN (critical for performance):\n→ DynamoDB distributes data across partitions based on PK hash\n→ HIGH CARDINALITY: many different PK values → even distribution → good\n→ LOW CARDINALITY: few different PK values → hot partitions → bad\n\nHOT PARTITION PROBLEM:\nBad: PK = \"status\" (values: \"active\", \"inactive\" — only 2 values!)\n→ ALL \"active\" items on same partition → overwhelms it\n→ Throttling errors despite unused capacity elsewhere\n\nGood: PK = userId (millions of unique users)\n→ Even distribution across all partitions\n→ Scales linearly\n```\n\n### DynamoDB Capacity Modes\n\n```\nON-DEMAND CAPACITY:\n→ No capacity planning required\n→ Pay per request: $1.25/million write requests, $0.25/million read requests\n→ Scales instantly to any throughput (no throttling!)\n→ More expensive than provisioned at high, steady throughput\n\nUSE ON-DEMAND FOR:\n→ New tables (don't know expected traffic)\n→ Unpredictable, spiky traffic patterns\n→ Low traffic tables (dev, occasional use)\n→ Tables where you'd rather pay more than deal with throttling\n\nPROVISIONED CAPACITY:\n→ You set: Read Capacity Units (RCU) and Write Capacity Units (WCU)\n→ 1 RCU = 1 strongly consistent read OR 2 eventually consistent reads of item ≤ 4 KB/sec\n→ 1 WCU = 1 write of item ≤ 1 KB/sec\n→ Charged per hour regardless of usage\n→ Cheaper at high, steady throughput\n\nCAPACITY MATH EXAMPLE:\nReads: 100 reads/sec, average item 4 KB, strongly consistent\n→ 100 × (4KB/4KB) × 1 = 100 RCU\n→ Cost: 100 × $0.00013/hour = $0.013/hour = $9.36/month\n\nAUTO SCALING (for provisioned):\n→ DynamoDB adjusts RCU/WCU based on utilization\n→ Target utilization: 70% (increase if above, decrease if below)\n→ Min/max RCU/WCU limits you set\n→ Handles gradual ramp-ups well, not sudden spikes\n→ For sudden spikes: consider on-demand or provisioned with headroom\n\nBURST CAPACITY:\n→ DynamoDB retains up to 5 minutes of unused RCU/WCU as burst\n→ Absorbs short traffic spikes automatically\n→ Not a substitute for proper capacity planning\n```\n\n### DynamoDB Indexes\n\n```\nWithout indexes: can ONLY query by primary key (PK + SK)\nWith indexes: query by additional attributes (at extra cost)\n\nGSI — Global Secondary Index:\n→ Define: new PK + optional new SK from existing attributes\n→ Has its OWN read/write capacity (separate from table)\n→ Eventually consistent (data replicated asynchronously)\n→ Can be added AFTER table creation\n→ Up to 20 GSIs per table\n→ Use for: \"get all orders with status='shipped'\"\n  Table PK: orderId\n  GSI PK: status, SK: createdAt\n  → Query: status='shipped' AND createdAt > '2024-01-01'\n\nLSI — Local Secondary Index:\n→ Same PK as table, different SK\n→ MUST be created at table creation (cannot add later!)\n→ Shares table's read/write capacity\n→ Strongly consistent reads possible\n→ Up to 5 LSIs per table\n→ Use for: alternative sort orders of same partition key data\n\nEXAMPLE — E-Commerce Orders:\nTable: PK=customerId, SK=orderId\n→ \"Get all orders for customer123\" → query by PK=customer123 ✅\n\nLSI: PK=customerId, SK=orderDate\n→ \"Get all orders for customer123 sorted by date\" → query LSI ✅\n\nGSI: PK=productId, SK=orderDate\n→ \"Get all orders containing product456\" → query GSI ✅\n→ (requires denormalization — store productId as attribute on order)\n```\n\n### DynamoDB Advanced Features\n\n```\nDAX — DynamoDB Accelerator:\n→ In-memory cache for DynamoDB\n→ Read latency: 1-9ms → microseconds (1000x faster!)\n→ Drop-in replacement: use DAX client instead of DynamoDB client\n→ Write-through cache: writes go to DynamoDB + DAX simultaneously\n→ Cost: per DAX node (starts ~$0.269/hour for cache.r6g.large)\n→ USE WHEN: read-heavy workloads need microsecond latency\n→ NOT FOR: strongly consistent reads (DAX is eventually consistent)\n            write-heavy workloads (little benefit)\n\nDYNAMO DB STREAMS:\n→ Time-ordered sequence of item-level changes\n→ Available for 24 hours\n→ Trigger Lambda on: INSERT, MODIFY, REMOVE\n→ Event contains: old image, new image, or both\n→ Use for: event-driven architectures, cross-region replication, analytics\n\nCOMMON STREAMS PATTERNS:\n→ User updates profile → Stream → Lambda → send welcome email (if new user)\n→ Order created → Stream → Lambda → update inventory count\n→ Any change → Stream → Lambda → replicate to Elasticsearch for search\n\nTTL — Time to Live:\n→ Set expiry timestamp attribute on item\n→ DynamoDB automatically deletes expired items\n→ Deletion: within 48 hours of expiry (not exactly at expiry time)\n→ FREE (no WCU consumed for TTL deletions)\n→ Use for: session tokens, temporary data, cache entries, OTPs\n\nGLOBAL TABLES:\n→ Multi-region, multi-active DynamoDB tables\n→ All regions can READ and WRITE\n→ DynamoDB replicates between regions automatically\n→ Last-write-wins conflict resolution\n→ Use for: global apps needing local write latency everywhere\n→ Example: ride-sharing app needing < 10ms writes in US, EU, Asia simultaneously\n```\n\n### SQL vs DynamoDB — Decision Framework\n\n```\nUSE RDS/AURORA (SQL) WHEN:\n→ Complex queries with JOINs between multiple entities\n→ Data has complex relationships that change\n→ Need ad-hoc analytics (GROUP BY, aggregations, subqueries)\n→ ACID transactions across multiple tables critical\n→ Team knows SQL well and data fits relational model\n→ Financial systems (accounting, banking, inventory)\n→ ERP, CRM, order management systems\n\nUSE DYNAMODB (NoSQL) WHEN:\n→ Access patterns known at design time (key-value, range queries)\n→ Need < 10ms reads at any scale\n→ Traffic is unpredictable or extremely high\n→ Data is hierarchical (order → line items → all in one item)\n→ Global deployment needing local writes (Global Tables)\n→ Gaming leaderboards, user preferences, session storage\n→ IoT data (millions of devices writing constantly)\n→ Real-time dashboards, activity feeds\n\nTHE ONE QUESTION TEST:\n\"Do I know EXACTLY how I'll query this data at design time?\"\n→ YES: DynamoDB works, design access patterns first\n→ NO: Use Aurora/RDS (flexible SQL queries)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Core Philosophy"
+        },
+        {
+          "type": "diagram",
+          "content": "DynamoDB is built on one key promise:\n\"Single-digit millisecond reads at ANY scale\"\n\nNo matter if you have:\n→ 1 item in the table\n→ 1 billion items in the table\n→ 1 request per day\n→ 1 million requests per second\n\nDynamoDB delivers the same millisecond response time.\nThis is fundamentally impossible for SQL databases to match at extreme scale.\n\nThe trade-off: to achieve this, DynamoDB limits how you can query data.\nYou must design your data model AROUND your access patterns.\nNot the other way around (as with SQL where you normalize then query flexibly)."
+        },
+        {
+          "type": "paragraph",
+          "content": "### DynamoDB Fundamentals"
+        },
+        {
+          "type": "diagram",
+          "content": "TABLE:\n→ Collection of items (like a SQL table but schema-less)\n→ No joins between tables (by design)\n→ Each table can have unlimited items, unlimited storage\n\nITEM:\n→ One record (like a SQL row)\n→ Maximum 400 KB per item (important limit!)\n→ Must have primary key, all other attributes optional\n→ Different items in same table can have completely different attributes\n\nPRIMARY KEY (choose at creation — cannot change!):\nType 1: PARTITION KEY only (Simple PK)\n  → Single attribute, must be UNIQUE across all items\n  → Example: userId, productId, orderId\n\nType 2: PARTITION KEY + SORT KEY (Composite PK)\n  → Combination must be unique\n  → Items with same partition key grouped together, sorted by sort key\n  → Example: PK=userId, SK=timestamp → all user's events sorted by time\n  → Enables range queries: \"get all events for user123 in last 7 days\"\n\nPARTITION KEY DESIGN (critical for performance):\n→ DynamoDB distributes data across partitions based on PK hash\n→ HIGH CARDINALITY: many different PK values → even distribution → good\n→ LOW CARDINALITY: few different PK values → hot partitions → bad\n\nHOT PARTITION PROBLEM:\nBad: PK = \"status\" (values: \"active\", \"inactive\" — only 2 values!)\n→ ALL \"active\" items on same partition → overwhelms it\n→ Throttling errors despite unused capacity elsewhere\n\nGood: PK = userId (millions of unique users)\n→ Even distribution across all partitions\n→ Scales linearly"
+        },
+        {
+          "type": "paragraph",
+          "content": "### DynamoDB Capacity Modes"
+        },
+        {
+          "type": "diagram",
+          "content": "ON-DEMAND CAPACITY:\n→ No capacity planning required\n→ Pay per request: $1.25/million write requests, $0.25/million read requests\n→ Scales instantly to any throughput (no throttling!)\n→ More expensive than provisioned at high, steady throughput\n\nUSE ON-DEMAND FOR:\n→ New tables (don't know expected traffic)\n→ Unpredictable, spiky traffic patterns\n→ Low traffic tables (dev, occasional use)\n→ Tables where you'd rather pay more than deal with throttling\n\nPROVISIONED CAPACITY:\n→ You set: Read Capacity Units (RCU) and Write Capacity Units (WCU)\n→ 1 RCU = 1 strongly consistent read OR 2 eventually consistent reads of item ≤ 4 KB/sec\n→ 1 WCU = 1 write of item ≤ 1 KB/sec\n→ Charged per hour regardless of usage\n→ Cheaper at high, steady throughput\n\nCAPACITY MATH EXAMPLE:\nReads: 100 reads/sec, average item 4 KB, strongly consistent\n→ 100 × (4KB/4KB) × 1 = 100 RCU\n→ Cost: 100 × $0.00013/hour = $0.013/hour = $9.36/month\n\nAUTO SCALING (for provisioned):\n→ DynamoDB adjusts RCU/WCU based on utilization\n→ Target utilization: 70% (increase if above, decrease if below)\n→ Min/max RCU/WCU limits you set\n→ Handles gradual ramp-ups well, not sudden spikes\n→ For sudden spikes: consider on-demand or provisioned with headroom\n\nBURST CAPACITY:\n→ DynamoDB retains up to 5 minutes of unused RCU/WCU as burst\n→ Absorbs short traffic spikes automatically\n→ Not a substitute for proper capacity planning"
+        },
+        {
+          "type": "paragraph",
+          "content": "### DynamoDB Indexes"
+        },
+        {
+          "type": "diagram",
+          "content": "Without indexes: can ONLY query by primary key (PK + SK)\nWith indexes: query by additional attributes (at extra cost)\n\nGSI — Global Secondary Index:\n→ Define: new PK + optional new SK from existing attributes\n→ Has its OWN read/write capacity (separate from table)\n→ Eventually consistent (data replicated asynchronously)\n→ Can be added AFTER table creation\n→ Up to 20 GSIs per table\n→ Use for: \"get all orders with status='shipped'\"\n  Table PK: orderId\n  GSI PK: status, SK: createdAt\n  → Query: status='shipped' AND createdAt > '2024-01-01'\n\nLSI — Local Secondary Index:\n→ Same PK as table, different SK\n→ MUST be created at table creation (cannot add later!)\n→ Shares table's read/write capacity\n→ Strongly consistent reads possible\n→ Up to 5 LSIs per table\n→ Use for: alternative sort orders of same partition key data\n\nEXAMPLE — E-Commerce Orders:\nTable: PK=customerId, SK=orderId\n→ \"Get all orders for customer123\" → query by PK=customer123 ✅\n\nLSI: PK=customerId, SK=orderDate\n→ \"Get all orders for customer123 sorted by date\" → query LSI ✅\n\nGSI: PK=productId, SK=orderDate\n→ \"Get all orders containing product456\" → query GSI ✅\n→ (requires denormalization — store productId as attribute on order)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### DynamoDB Advanced Features"
+        },
+        {
+          "type": "diagram",
+          "content": "DAX — DynamoDB Accelerator:\n→ In-memory cache for DynamoDB\n→ Read latency: 1-9ms → microseconds (1000x faster!)\n→ Drop-in replacement: use DAX client instead of DynamoDB client\n→ Write-through cache: writes go to DynamoDB + DAX simultaneously\n→ Cost: per DAX node (starts ~$0.269/hour for cache.r6g.large)\n→ USE WHEN: read-heavy workloads need microsecond latency\n→ NOT FOR: strongly consistent reads (DAX is eventually consistent)\n            write-heavy workloads (little benefit)\n\nDYNAMO DB STREAMS:\n→ Time-ordered sequence of item-level changes\n→ Available for 24 hours\n→ Trigger Lambda on: INSERT, MODIFY, REMOVE\n→ Event contains: old image, new image, or both\n→ Use for: event-driven architectures, cross-region replication, analytics\n\nCOMMON STREAMS PATTERNS:\n→ User updates profile → Stream → Lambda → send welcome email (if new user)\n→ Order created → Stream → Lambda → update inventory count\n→ Any change → Stream → Lambda → replicate to Elasticsearch for search\n\nTTL — Time to Live:\n→ Set expiry timestamp attribute on item\n→ DynamoDB automatically deletes expired items\n→ Deletion: within 48 hours of expiry (not exactly at expiry time)\n→ FREE (no WCU consumed for TTL deletions)\n→ Use for: session tokens, temporary data, cache entries, OTPs\n\nGLOBAL TABLES:\n→ Multi-region, multi-active DynamoDB tables\n→ All regions can READ and WRITE\n→ DynamoDB replicates between regions automatically\n→ Last-write-wins conflict resolution\n→ Use for: global apps needing local write latency everywhere\n→ Example: ride-sharing app needing < 10ms writes in US, EU, Asia simultaneously"
+        },
+        {
+          "type": "paragraph",
+          "content": "### SQL vs DynamoDB — Decision Framework"
+        },
+        {
+          "type": "diagram",
+          "content": "USE RDS/AURORA (SQL) WHEN:\n→ Complex queries with JOINs between multiple entities\n→ Data has complex relationships that change\n→ Need ad-hoc analytics (GROUP BY, aggregations, subqueries)\n→ ACID transactions across multiple tables critical\n→ Team knows SQL well and data fits relational model\n→ Financial systems (accounting, banking, inventory)\n→ ERP, CRM, order management systems\n\nUSE DYNAMODB (NoSQL) WHEN:\n→ Access patterns known at design time (key-value, range queries)\n→ Need < 10ms reads at any scale\n→ Traffic is unpredictable or extremely high\n→ Data is hierarchical (order → line items → all in one item)\n→ Global deployment needing local writes (Global Tables)\n→ Gaming leaderboards, user preferences, session storage\n→ IoT data (millions of devices writing constantly)\n→ Real-time dashboards, activity feeds\n\nTHE ONE QUESTION TEST:\n\"Do I know EXACTLY how I'll query this data at design time?\"\n→ YES: DynamoDB works, design access patterns first\n→ NO: Use Aurora/RDS (flexible SQL queries)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ 1 item in the table",
+        "→ 1 billion items in the table",
+        "→ 1 request per day",
+        "→ 1 million requests per second",
+        "→ Collection of items (like a SQL table but schema-less)",
+        "→ No joins between tables (by design)",
+        "→ Each table can have unlimited items, unlimited storage",
+        "→ One record (like a SQL row)"
+      ]
+    },
+    {
+      "id": "elasticache-inmemory-caching",
+      "title": "🚀 ElastiCache — In-Memory Caching",
+      "type": "concept",
+      "rawMarkdown": "### What is ElastiCache?\n\n```\nElastiCache = managed Redis or Memcached in the cloud\n\nWHY CACHING:\nDatabase query takes 20ms → user waits 20ms\nCache hit takes 0.1ms → user waits 0.1ms (200x faster!)\n\nAND: database is expensive, cache is cheap\nInstead of adding more DB capacity ($500/month)\n→ Add cache layer ($50/month) → same performance\n\nWHEN TO USE CACHE:\n→ Same query run thousands of times/minute (user profile, product catalog)\n→ Complex expensive query (aggregation, JOIN) needed frequently\n→ Session storage (faster + cheaper than DB sessions)\n→ Rate limiting counters\n→ Real-time leaderboards (sorted sets)\n→ Pub/sub messaging (Redis pub/sub)\n```\n\n### Redis vs Memcached\n\n```\n                REDIS                       MEMCACHED\nType            Advanced data structures    Simple key-value only\nData types      String, List, Set, Hash,    String only\n                Sorted Set, Bitmap, etc.\nPersistence     YES (AOF + RDB snapshots)   NO (pure in-memory)\nReplication     Primary + replicas          No replication\nCluster mode    YES (multi-shard)           YES (multi-thread)\nMulti-AZ        YES                         NO\nPub/Sub         YES                         NO\nTransactions    YES (MULTI/EXEC)            NO\nScripting       YES (Lua)                   NO\n\nCHOOSE REDIS (almost always):\n→ Need data persistence (survives restart)\n→ Need replication (HA)\n→ Need complex data structures (sorted sets for leaderboards)\n→ Need pub/sub\n→ Session storage\n→ Rate limiting\n\nCHOOSE MEMCACHED (rare):\n→ Simplest possible key-value caching only\n→ Need multi-threaded performance (CPU-intensive caching)\n→ Don't need persistence or HA\n→ Horizontal scaling by adding more nodes (simpler model)\n\nREAL WORLD: 95% of teams choose Redis.\n```\n\n### ElastiCache Patterns\n\n```\nCACHE-ASIDE (Lazy Loading) — Most Common:\nApp → check cache (Redis) → hit → return data (fast!)\nApp → check cache → miss → query DB → store in cache → return data\n\nCODE:\nconst cached = await redis.get(`user:${userId}`);\nif (cached) return JSON.parse(cached);\nconst user = await db.query('SELECT * FROM users WHERE id = ?', [userId]);\nawait redis.setex(`user:${userId}`, 3600, JSON.stringify(user)); // 1hr TTL\nreturn user;\n\nPROs: only cache what's actually requested, resilient (cache failure → still works)\nCONs: first request always slow, cache can be stale until TTL expires\n\nWRITE-THROUGH — Keep Cache Updated:\nApp → write to DB AND cache simultaneously on every write\n→ Cache always fresh (no stale data)\n→ More complex code, cache has data that may never be read\n\nREAD-THROUGH:\nCache library handles DB query automatically on cache miss\n→ App only talks to cache, library talks to DB\n→ Cleaner code, requires compatible library\n\nWRITE-BEHIND (Write-Back):\nApp → writes to cache → cache asynchronously writes to DB\n→ Fastest writes (return immediately after cache write)\n→ Risk: if cache fails before writing to DB → data loss\n→ Use only for non-critical data where speed is critical\n\nTTL STRATEGY:\n→ Always set TTL (Time To Live) on cached items\n→ Without TTL: stale data lives forever, memory fills up\n→ TTL = how long can you tolerate slightly stale data?\n→ User profile: 5-60 minutes (changes infrequently)\n→ Product price: 1-5 minutes (changes more often, must be accurate)\n→ Exchange rate: 30 seconds (very time-sensitive)\n→ Session token: match session lifetime\n```\n\n### ElastiCache for Session Management\n\n```\nTHE PROBLEM WITHOUT CACHE:\n3 EC2 instances behind load balancer\nUser logs in → session stored in Instance 1 memory\nNext request → goes to Instance 2 → \"who are you? Not logged in!\"\n\nSOLUTIONS (worst to best):\n\n1. Sticky sessions (ALB stickiness): route same user to same instance\n   PROBLEM: if instance dies → session lost. Poor load distribution.\n\n2. Session in RDS: every request queries database for session\n   PROBLEM: database bottleneck. Adds 20-50ms to every request.\n\n3. Session in ElastiCache Redis:\n   → Any instance reads session from Redis (shared, fast)\n   → 0.1ms to read session instead of 20ms for DB\n   → Redis cluster → HA, survives instance failures\n   → TTL → sessions automatically expire\n   → This is the correct answer\n\nIMPLEMENTATION:\nconst session = require('express-session');\nconst RedisStore = require('connect-redis')(session);\nconst redisClient = require('./redis'); // your Redis client\n\napp.use(session({\n  store: new RedisStore({ client: redisClient }),\n  secret: process.env.SESSION_SECRET,\n  resave: false,\n  saveUninitialized: false,\n  cookie: { maxAge: 86400000 } // 24 hours\n}));\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### What is ElastiCache?"
+        },
+        {
+          "type": "diagram",
+          "content": "ElastiCache = managed Redis or Memcached in the cloud\n\nWHY CACHING:\nDatabase query takes 20ms → user waits 20ms\nCache hit takes 0.1ms → user waits 0.1ms (200x faster!)\n\nAND: database is expensive, cache is cheap\nInstead of adding more DB capacity ($500/month)\n→ Add cache layer ($50/month) → same performance\n\nWHEN TO USE CACHE:\n→ Same query run thousands of times/minute (user profile, product catalog)\n→ Complex expensive query (aggregation, JOIN) needed frequently\n→ Session storage (faster + cheaper than DB sessions)\n→ Rate limiting counters\n→ Real-time leaderboards (sorted sets)\n→ Pub/sub messaging (Redis pub/sub)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Redis vs Memcached"
+        },
+        {
+          "type": "diagram",
+          "content": "REDIS                       MEMCACHED\nType            Advanced data structures    Simple key-value only\nData types      String, List, Set, Hash,    String only\n                Sorted Set, Bitmap, etc.\nPersistence     YES (AOF + RDB snapshots)   NO (pure in-memory)\nReplication     Primary + replicas          No replication\nCluster mode    YES (multi-shard)           YES (multi-thread)\nMulti-AZ        YES                         NO\nPub/Sub         YES                         NO\nTransactions    YES (MULTI/EXEC)            NO\nScripting       YES (Lua)                   NO\n\nCHOOSE REDIS (almost always):\n→ Need data persistence (survives restart)\n→ Need replication (HA)\n→ Need complex data structures (sorted sets for leaderboards)\n→ Need pub/sub\n→ Session storage\n→ Rate limiting\n\nCHOOSE MEMCACHED (rare):\n→ Simplest possible key-value caching only\n→ Need multi-threaded performance (CPU-intensive caching)\n→ Don't need persistence or HA\n→ Horizontal scaling by adding more nodes (simpler model)\n\nREAL WORLD: 95% of teams choose Redis."
+        },
+        {
+          "type": "paragraph",
+          "content": "### ElastiCache Patterns"
+        },
+        {
+          "type": "diagram",
+          "content": "CACHE-ASIDE (Lazy Loading) — Most Common:\nApp → check cache (Redis) → hit → return data (fast!)\nApp → check cache → miss → query DB → store in cache → return data\n\nCODE:\nconst cached = await redis.get(`user:${userId}`);\nif (cached) return JSON.parse(cached);\nconst user = await db.query('SELECT * FROM users WHERE id = ?', [userId]);\nawait redis.setex(`user:${userId}`, 3600, JSON.stringify(user)); // 1hr TTL\nreturn user;\n\nPROs: only cache what's actually requested, resilient (cache failure → still works)\nCONs: first request always slow, cache can be stale until TTL expires\n\nWRITE-THROUGH — Keep Cache Updated:\nApp → write to DB AND cache simultaneously on every write\n→ Cache always fresh (no stale data)\n→ More complex code, cache has data that may never be read\n\nREAD-THROUGH:\nCache library handles DB query automatically on cache miss\n→ App only talks to cache, library talks to DB\n→ Cleaner code, requires compatible library\n\nWRITE-BEHIND (Write-Back):\nApp → writes to cache → cache asynchronously writes to DB\n→ Fastest writes (return immediately after cache write)\n→ Risk: if cache fails before writing to DB → data loss\n→ Use only for non-critical data where speed is critical\n\nTTL STRATEGY:\n→ Always set TTL (Time To Live) on cached items\n→ Without TTL: stale data lives forever, memory fills up\n→ TTL = how long can you tolerate slightly stale data?\n→ User profile: 5-60 minutes (changes infrequently)\n→ Product price: 1-5 minutes (changes more often, must be accurate)\n→ Exchange rate: 30 seconds (very time-sensitive)\n→ Session token: match session lifetime"
+        },
+        {
+          "type": "paragraph",
+          "content": "### ElastiCache for Session Management"
+        },
+        {
+          "type": "diagram",
+          "content": "THE PROBLEM WITHOUT CACHE:\n3 EC2 instances behind load balancer\nUser logs in → session stored in Instance 1 memory\nNext request → goes to Instance 2 → \"who are you? Not logged in!\"\n\nSOLUTIONS (worst to best):\n\n1. Sticky sessions (ALB stickiness): route same user to same instance\n   PROBLEM: if instance dies → session lost. Poor load distribution.\n\n2. Session in RDS: every request queries database for session\n   PROBLEM: database bottleneck. Adds 20-50ms to every request.\n\n3. Session in ElastiCache Redis:\n   → Any instance reads session from Redis (shared, fast)\n   → 0.1ms to read session instead of 20ms for DB\n   → Redis cluster → HA, survives instance failures\n   → TTL → sessions automatically expire\n   → This is the correct answer\n\nIMPLEMENTATION:\nconst session = require('express-session');\nconst RedisStore = require('connect-redis')(session);\nconst redisClient = require('./redis'); // your Redis client\n\napp.use(session({\n  store: new RedisStore({ client: redisClient }),\n  secret: process.env.SESSION_SECRET,\n  resave: false,\n  saveUninitialized: false,\n  cookie: { maxAge: 86400000 } // 24 hours\n}));"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Add cache layer ($50/month) → same performance",
+        "→ Same query run thousands of times/minute (user profile, product catalog)",
+        "→ Complex expensive query (aggregation, JOIN) needed frequently",
+        "→ Session storage (faster + cheaper than DB sessions)",
+        "→ Rate limiting counters",
+        "→ Real-time leaderboards (sorted sets)",
+        "→ Pub/sub messaging (Redis pub/sub)",
+        "→ Need data persistence (survives restart)"
+      ]
+    },
+    {
+      "id": "interview-qa-databases",
+      "title": "🎯 Interview Q&A — Databases",
+      "type": "qa",
+      "rawMarkdown": "**Q: Aurora vs RDS MySQL — which would you choose and why?**\n```\n\"For most production workloads I'd default to Aurora MySQL.\n\nAurora's advantages that matter operationally:\nStorage auto-scales to 128 TB without any maintenance. RDS requires manual\nresize operations. In production, 'database disk full' is a nightmare you\ndon't want. Aurora eliminates it.\n\nRead replicas have < 10ms replication lag (vs up to 1 second for RDS) and\nyou can have 15 of them (vs 5). The shared storage architecture means\nreplicas don't need to replicate data — they just read from the same storage\ncluster. Failover is < 30 seconds (vs 1-2 minutes for RDS Multi-AZ).\n\nAurora costs roughly 20% more per instance hour, but when you factor in\noperational savings (no storage management, faster failover, better replicas),\nit usually wins total cost of ownership.\n\nI'd use RDS MySQL over Aurora when: budget is very tight (small startup, < $100/month DB),\nthe workload is read-only or very small, or when testing something quick.\nFor serious production: Aurora.\"\n```\n\n**Q: DynamoDB is showing throttling errors. What's happening and how do you fix it?**\n```\n\"Throttling means we're exceeding our provisioned capacity — either RCU or WCU.\nIt can also mean we have hot partitions.\n\nDiagnosis:\n1. CloudWatch: SuccessfulRequestLatency, ConsumedReadCapacityUnits,\n   ConsumedWriteCapacityUnits, ThrottledRequests per table and index\n\n2. Is it the whole table or specific operations?\n   If specific: likely hot partitions\n\n3. Hot partition diagnosis: \n   CloudWatch contributor insights → shows which PKs are consuming most capacity\n   If one PK is using 90% of capacity → hot partition\n\nFixes for hot partitions:\n→ Change partition key design (better cardinality)\n→ Add random suffix to PK (user_123_1, user_123_2, ...) then scatter/gather reads\n→ Use DAX cache to absorb read traffic\n\nFixes for overall throttling:\n→ Provisioned: increase RCU/WCU (manual or enable auto-scaling)\n→ Switch to on-demand capacity mode (never throttles, costs more)\n→ Add DAX in front for read traffic\n→ Exponential backoff with jitter in retry logic (already in AWS SDK)\n→ Batch reads/writes (BatchGetItem, BatchWriteItem) — more efficient\n\nLong-term: review access patterns and partition key design.\nThrottling is often a data model problem, not a capacity problem.\"\n```\n\n**Q: When would you use ElastiCache vs DynamoDB for caching?**\n```\n\"They serve different caching needs.\n\nElastiCache Redis is a true caching layer — microsecond reads, complex data\nstructures, pub/sub, persistence. Use it when caching in front of another\ndatabase: cache database query results in Redis, invalidate on write.\nBest for: application-level caching (user sessions, hot query results,\nrate limiting, real-time leaderboards).\n\nDynamoDB with DAX is DynamoDB's own caching accelerator — microsecond\nreads for DynamoDB items specifically. It's built for the DynamoDB access\npattern (key-value lookups by PK). Use DAX when your DynamoDB table is\nthe primary data store and you need faster reads without adding Redis.\n\nDynamoDB itself (without DAX) at single-digit millisecond is often 'fast\nenough' and can reduce the need for a separate cache. If your access patterns\nare pure key-value lookups and milliseconds are acceptable — no cache needed.\n\nIn practice: most complex applications use both. Aurora as relational DB +\nElastiCache Redis to cache hot Aurora queries + DynamoDB for specific\nhigh-scale NoSQL data + DAX if DynamoDB reads need to be faster.\"\n```\n\n**Q: Design a database architecture for a multi-tenant SaaS application with 10,000 tenants.**\n```\n\"Multi-tenant database design has three models — choose based on isolation needs:\n\nModel 1: Shared database, shared schema (row-level isolation):\n→ One Aurora cluster, one schema, tenantId column on every table\n→ Application filters by tenantId in every query\n→ Cheapest ($500/month serves all tenants)\n→ Risk: missing tenantId filter → data leak between tenants\n→ Risk: one tenant's heavy queries affect all tenants ('noisy neighbor')\n→ Use for: small tenants, cost-sensitive, can enforce row-level security\n\nModel 2: Shared database, separate schemas:\n→ One Aurora cluster, separate schema per tenant (tenant_001, tenant_002)\n→ Strong query isolation (can't accidentally cross schema boundaries)\n→ More expensive (more connections, schema management)\n→ Use for: medium isolation needs, regulated industries\n\nModel 3: Separate databases per tenant:\n→ Aurora Serverless per tenant (scales to zero = cheap for inactive tenants)\n→ Complete isolation — one tenant's data never touches another's\n→ Can use different database sizes per tenant (premium tenants get more)\n→ Complex management: 10,000 Aurora instances to monitor\n→ Use for: enterprise tenants, maximum isolation, compliance requirements\n\nMy recommendation for 10,000 tenants:\nHybrid approach — free/small tenants on shared database (model 1 with RLS),\nenterprise tenants get dedicated Aurora Serverless (model 3).\nTenant routing: API reads tenant tier from DynamoDB → routes to correct DB.\nAs tenants grow, migrate from shared to dedicated automatically.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: Aurora vs RDS MySQL — which would you choose and why?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"For most production workloads I'd default to Aurora MySQL.\n\nAurora's advantages that matter operationally:\nStorage auto-scales to 128 TB without any maintenance. RDS requires manual\nresize operations. In production, 'database disk full' is a nightmare you\ndon't want. Aurora eliminates it.\n\nRead replicas have < 10ms replication lag (vs up to 1 second for RDS) and\nyou can have 15 of them (vs 5). The shared storage architecture means\nreplicas don't need to replicate data — they just read from the same storage\ncluster. Failover is < 30 seconds (vs 1-2 minutes for RDS Multi-AZ).\n\nAurora costs roughly 20% more per instance hour, but when you factor in\noperational savings (no storage management, faster failover, better replicas),\nit usually wins total cost of ownership.\n\nI'd use RDS MySQL over Aurora when: budget is very tight (small startup, < $100/month DB),\nthe workload is read-only or very small, or when testing something quick.\nFor serious production: Aurora.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: DynamoDB is showing throttling errors. What's happening and how do you fix it?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Throttling means we're exceeding our provisioned capacity — either RCU or WCU.\nIt can also mean we have hot partitions.\n\nDiagnosis:\n1. CloudWatch: SuccessfulRequestLatency, ConsumedReadCapacityUnits,\n   ConsumedWriteCapacityUnits, ThrottledRequests per table and index\n\n2. Is it the whole table or specific operations?\n   If specific: likely hot partitions\n\n3. Hot partition diagnosis: \n   CloudWatch contributor insights → shows which PKs are consuming most capacity\n   If one PK is using 90% of capacity → hot partition\n\nFixes for hot partitions:\n→ Change partition key design (better cardinality)\n→ Add random suffix to PK (user_123_1, user_123_2, ...) then scatter/gather reads\n→ Use DAX cache to absorb read traffic\n\nFixes for overall throttling:\n→ Provisioned: increase RCU/WCU (manual or enable auto-scaling)\n→ Switch to on-demand capacity mode (never throttles, costs more)\n→ Add DAX in front for read traffic\n→ Exponential backoff with jitter in retry logic (already in AWS SDK)\n→ Batch reads/writes (BatchGetItem, BatchWriteItem) — more efficient\n\nLong-term: review access patterns and partition key design.\nThrottling is often a data model problem, not a capacity problem.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: When would you use ElastiCache vs DynamoDB for caching?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"They serve different caching needs.\n\nElastiCache Redis is a true caching layer — microsecond reads, complex data\nstructures, pub/sub, persistence. Use it when caching in front of another\ndatabase: cache database query results in Redis, invalidate on write.\nBest for: application-level caching (user sessions, hot query results,\nrate limiting, real-time leaderboards).\n\nDynamoDB with DAX is DynamoDB's own caching accelerator — microsecond\nreads for DynamoDB items specifically. It's built for the DynamoDB access\npattern (key-value lookups by PK). Use DAX when your DynamoDB table is\nthe primary data store and you need faster reads without adding Redis.\n\nDynamoDB itself (without DAX) at single-digit millisecond is often 'fast\nenough' and can reduce the need for a separate cache. If your access patterns\nare pure key-value lookups and milliseconds are acceptable — no cache needed.\n\nIn practice: most complex applications use both. Aurora as relational DB +\nElastiCache Redis to cache hot Aurora queries + DynamoDB for specific\nhigh-scale NoSQL data + DAX if DynamoDB reads need to be faster.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Design a database architecture for a multi-tenant SaaS application with 10,000 tenants.**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Multi-tenant database design has three models — choose based on isolation needs:\n\nModel 1: Shared database, shared schema (row-level isolation):\n→ One Aurora cluster, one schema, tenantId column on every table\n→ Application filters by tenantId in every query\n→ Cheapest ($500/month serves all tenants)\n→ Risk: missing tenantId filter → data leak between tenants\n→ Risk: one tenant's heavy queries affect all tenants ('noisy neighbor')\n→ Use for: small tenants, cost-sensitive, can enforce row-level security\n\nModel 2: Shared database, separate schemas:\n→ One Aurora cluster, separate schema per tenant (tenant_001, tenant_002)\n→ Strong query isolation (can't accidentally cross schema boundaries)\n→ More expensive (more connections, schema management)\n→ Use for: medium isolation needs, regulated industries\n\nModel 3: Separate databases per tenant:\n→ Aurora Serverless per tenant (scales to zero = cheap for inactive tenants)\n→ Complete isolation — one tenant's data never touches another's\n→ Can use different database sizes per tenant (premium tenants get more)\n→ Complex management: 10,000 Aurora instances to monitor\n→ Use for: enterprise tenants, maximum isolation, compliance requirements\n\nMy recommendation for 10,000 tenants:\nHybrid approach — free/small tenants on shared database (model 1 with RLS),\nenterprise tenants get dedicated Aurora Serverless (model 3).\nTenant routing: API reads tenant tier from DynamoDB → routes to correct DB.\nAs tenants grow, migrate from shared to dedicated automatically.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "07-databases-rds-aurora-dynamodb-elasticache-q1",
+          "question": "Aurora vs RDS MySQL — which would you choose and why?",
+          "answer": "\"For most production workloads I'd default to Aurora MySQL.\n\nAurora's advantages that matter operationally:\nStorage auto-scales to 128 TB without any maintenance. RDS requires manual\nresize operations. In production, 'database disk full' is a nightmare you\ndon't want. Aurora eliminates it.\n\nRead replicas have < 10ms replication lag (vs up to 1 second for RDS) and\nyou can have 15 of them (vs 5). The shared storage architecture means\nreplicas don't need to replicate data — they just read from the same storage\ncluster. Failover is < 30 seconds (vs 1-2 minutes for RDS Multi-AZ).\n\nAurora costs roughly 20% more per instance hour, but when you factor in\noperational savings (no storage management, faster failover, better replicas),\nit usually wins total cost of ownership.\n\nI'd use RDS MySQL over Aurora when: budget is very tight (small startup, < $100/month DB),\nthe workload is read-only or very small, or when testing something quick.\nFor serious production: Aurora.\"",
+          "topicNumber": 7,
+          "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+          "topic": "Databases (RDS, Aurora, DynamoDB, ElastiCache)"
+        },
+        {
+          "id": "07-databases-rds-aurora-dynamodb-elasticache-q2",
+          "question": "DynamoDB is showing throttling errors. What's happening and how do you fix it?",
+          "answer": "\"Throttling means we're exceeding our provisioned capacity — either RCU or WCU.\nIt can also mean we have hot partitions.\n\nDiagnosis:\n1. CloudWatch: SuccessfulRequestLatency, ConsumedReadCapacityUnits,\n   ConsumedWriteCapacityUnits, ThrottledRequests per table and index\n\n2. Is it the whole table or specific operations?\n   If specific: likely hot partitions\n\n3. Hot partition diagnosis: \n   CloudWatch contributor insights → shows which PKs are consuming most capacity\n   If one PK is using 90% of capacity → hot partition\n\nFixes for hot partitions:\n→ Change partition key design (better cardinality)\n→ Add random suffix to PK (user_123_1, user_123_2, ...) then scatter/gather reads\n→ Use DAX cache to absorb read traffic\n\nFixes for overall throttling:\n→ Provisioned: increase RCU/WCU (manual or enable auto-scaling)\n→ Switch to on-demand capacity mode (never throttles, costs more)\n→ Add DAX in front for read traffic\n→ Exponential backoff with jitter in retry logic (already in AWS SDK)\n→ Batch reads/writes (BatchGetItem, BatchWriteItem) — more efficient\n\nLong-term: review access patterns and partition key design.\nThrottling is often a data model problem, not a capacity problem.\"",
+          "topicNumber": 7,
+          "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+          "topic": "Databases (RDS, Aurora, DynamoDB, ElastiCache)"
+        },
+        {
+          "id": "07-databases-rds-aurora-dynamodb-elasticache-q3",
+          "question": "When would you use ElastiCache vs DynamoDB for caching?",
+          "answer": "\"They serve different caching needs.\n\nElastiCache Redis is a true caching layer — microsecond reads, complex data\nstructures, pub/sub, persistence. Use it when caching in front of another\ndatabase: cache database query results in Redis, invalidate on write.\nBest for: application-level caching (user sessions, hot query results,\nrate limiting, real-time leaderboards).\n\nDynamoDB with DAX is DynamoDB's own caching accelerator — microsecond\nreads for DynamoDB items specifically. It's built for the DynamoDB access\npattern (key-value lookups by PK). Use DAX when your DynamoDB table is\nthe primary data store and you need faster reads without adding Redis.\n\nDynamoDB itself (without DAX) at single-digit millisecond is often 'fast\nenough' and can reduce the need for a separate cache. If your access patterns\nare pure key-value lookups and milliseconds are acceptable — no cache needed.\n\nIn practice: most complex applications use both. Aurora as relational DB +\nElastiCache Redis to cache hot Aurora queries + DynamoDB for specific\nhigh-scale NoSQL data + DAX if DynamoDB reads need to be faster.\"",
+          "topicNumber": 7,
+          "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+          "topic": "Databases (RDS, Aurora, DynamoDB, ElastiCache)"
+        },
+        {
+          "id": "07-databases-rds-aurora-dynamodb-elasticache-q4",
+          "question": "Design a database architecture for a multi-tenant SaaS application with 10,000 tenants.",
+          "answer": "\"Multi-tenant database design has three models — choose based on isolation needs:\n\nModel 1: Shared database, shared schema (row-level isolation):\n→ One Aurora cluster, one schema, tenantId column on every table\n→ Application filters by tenantId in every query\n→ Cheapest ($500/month serves all tenants)\n→ Risk: missing tenantId filter → data leak between tenants\n→ Risk: one tenant's heavy queries affect all tenants ('noisy neighbor')\n→ Use for: small tenants, cost-sensitive, can enforce row-level security\n\nModel 2: Shared database, separate schemas:\n→ One Aurora cluster, separate schema per tenant (tenant_001, tenant_002)\n→ Strong query isolation (can't accidentally cross schema boundaries)\n→ More expensive (more connections, schema management)\n→ Use for: medium isolation needs, regulated industries\n\nModel 3: Separate databases per tenant:\n→ Aurora Serverless per tenant (scales to zero = cheap for inactive tenants)\n→ Complete isolation — one tenant's data never touches another's\n→ Can use different database sizes per tenant (premium tenants get more)\n→ Complex management: 10,000 Aurora instances to monitor\n→ Use for: enterprise tenants, maximum isolation, compliance requirements\n\nMy recommendation for 10,000 tenants:\nHybrid approach — free/small tenants on shared database (model 1 with RLS),\nenterprise tenants get dedicated Aurora Serverless (model 3).\nTenant routing: API reads tenant tier from DynamoDB → routes to correct DB.\nAs tenants grow, migrate from shared to dedicated automatically.\"",
+          "topicNumber": 7,
+          "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+          "topic": "Databases (RDS, Aurora, DynamoDB, ElastiCache)"
+        }
+      ],
+      "revisionPoints": [
+        "→ Change partition key design (better cardinality)",
+        "→ Add random suffix to PK (user_123_1, user_123_2, ...) then scatter/gather reads",
+        "→ Use DAX cache to absorb read traffic",
+        "→ Provisioned: increase RCU/WCU (manual or enable auto-scaling)",
+        "→ Switch to on-demand capacity mode (never throttles, costs more)",
+        "→ Add DAX in front for read traffic",
+        "→ Exponential backoff with jitter in retry logic (already in AWS SDK)",
+        "→ Batch reads/writes (BatchGetItem, BatchWriteItem) — more efficient"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nRDS/Aurora → VPC: must be in private subnet (never public!)\nRDS/Aurora → Security Groups: only app server SG can connect\nRDS/Aurora → KMS: encryption at rest\nRDS/Aurora → Secrets Manager: store DB password, auto-rotate\nRDS/Aurora → CloudWatch: metrics + performance insights\nRDS/Aurora → S3: automated backups stored in S3\nRDS/Aurora ← Lambda: Lambda queries DB (use RDS Proxy for connection pooling)\nRDS/Aurora ← ECS: containers connect to DB\n\nDynamoDB → DAX: in-memory cache layer\nDynamoDB → Streams → Lambda: event-driven processing\nDynamoDB → Global Tables → multi-region replication\nDynamoDB ← API Gateway + Lambda: serverless API backend\n\nElastiCache → VPC: in private subnet, no public access\nElastiCache ← EC2/Lambda/ECS: all compute layers use it\nElastiCache → CloudWatch: CacheMisses, CacheHits metrics\n\nNEXT: VPC — Networking Deep Dive\nEverything you just learned (EC2, RDS, Lambda) all lives inside a VPC.\nNow we learn how that network actually works.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "RDS/Aurora → VPC: must be in private subnet (never public!)\nRDS/Aurora → Security Groups: only app server SG can connect\nRDS/Aurora → KMS: encryption at rest\nRDS/Aurora → Secrets Manager: store DB password, auto-rotate\nRDS/Aurora → CloudWatch: metrics + performance insights\nRDS/Aurora → S3: automated backups stored in S3\nRDS/Aurora ← Lambda: Lambda queries DB (use RDS Proxy for connection pooling)\nRDS/Aurora ← ECS: containers connect to DB\n\nDynamoDB → DAX: in-memory cache layer\nDynamoDB → Streams → Lambda: event-driven processing\nDynamoDB → Global Tables → multi-region replication\nDynamoDB ← API Gateway + Lambda: serverless API backend\n\nElastiCache → VPC: in private subnet, no public access\nElastiCache ← EC2/Lambda/ECS: all compute layers use it\nElastiCache → CloudWatch: CacheMisses, CacheHits metrics\n\nNEXT: VPC — Networking Deep Dive\nEverything you just learned (EC2, RDS, Lambda) all lives inside a VPC.\nNow we learn how that network actually works."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "RDS/Aurora → VPC: must be in private subnet (never public!)"
+      ]
+    }
+  ]
+}

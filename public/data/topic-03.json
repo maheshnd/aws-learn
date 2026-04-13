@@ -1,0 +1,485 @@
+{
+  "number": 3,
+  "slug": "03-ec2-elastic-compute-cloud",
+  "title": "EC2 (Elastic Compute Cloud)",
+  "sections": [
+    {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nBEFORE EC2 (2005):\nWant to run your app on the internet?\n→ Buy a physical server ($10,000–$30,000)\n→ Set it up in a data center\n→ Pay monthly for power, cooling, bandwidth\n→ If traffic doubles → buy ANOTHER server (months of wait)\n→ If traffic drops → stuck paying for idle hardware\n\nEC2 (2006 onwards):\n→ Rent a virtual server in 90 seconds\n→ Pay per second of usage\n→ Stop it → pay $0 for compute\n→ Traffic doubles → launch 10 more in 2 minutes\n→ Traffic drops → terminate extras → stop paying\n\n\"Elastic\" = can grow and shrink\n\"Compute\" = CPU + RAM + networking\n\"Cloud\"   = runs in AWS data center, not your office\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "BEFORE EC2 (2005):\nWant to run your app on the internet?\n→ Buy a physical server ($10,000–$30,000)\n→ Set it up in a data center\n→ Pay monthly for power, cooling, bandwidth\n→ If traffic doubles → buy ANOTHER server (months of wait)\n→ If traffic drops → stuck paying for idle hardware\n\nEC2 (2006 onwards):\n→ Rent a virtual server in 90 seconds\n→ Pay per second of usage\n→ Stop it → pay $0 for compute\n→ Traffic doubles → launch 10 more in 2 minutes\n→ Traffic drops → terminate extras → stop paying\n\n\"Elastic\" = can grow and shrink\n\"Compute\" = CPU + RAM + networking\n\"Cloud\"   = runs in AWS data center, not your office"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Buy a physical server ($10,000–$30,000)",
+        "→ Set it up in a data center",
+        "→ Pay monthly for power, cooling, bandwidth",
+        "→ If traffic doubles → buy ANOTHER server (months of wait)",
+        "→ If traffic drops → stuck paying for idle hardware",
+        "→ Rent a virtual server in 90 seconds",
+        "→ Pay per second of usage",
+        "→ Stop it → pay $0 for compute"
+      ]
+    },
+    {
+      "id": "what-you-get-with-an-ec2-instance",
+      "title": "🖥️ What You Get with an EC2 Instance",
+      "type": "concept",
+      "rawMarkdown": "```\nWhen you launch EC2, you choose:\n\n┌─────────────────────────────────────────────────────────────────┐\n│  1. AMI (Amazon Machine Image)                                  │\n│     The template — OS + pre-installed software                  │\n│     Amazon Linux 2023, Ubuntu 22.04, Windows Server 2022       │\n│     Or your own custom AMI with your software pre-baked in     │\n├─────────────────────────────────────────────────────────────────┤\n│  2. Instance Type                                               │\n│     How powerful — CPU cores + RAM size                        │\n│     t3.micro (2 vCPU, 1GB) to p4d.24xlarge (96 vCPU, 1152GB) │\n├─────────────────────────────────────────────────────────────────┤\n│  3. Storage (EBS Volume)                                        │\n│     The hard drive — where OS and data live                    │\n│     SSD (gp3) or HDD, 1GB to 64TB                             │\n├─────────────────────────────────────────────────────────────────┤\n│  4. Network Configuration                                       │\n│     Which VPC, which subnet, public or private                 │\n│     Security Groups (firewall rules)                           │\n├─────────────────────────────────────────────────────────────────┤\n│  5. IAM Role                                                    │\n│     What AWS services this instance can access                 │\n│     (Always attach one — use roles, not access keys)           │\n├─────────────────────────────────────────────────────────────────┤\n│  6. Key Pair                                                    │\n│     SSH key for Linux login. Public key on AWS, private on you │\n│     Lose the private key → lose access forever (no recovery)   │\n└─────────────────────────────────────────────────────────────────┘\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "When you launch EC2, you choose:\n\n┌─────────────────────────────────────────────────────────────────┐\n│  1. AMI (Amazon Machine Image)                                  │\n│     The template — OS + pre-installed software                  │\n│     Amazon Linux 2023, Ubuntu 22.04, Windows Server 2022       │\n│     Or your own custom AMI with your software pre-baked in     │\n├─────────────────────────────────────────────────────────────────┤\n│  2. Instance Type                                               │\n│     How powerful — CPU cores + RAM size                        │\n│     t3.micro (2 vCPU, 1GB) to p4d.24xlarge (96 vCPU, 1152GB) │\n├─────────────────────────────────────────────────────────────────┤\n│  3. Storage (EBS Volume)                                        │\n│     The hard drive — where OS and data live                    │\n│     SSD (gp3) or HDD, 1GB to 64TB                             │\n├─────────────────────────────────────────────────────────────────┤\n│  4. Network Configuration                                       │\n│     Which VPC, which subnet, public or private                 │\n│     Security Groups (firewall rules)                           │\n├─────────────────────────────────────────────────────────────────┤\n│  5. IAM Role                                                    │\n│     What AWS services this instance can access                 │\n│     (Always attach one — use roles, not access keys)           │\n├─────────────────────────────────────────────────────────────────┤\n│  6. Key Pair                                                    │\n│     SSH key for Linux login. Public key on AWS, private on you │\n│     Lose the private key → lose access forever (no recovery)   │\n└─────────────────────────────────────────────────────────────────┘"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "┌─────────────────────────────────────────────────────────────────┐"
+      ]
+    },
+    {
+      "id": "instance-types-the-complete-guide",
+      "title": "📊 Instance Types — The Complete Guide",
+      "type": "concept",
+      "rawMarkdown": "### Naming Convention\n```\nFORMAT: [family][generation][processor].[size]\n\nExample: m6g.xlarge\n  m → General purpose (balanced CPU/memory)\n  6 → 6th generation (newer = better perf, often cheaper)\n  g → Graviton (ARM processor — AWS-designed chip)\n  xlarge → size (4 vCPU, 16 GB RAM for this family)\n\nPROCESSORS:\n(nothing) → Intel x86 (default, most compatible)\na or g    → AMD EPYC or AWS Graviton (ARM) — 10–40% cheaper, same/better perf\ni         → Intel specific (rare)\n```\n\n### Instance Families\n\n```\nFAMILY  FULL NAME            DESCRIPTION                    USE CASE\n──────────────────────────────────────────────────────────────────────\nt       General (burstable)  Cheap baseline, burst on demand Dev/test, small apps\n                             CPU credits system               Low-traffic websites\n                             t3.micro: $0.0104/hr            Microservices\n\nm       General (balanced)   Consistent CPU + memory         Production APIs\n                             Best price/perf for balanced    Application servers\n                             m5.large: $0.096/hr             Medium databases\n\nc       Compute optimized    High CPU relative to memory     Gaming servers\n                             For CPU-intensive workloads     ML inference\n                             c5.xlarge: $0.17/hr             Video encoding\n                                                             Scientific computing\n\nr       Memory optimized     High memory relative to CPU     In-memory databases\n                             For memory-intensive workloads  Redis, Memcached\n                             r5.xlarge: $0.252/hr            SAP HANA\n                                                             Real-time analytics\n\ni       Storage optimized    High I/O, local NVMe SSDs       High-freq databases\n                             For I/O intensive workloads     Elasticsearch\n                             i3.xlarge: $0.312/hr            Data warehousing\n\np/g     GPU accelerated      NVIDIA GPUs                     ML model training\n                             For parallel computation        Deep learning\n                             p3.2xlarge: $3.06/hr            Graphics rendering\n\nx       Extra memory         Terabytes of RAM                SAP HANA\n                             Largest memory instances        In-memory analytics\n                             x1e.32xlarge: $26.688/hr        Genome processing\n\ninf     Inferentia           AWS-designed ML inference chip  Fast ML inference\n                             Up to 70% cheaper than GPU      Production ML APIs\n```\n\n### Size Progression\n```\nnano → micro → small → medium → large → xlarge → 2xlarge → 4xlarge → 8xlarge → ...\n\nEach step UP doubles: vCPU + RAM + network bandwidth + EBS throughput\n\nt3 family as example:\nt3.nano:    2 vCPU,  0.5 GB  → $0.0052/hr → $3.75/month\nt3.micro:   2 vCPU,  1 GB   → $0.0104/hr → $7.49/month\nt3.small:   2 vCPU,  2 GB   → $0.0208/hr → $14.98/month\nt3.medium:  2 vCPU,  4 GB   → $0.0416/hr → $29.95/month\nt3.large:   2 vCPU,  8 GB   → $0.0832/hr → $59.90/month\nt3.xlarge:  4 vCPU, 16 GB   → $0.1664/hr → $119.81/month\nt3.2xlarge: 8 vCPU, 32 GB   → $0.3328/hr → $239.62/month\n```\n\n### Burstable Instances (T family) — CPU Credits\n```\nt3 instances have a BASELINE CPU percentage + ability to BURST above it.\nThey use a credit system.\n\nHow it works:\n→ Instance earns credits when using CPU BELOW baseline\n→ Instance spends credits when using CPU ABOVE baseline\n→ Run out of credits → throttled to baseline (can feel very slow!)\n\nt3.micro: baseline = 10% CPU, earns 6 credits/hour\n→ Idle for 1 hour = 6 credits earned\n→ Burst to 100% CPU for 3.6 minutes = 6 credits spent\n\nt3 (unlimited mode — default now):\n→ Can burst indefinitely without throttling\n→ Pay extra if you use more than your credit earns\n→ Good for: uneven workloads (normal = low, occasionally high)\n→ Watch: unexpected charges if continuously bursting\n\nWHEN TO AVOID T instances:\n→ Consistent high CPU (> 40%) → use m or c family instead\n→ Production databases → use r family (predictable)\n→ ML workloads → use p or g family (GPU)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Naming Convention"
+        },
+        {
+          "type": "diagram",
+          "content": "FORMAT: [family][generation][processor].[size]\n\nExample: m6g.xlarge\n  m → General purpose (balanced CPU/memory)\n  6 → 6th generation (newer = better perf, often cheaper)\n  g → Graviton (ARM processor — AWS-designed chip)\n  xlarge → size (4 vCPU, 16 GB RAM for this family)\n\nPROCESSORS:\n(nothing) → Intel x86 (default, most compatible)\na or g    → AMD EPYC or AWS Graviton (ARM) — 10–40% cheaper, same/better perf\ni         → Intel specific (rare)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Instance Families"
+        },
+        {
+          "type": "diagram",
+          "content": "FAMILY  FULL NAME            DESCRIPTION                    USE CASE\n──────────────────────────────────────────────────────────────────────\nt       General (burstable)  Cheap baseline, burst on demand Dev/test, small apps\n                             CPU credits system               Low-traffic websites\n                             t3.micro: $0.0104/hr            Microservices\n\nm       General (balanced)   Consistent CPU + memory         Production APIs\n                             Best price/perf for balanced    Application servers\n                             m5.large: $0.096/hr             Medium databases\n\nc       Compute optimized    High CPU relative to memory     Gaming servers\n                             For CPU-intensive workloads     ML inference\n                             c5.xlarge: $0.17/hr             Video encoding\n                                                             Scientific computing\n\nr       Memory optimized     High memory relative to CPU     In-memory databases\n                             For memory-intensive workloads  Redis, Memcached\n                             r5.xlarge: $0.252/hr            SAP HANA\n                                                             Real-time analytics\n\ni       Storage optimized    High I/O, local NVMe SSDs       High-freq databases\n                             For I/O intensive workloads     Elasticsearch\n                             i3.xlarge: $0.312/hr            Data warehousing\n\np/g     GPU accelerated      NVIDIA GPUs                     ML model training\n                             For parallel computation        Deep learning\n                             p3.2xlarge: $3.06/hr            Graphics rendering\n\nx       Extra memory         Terabytes of RAM                SAP HANA\n                             Largest memory instances        In-memory analytics\n                             x1e.32xlarge: $26.688/hr        Genome processing\n\ninf     Inferentia           AWS-designed ML inference chip  Fast ML inference\n                             Up to 70% cheaper than GPU      Production ML APIs"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Size Progression"
+        },
+        {
+          "type": "diagram",
+          "content": "nano → micro → small → medium → large → xlarge → 2xlarge → 4xlarge → 8xlarge → ...\n\nEach step UP doubles: vCPU + RAM + network bandwidth + EBS throughput\n\nt3 family as example:\nt3.nano:    2 vCPU,  0.5 GB  → $0.0052/hr → $3.75/month\nt3.micro:   2 vCPU,  1 GB   → $0.0104/hr → $7.49/month\nt3.small:   2 vCPU,  2 GB   → $0.0208/hr → $14.98/month\nt3.medium:  2 vCPU,  4 GB   → $0.0416/hr → $29.95/month\nt3.large:   2 vCPU,  8 GB   → $0.0832/hr → $59.90/month\nt3.xlarge:  4 vCPU, 16 GB   → $0.1664/hr → $119.81/month\nt3.2xlarge: 8 vCPU, 32 GB   → $0.3328/hr → $239.62/month"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Burstable Instances (T family) — CPU Credits"
+        },
+        {
+          "type": "diagram",
+          "content": "t3 instances have a BASELINE CPU percentage + ability to BURST above it.\nThey use a credit system.\n\nHow it works:\n→ Instance earns credits when using CPU BELOW baseline\n→ Instance spends credits when using CPU ABOVE baseline\n→ Run out of credits → throttled to baseline (can feel very slow!)\n\nt3.micro: baseline = 10% CPU, earns 6 credits/hour\n→ Idle for 1 hour = 6 credits earned\n→ Burst to 100% CPU for 3.6 minutes = 6 credits spent\n\nt3 (unlimited mode — default now):\n→ Can burst indefinitely without throttling\n→ Pay extra if you use more than your credit earns\n→ Good for: uneven workloads (normal = low, occasionally high)\n→ Watch: unexpected charges if continuously bursting\n\nWHEN TO AVOID T instances:\n→ Consistent high CPU (> 40%) → use m or c family instead\n→ Production databases → use r family (predictable)\n→ ML workloads → use p or g family (GPU)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Instance earns credits when using CPU BELOW baseline",
+        "→ Instance spends credits when using CPU ABOVE baseline",
+        "→ Run out of credits → throttled to baseline (can feel very slow!)",
+        "→ Idle for 1 hour = 6 credits earned",
+        "→ Burst to 100% CPU for 3.6 minutes = 6 credits spent",
+        "→ Can burst indefinitely without throttling",
+        "→ Pay extra if you use more than your credit earns",
+        "→ Good for: uneven workloads (normal = low, occasionally high)"
+      ]
+    },
+    {
+      "id": "ec2-pricing-all-6-models",
+      "title": "💵 EC2 Pricing — All 6 Models",
+      "type": "pricing",
+      "rawMarkdown": "```\n                    DISCOUNT    COMMITMENT   INTERRUPTION    BEST FOR\nOn-Demand           0%          None         Never           Dev, unpredictable\nReserved (1yr)      40%         1 year       Never           Steady 24/7 prod\nReserved (3yr)      60–72%      3 years      Never           Long-term 24/7 prod\nSavings Plans       up to 72%   1 or 3yr     Never           Flexible prod\nSpot                up to 90%   None         YES (2min warn) Batch, fault-tolerant\nDedicated Host      0% off ($$) Optional     Never           License compliance\n```\n\n### On-Demand Deep Dive\n```\n→ Pay per second (min 60 seconds for Linux)\n→ Pay per hour for Windows\n→ No long-term commitment\n→ Can stop and restart anytime\n→ Highest unit price\n\nBest for:\n→ Development and testing (not running 24/7)\n→ Applications with unpredictable traffic patterns\n→ Short-term workloads that can't be interrupted\n→ First time running new application (before you know the right size)\n```\n\n### Reserved Instances Deep Dive\n```\nCOMMITMENT: pay for 1 or 3 years of compute (used or not!)\nSAVINGS: 40% (1yr) to 72% (3yr all upfront)\n\nPAYMENT OPTIONS:\nAll Upfront    → pay full 1yr/3yr cost now → biggest discount\nPartial Upfront → pay some now, rest monthly → medium discount\nNo Upfront     → pay monthly → smallest discount (still big vs on-demand)\n\nTYPES:\nStandard Reserved → locked to specific instance family, region\n                    (biggest discount, least flexible)\nConvertible Reserved → can change instance type during term\n                       (smaller discount, but flexible)\n\nWHEN TO USE:\n→ Production EC2 that runs 24/7 for 1+ years (database, app server)\n→ ONLY if you're confident about the instance type (Standard RI)\n→ If unsure about future instance type → Savings Plans instead\n\nGOTCHA: You pay for Reserved Instance whether you use it or not!\n        If you reserve 10 instances and only use 5 → paying for 5 idle ones\n        → Use Savings Plans if less certain about usage\n```\n\n### Savings Plans Deep Dive\n```\nCommitment: spend minimum $/hour (e.g., $0.10/hour)\nSavings: up to 72% (similar to Reserved Instances)\nFlexibility: applies automatically to any instance type, any size, any region\n\nTYPES:\nCompute Savings Plans → applies to: EC2 (any family/size/region), Lambda, Fargate\n                        Most flexible. Recommended for most companies.\n\nEC2 Instance Savings Plans → applies to: specific instance family in specific region\n                              Bigger discount than Compute SP. Less flexible.\n\nHOW IT WORKS:\n→ You commit to $0.10/hour of compute spend\n→ AWS applies the discount to whatever compute you use\n→ Use t3 today → gets discounted. Switch to m5 tomorrow → still discounted.\n→ Unused commitment → still charged (like RI)\n\nWHY SAVINGS PLANS > RESERVED INSTANCES FOR MOST COMPANIES:\n→ Flexibility across instance types (no need to predict exactly)\n→ Covers Lambda and Fargate too (Reserved Instances don't)\n→ Easier to manage (one commitment vs many reservations)\n→ AWS recommends Savings Plans as the modern alternative\n```\n\n### Spot Instances Deep Dive\n```\nWHAT SPOT IS:\n→ AWS has unused EC2 capacity across data centers\n→ Instead of idle hardware, they offer it at 60–90% discount\n→ Price fluctuates based on supply/demand (Spot price)\n→ If AWS needs the capacity back → they give 2-minute warning → terminate\n\nTHE 2-MINUTE INTERRUPTION:\n→ AWS sends interruption notice to instance metadata\n→ Instance has 2 minutes to finish + save state\n→ After 2 minutes: instance is terminated (or stopped, depending on config)\n→ Your application MUST be able to handle this gracefully\n\nPERFECT FOR (fault-tolerant, stateless):\n✅ Batch data processing (re-run the job if interrupted)\n✅ ML model training (checkpoint every 10 min, resume from checkpoint)\n✅ CI/CD build runners (retry the build)\n✅ Video transcoding (retry failed segment)\n✅ Web crawlers (lost progress is acceptable)\n✅ Genomics and scientific computing (checkpoint-based)\n\nNEVER USE FOR:\n❌ Databases (data corruption risk on sudden termination)\n❌ Real-time APIs (sudden capacity loss = downtime)\n❌ Session-based apps (users lose sessions)\n❌ Anything that cannot tolerate interruption\n\nSPOT STRATEGIES:\nSpot Fleet → request capacity from multiple instance types/AZs simultaneously\n             If one type is interrupted, fleet maintains capacity from others\n\nSpot Instance interruption handling:\n→ Use Auto Scaling groups with Spot + On-Demand mix (20% On-Demand baseline)\n→ Application checkpoints every N minutes\n→ Spot interruption handler Lambda (listens to CloudWatch Event)\n→ Save state to S3/DynamoDB before shutdown\n\nSPOT SAVINGS EXAMPLE:\nNormal: 10 × m5.2xlarge On-Demand = 10 × $0.384/hr = $3.84/hr = $2,765/month\nSpot:   10 × m5.2xlarge Spot     = 10 × $0.115/hr = $1.15/hr = $828/month\nSavings: $1,937/month (70% discount)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "text-panel",
+          "content": "DISCOUNT    COMMITMENT   INTERRUPTION    BEST FOR\nOn-Demand           0%          None         Never           Dev, unpredictable\nReserved (1yr)      40%         1 year       Never           Steady 24/7 prod\nReserved (3yr)      60–72%      3 years      Never           Long-term 24/7 prod\nSavings Plans       up to 72%   1 or 3yr     Never           Flexible prod\nSpot                up to 90%   None         YES (2min warn) Batch, fault-tolerant\nDedicated Host      0% off ($$) Optional     Never           License compliance"
+        },
+        {
+          "type": "paragraph",
+          "content": "### On-Demand Deep Dive"
+        },
+        {
+          "type": "diagram",
+          "content": "→ Pay per second (min 60 seconds for Linux)\n→ Pay per hour for Windows\n→ No long-term commitment\n→ Can stop and restart anytime\n→ Highest unit price\n\nBest for:\n→ Development and testing (not running 24/7)\n→ Applications with unpredictable traffic patterns\n→ Short-term workloads that can't be interrupted\n→ First time running new application (before you know the right size)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Reserved Instances Deep Dive"
+        },
+        {
+          "type": "diagram",
+          "content": "COMMITMENT: pay for 1 or 3 years of compute (used or not!)\nSAVINGS: 40% (1yr) to 72% (3yr all upfront)\n\nPAYMENT OPTIONS:\nAll Upfront    → pay full 1yr/3yr cost now → biggest discount\nPartial Upfront → pay some now, rest monthly → medium discount\nNo Upfront     → pay monthly → smallest discount (still big vs on-demand)\n\nTYPES:\nStandard Reserved → locked to specific instance family, region\n                    (biggest discount, least flexible)\nConvertible Reserved → can change instance type during term\n                       (smaller discount, but flexible)\n\nWHEN TO USE:\n→ Production EC2 that runs 24/7 for 1+ years (database, app server)\n→ ONLY if you're confident about the instance type (Standard RI)\n→ If unsure about future instance type → Savings Plans instead\n\nGOTCHA: You pay for Reserved Instance whether you use it or not!\n        If you reserve 10 instances and only use 5 → paying for 5 idle ones\n        → Use Savings Plans if less certain about usage"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Savings Plans Deep Dive"
+        },
+        {
+          "type": "diagram",
+          "content": "Commitment: spend minimum $/hour (e.g., $0.10/hour)\nSavings: up to 72% (similar to Reserved Instances)\nFlexibility: applies automatically to any instance type, any size, any region\n\nTYPES:\nCompute Savings Plans → applies to: EC2 (any family/size/region), Lambda, Fargate\n                        Most flexible. Recommended for most companies.\n\nEC2 Instance Savings Plans → applies to: specific instance family in specific region\n                              Bigger discount than Compute SP. Less flexible.\n\nHOW IT WORKS:\n→ You commit to $0.10/hour of compute spend\n→ AWS applies the discount to whatever compute you use\n→ Use t3 today → gets discounted. Switch to m5 tomorrow → still discounted.\n→ Unused commitment → still charged (like RI)\n\nWHY SAVINGS PLANS > RESERVED INSTANCES FOR MOST COMPANIES:\n→ Flexibility across instance types (no need to predict exactly)\n→ Covers Lambda and Fargate too (Reserved Instances don't)\n→ Easier to manage (one commitment vs many reservations)\n→ AWS recommends Savings Plans as the modern alternative"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Spot Instances Deep Dive"
+        },
+        {
+          "type": "diagram",
+          "content": "WHAT SPOT IS:\n→ AWS has unused EC2 capacity across data centers\n→ Instead of idle hardware, they offer it at 60–90% discount\n→ Price fluctuates based on supply/demand (Spot price)\n→ If AWS needs the capacity back → they give 2-minute warning → terminate\n\nTHE 2-MINUTE INTERRUPTION:\n→ AWS sends interruption notice to instance metadata\n→ Instance has 2 minutes to finish + save state\n→ After 2 minutes: instance is terminated (or stopped, depending on config)\n→ Your application MUST be able to handle this gracefully\n\nPERFECT FOR (fault-tolerant, stateless):\n✅ Batch data processing (re-run the job if interrupted)\n✅ ML model training (checkpoint every 10 min, resume from checkpoint)\n✅ CI/CD build runners (retry the build)\n✅ Video transcoding (retry failed segment)\n✅ Web crawlers (lost progress is acceptable)\n✅ Genomics and scientific computing (checkpoint-based)\n\nNEVER USE FOR:\n❌ Databases (data corruption risk on sudden termination)\n❌ Real-time APIs (sudden capacity loss = downtime)\n❌ Session-based apps (users lose sessions)\n❌ Anything that cannot tolerate interruption\n\nSPOT STRATEGIES:\nSpot Fleet → request capacity from multiple instance types/AZs simultaneously\n             If one type is interrupted, fleet maintains capacity from others\n\nSpot Instance interruption handling:\n→ Use Auto Scaling groups with Spot + On-Demand mix (20% On-Demand baseline)\n→ Application checkpoints every N minutes\n→ Spot interruption handler Lambda (listens to CloudWatch Event)\n→ Save state to S3/DynamoDB before shutdown\n\nSPOT SAVINGS EXAMPLE:\nNormal: 10 × m5.2xlarge On-Demand = 10 × $0.384/hr = $3.84/hr = $2,765/month\nSpot:   10 × m5.2xlarge Spot     = 10 × $0.115/hr = $1.15/hr = $828/month\nSavings: $1,937/month (70% discount)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Pay per second (min 60 seconds for Linux)",
+        "→ Pay per hour for Windows",
+        "→ No long-term commitment",
+        "→ Can stop and restart anytime",
+        "→ Highest unit price",
+        "→ Development and testing (not running 24/7)",
+        "→ Applications with unpredictable traffic patterns",
+        "→ Short-term workloads that can't be interrupted"
+      ]
+    },
+    {
+      "id": "security-groups-ec2-firewalls",
+      "title": "🔒 Security Groups — EC2 Firewalls",
+      "type": "concept",
+      "rawMarkdown": "```\nSecurity Group = virtual firewall attached to an EC2 instance (or RDS, Lambda, ELB)\nControls: what traffic can reach the instance (inbound) and leave (outbound)\n\nKEY FACTS:\n→ STATEFUL: if you allow inbound → response traffic automatically allowed outbound\n            No need to add outbound rule for responses\n→ ALLOW ONLY: you can only write Allow rules (no Deny)\n              To block something: simply don't add an Allow rule\n→ MULTIPLE: one instance can have multiple security groups (additive)\n→ IMMEDIATE: changes apply instantly, no restart needed\n→ REFERENCE: you can use another SG as the source (not just IP)\n\nDEFAULT BEHAVIOR:\n→ All inbound: BLOCKED (nothing can reach instance)\n→ All outbound: ALLOWED (instance can reach anywhere)\n\nINBOUND RULE FORMAT:\nType        | Protocol | Port Range | Source\nHTTP          TCP        80           0.0.0.0/0 (anywhere IPv4)\nHTTPS         TCP        443          0.0.0.0/0\nSSH           TCP        22           10.0.0.0/8 (internal only!)\nMySQL         TCP        3306         sg-0abc123def (app server SG)\nCustom TCP    TCP        8080         sg-0xyz789 (load balancer SG)\n```\n\n### Security Group Referencing (Advanced)\n```\nInstead of hardcoding IP addresses (which change), reference other security groups.\n\nEXAMPLE ARCHITECTURE:\nLoad Balancer SG (sg-alb):\n  Inbound: Allow 443 from 0.0.0.0/0 (internet HTTPS)\n\nApp Server SG (sg-app):\n  Inbound: Allow 3000 from sg-alb (ONLY from load balancer!)\n           No direct internet access to app servers\n\nDatabase SG (sg-db):\n  Inbound: Allow 5432 from sg-app (ONLY from app servers!)\n           Database has ZERO internet access\n\nWHY THIS IS BETTER THAN IP-BASED RULES:\n→ App servers scale in/out → IPs change constantly\n→ With SG reference: any instance in sg-app can reach the database\n→ Remove instance from sg-app → it loses DB access automatically\n→ Add instance to sg-app → it gets DB access automatically\n→ Zero manual IP management\n```\n\n### Common Security Group Configurations\n```\nWEB SERVER (public-facing):\nInbound:  HTTPS (443)  from 0.0.0.0/0\n          HTTP  (80)   from 0.0.0.0/0   ← redirect to HTTPS in app\n          SSH   (22)   from VPN_IP only (or use SSM Session Manager!)\nOutbound: All traffic allowed\n\nAPPLICATION SERVER (private):\nInbound:  Custom (8080) from sg-loadbalancer only\n          SSH    (22)   from Bastion Host SG only (or SSM)\nOutbound: All traffic allowed (for external API calls, AWS services)\n\nDATABASE (most restricted):\nInbound:  MySQL/Aurora (3306) from sg-application only\n          PostgreSQL   (5432) from sg-application only\nOutbound: All traffic allowed (for software updates — or restrict this too)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Security Group = virtual firewall attached to an EC2 instance (or RDS, Lambda, ELB)\nControls: what traffic can reach the instance (inbound) and leave (outbound)\n\nKEY FACTS:\n→ STATEFUL: if you allow inbound → response traffic automatically allowed outbound\n            No need to add outbound rule for responses\n→ ALLOW ONLY: you can only write Allow rules (no Deny)\n              To block something: simply don't add an Allow rule\n→ MULTIPLE: one instance can have multiple security groups (additive)\n→ IMMEDIATE: changes apply instantly, no restart needed\n→ REFERENCE: you can use another SG as the source (not just IP)\n\nDEFAULT BEHAVIOR:\n→ All inbound: BLOCKED (nothing can reach instance)\n→ All outbound: ALLOWED (instance can reach anywhere)\n\nINBOUND RULE FORMAT:\nType        | Protocol | Port Range | Source\nHTTP          TCP        80           0.0.0.0/0 (anywhere IPv4)\nHTTPS         TCP        443          0.0.0.0/0\nSSH           TCP        22           10.0.0.0/8 (internal only!)\nMySQL         TCP        3306         sg-0abc123def (app server SG)\nCustom TCP    TCP        8080         sg-0xyz789 (load balancer SG)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Security Group Referencing (Advanced)"
+        },
+        {
+          "type": "diagram",
+          "content": "Instead of hardcoding IP addresses (which change), reference other security groups.\n\nEXAMPLE ARCHITECTURE:\nLoad Balancer SG (sg-alb):\n  Inbound: Allow 443 from 0.0.0.0/0 (internet HTTPS)\n\nApp Server SG (sg-app):\n  Inbound: Allow 3000 from sg-alb (ONLY from load balancer!)\n           No direct internet access to app servers\n\nDatabase SG (sg-db):\n  Inbound: Allow 5432 from sg-app (ONLY from app servers!)\n           Database has ZERO internet access\n\nWHY THIS IS BETTER THAN IP-BASED RULES:\n→ App servers scale in/out → IPs change constantly\n→ With SG reference: any instance in sg-app can reach the database\n→ Remove instance from sg-app → it loses DB access automatically\n→ Add instance to sg-app → it gets DB access automatically\n→ Zero manual IP management"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Common Security Group Configurations"
+        },
+        {
+          "type": "diagram",
+          "content": "WEB SERVER (public-facing):\nInbound:  HTTPS (443)  from 0.0.0.0/0\n          HTTP  (80)   from 0.0.0.0/0   ← redirect to HTTPS in app\n          SSH   (22)   from VPN_IP only (or use SSM Session Manager!)\nOutbound: All traffic allowed\n\nAPPLICATION SERVER (private):\nInbound:  Custom (8080) from sg-loadbalancer only\n          SSH    (22)   from Bastion Host SG only (or SSM)\nOutbound: All traffic allowed (for external API calls, AWS services)\n\nDATABASE (most restricted):\nInbound:  MySQL/Aurora (3306) from sg-application only\n          PostgreSQL   (5432) from sg-application only\nOutbound: All traffic allowed (for software updates — or restrict this too)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ STATEFUL: if you allow inbound → response traffic automatically allowed outbound",
+        "→ ALLOW ONLY: you can only write Allow rules (no Deny)",
+        "→ MULTIPLE: one instance can have multiple security groups (additive)",
+        "→ IMMEDIATE: changes apply instantly, no restart needed",
+        "→ REFERENCE: you can use another SG as the source (not just IP)",
+        "→ All inbound: BLOCKED (nothing can reach instance)",
+        "→ All outbound: ALLOWED (instance can reach anywhere)",
+        "→ App servers scale in/out → IPs change constantly"
+      ]
+    },
+    {
+      "id": "ec2-instance-lifecycle",
+      "title": "💾 EC2 Instance Lifecycle",
+      "type": "concept",
+      "rawMarkdown": "```\n              LAUNCH\n                │\n                ▼\n           ┌─────────┐\n           │ Running │ ← billing starts (compute + EBS)\n           └────┬────┘\n          ┌─────┴──────┐\n          ▼            ▼\n      ┌───────┐    ┌───────────┐\n      │ Stop  │    │ Terminate │\n      └───┬───┘    └─────┬─────┘\n          ▼              ▼\n     ┌─────────┐    Instance + root \n     │ Stopped │    EBS deleted forever\n     └────┬────┘    (no recovery!)\n          │    ← billing: EBS only, no compute\n          ▼\n        Start again\n```\n\n### Stop vs Terminate\n```\nSTOP (like shutting down a laptop):\n→ OS shuts down cleanly\n→ RAM is cleared (nothing persists in memory)\n→ EBS root volume DATA is preserved\n→ Public IP changes (unless Elastic IP)\n→ Private IP stays the same\n→ Billing: $0 for compute, still charged for EBS\n→ Start it again anytime\n\nTERMINATE (delete the instance):\n→ Instance is destroyed permanently\n→ Root EBS volume DELETED by default (configure DeleteOnTermination=false to prevent)\n→ Data EBS volumes: can be configured to keep or delete\n→ CANNOT UNDO. Instance is gone forever.\n→ Use for: instances you no longer need\n\nHIBERNATE (save RAM to EBS, faster resume):\n→ Saves RAM contents to EBS\n→ On restart: restores RAM state (faster boot than cold start)\n→ Instance \"remembers\" what was running\n→ EBS must have enough space for RAM\n→ Max hibernate duration: 60 days\n→ Use for: keeping long-running processes paused, faster resume\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "LAUNCH\n                │\n                ▼\n           ┌─────────┐\n           │ Running │ ← billing starts (compute + EBS)\n           └────┬────┘\n          ┌─────┴──────┐\n          ▼            ▼\n      ┌───────┐    ┌───────────┐\n      │ Stop  │    │ Terminate │\n      └───┬───┘    └─────┬─────┘\n          ▼              ▼\n     ┌─────────┐    Instance + root \n     │ Stopped │    EBS deleted forever\n     └────┬────┘    (no recovery!)\n          │    ← billing: EBS only, no compute\n          ▼\n        Start again"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Stop vs Terminate"
+        },
+        {
+          "type": "diagram",
+          "content": "STOP (like shutting down a laptop):\n→ OS shuts down cleanly\n→ RAM is cleared (nothing persists in memory)\n→ EBS root volume DATA is preserved\n→ Public IP changes (unless Elastic IP)\n→ Private IP stays the same\n→ Billing: $0 for compute, still charged for EBS\n→ Start it again anytime\n\nTERMINATE (delete the instance):\n→ Instance is destroyed permanently\n→ Root EBS volume DELETED by default (configure DeleteOnTermination=false to prevent)\n→ Data EBS volumes: can be configured to keep or delete\n→ CANNOT UNDO. Instance is gone forever.\n→ Use for: instances you no longer need\n\nHIBERNATE (save RAM to EBS, faster resume):\n→ Saves RAM contents to EBS\n→ On restart: restores RAM state (faster boot than cold start)\n→ Instance \"remembers\" what was running\n→ EBS must have enough space for RAM\n→ Max hibernate duration: 60 days\n→ Use for: keeping long-running processes paused, faster resume"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ OS shuts down cleanly",
+        "→ RAM is cleared (nothing persists in memory)",
+        "→ EBS root volume DATA is preserved",
+        "→ Public IP changes (unless Elastic IP)",
+        "→ Private IP stays the same",
+        "→ Billing: $0 for compute, still charged for EBS",
+        "→ Start it again anytime",
+        "→ Instance is destroyed permanently"
+      ]
+    },
+    {
+      "id": "user-data-startup-scripts",
+      "title": "🚀 User Data — Startup Scripts",
+      "type": "concept",
+      "rawMarkdown": "```\nUser Data = a script that runs ONCE when EC2 first starts\n→ Runs as root (no sudo needed)\n→ Only runs on FIRST boot (not on restart/stop-start)\n→ Runs in background — doesn't wait for completion before reporting \"running\"\n→ Logs available in: /var/log/cloud-init-output.log\n\nCOMMON USE CASES:\n→ Install software (nginx, node, java)\n→ Pull latest code from CodeCommit/GitHub\n→ Configure application settings\n→ Register instance with load balancer\n→ Send notification that instance is ready\n\nEXAMPLE — Install + start nginx:\n#!/bin/bash\nyum update -y\nyum install -y nginx\nsystemctl start nginx\nsystemctl enable nginx\necho \"<h1>Hello from $(hostname)</h1>\" > /usr/share/nginx/html/index.html\n\nEXAMPLE — Node.js app:\n#!/bin/bash\ncurl -sL https://rpm.nodesource.com/setup_18.x | bash -\nyum install -y nodejs\nnpm install -g pm2\naws s3 cp s3://my-app-bucket/app.zip /home/ec2-user/\ncd /home/ec2-user && unzip app.zip\nnpm install --production\npm2 start app.js\npm2 startup systemd\npm2 save\n\nGOTCHA: User data runs as root. If you install packages as root but your\napp runs as ec2-user → file permission issues. Be explicit about ownership:\nchown -R ec2-user:ec2-user /home/ec2-user/app\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "User Data = a script that runs ONCE when EC2 first starts\n→ Runs as root (no sudo needed)\n→ Only runs on FIRST boot (not on restart/stop-start)\n→ Runs in background — doesn't wait for completion before reporting \"running\"\n→ Logs available in: /var/log/cloud-init-output.log\n\nCOMMON USE CASES:\n→ Install software (nginx, node, java)\n→ Pull latest code from CodeCommit/GitHub\n→ Configure application settings\n→ Register instance with load balancer\n→ Send notification that instance is ready\n\nEXAMPLE — Install + start nginx:\n#!/bin/bash\nyum update -y\nyum install -y nginx\nsystemctl start nginx\nsystemctl enable nginx\necho \"<h1>Hello from $(hostname)</h1>\" > /usr/share/nginx/html/index.html\n\nEXAMPLE — Node.js app:\n#!/bin/bash\ncurl -sL https://rpm.nodesource.com/setup_18.x | bash -\nyum install -y nodejs\nnpm install -g pm2\naws s3 cp s3://my-app-bucket/app.zip /home/ec2-user/\ncd /home/ec2-user && unzip app.zip\nnpm install --production\npm2 start app.js\npm2 startup systemd\npm2 save\n\nGOTCHA: User data runs as root. If you install packages as root but your\napp runs as ec2-user → file permission issues. Be explicit about ownership:\nchown -R ec2-user:ec2-user /home/ec2-user/app"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Runs as root (no sudo needed)",
+        "→ Only runs on FIRST boot (not on restart/stop-start)",
+        "→ Runs in background — doesn't wait for completion before reporting \"running\"",
+        "→ Logs available in: /var/log/cloud-init-output.log",
+        "→ Install software (nginx, node, java)",
+        "→ Pull latest code from CodeCommit/GitHub",
+        "→ Configure application settings",
+        "→ Register instance with load balancer"
+      ]
+    },
+    {
+      "id": "instance-metadata-service-imds",
+      "title": "🔍 Instance Metadata Service (IMDS)",
+      "type": "concept",
+      "rawMarkdown": "```\nEvery EC2 instance can query its own metadata.\nURL: http://169.254.169.254/latest/meta-data/\n→ This IP is ONLY accessible from within the instance (link-local)\n→ No authentication needed for IMDSv1 (security risk!)\n→ IMDSv2 requires a token (more secure — enforce this!)\n\nUSEFUL METADATA:\n# Instance ID\ncurl http://169.254.169.254/latest/meta-data/instance-id\n→ i-0abc123def456789\n\n# Instance type\ncurl http://169.254.169.254/latest/meta-data/instance-type\n→ t3.medium\n\n# Public IP (if assigned)\ncurl http://169.254.169.254/latest/meta-data/public-ipv4\n→ 54.210.167.23\n\n# IAM Role credentials (auto-rotated!)\ncurl http://169.254.169.254/latest/meta-data/iam/security-credentials/MyRoleName\n→ { AccessKeyId, SecretAccessKey, Token, Expiration }\n\n# AZ the instance is in\ncurl http://169.254.169.254/latest/meta-data/placement/availability-zone\n→ us-east-1b\n\nUSE IN CODE:\nconst response = await fetch('http://169.254.169.254/latest/meta-data/instance-id');\nconst instanceId = await response.text();\n→ Use this to tag logs, metrics with the specific instance\n\nIMDSv2 (use this — more secure):\nTOKEN=$(curl -X PUT \"http://169.254.169.254/latest/api/token\" \\\n  -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\")\ncurl -H \"X-aws-ec2-metadata-token: $TOKEN\" \\\n  http://169.254.169.254/latest/meta-data/instance-id\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Every EC2 instance can query its own metadata.\nURL: http://169.254.169.254/latest/meta-data/\n→ This IP is ONLY accessible from within the instance (link-local)\n→ No authentication needed for IMDSv1 (security risk!)\n→ IMDSv2 requires a token (more secure — enforce this!)\n\nUSEFUL METADATA:\n# Instance ID\ncurl http://169.254.169.254/latest/meta-data/instance-id\n→ i-0abc123def456789\n\n# Instance type\ncurl http://169.254.169.254/latest/meta-data/instance-type\n→ t3.medium\n\n# Public IP (if assigned)\ncurl http://169.254.169.254/latest/meta-data/public-ipv4\n→ 54.210.167.23\n\n# IAM Role credentials (auto-rotated!)\ncurl http://169.254.169.254/latest/meta-data/iam/security-credentials/MyRoleName\n→ { AccessKeyId, SecretAccessKey, Token, Expiration }\n\n# AZ the instance is in\ncurl http://169.254.169.254/latest/meta-data/placement/availability-zone\n→ us-east-1b\n\nUSE IN CODE:\nconst response = await fetch('http://169.254.169.254/latest/meta-data/instance-id');\nconst instanceId = await response.text();\n→ Use this to tag logs, metrics with the specific instance\n\nIMDSv2 (use this — more secure):\nTOKEN=$(curl -X PUT \"http://169.254.169.254/latest/api/token\" \\\n  -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\")\ncurl -H \"X-aws-ec2-metadata-token: $TOKEN\" \\\n  http://169.254.169.254/latest/meta-data/instance-id"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ This IP is ONLY accessible from within the instance (link-local)",
+        "→ No authentication needed for IMDSv1 (security risk!)",
+        "→ IMDSv2 requires a token (more secure — enforce this!)",
+        "→ i-0abc123def456789",
+        "→ t3.medium",
+        "→ 54.210.167.23",
+        "→ { AccessKeyId, SecretAccessKey, Token, Expiration }",
+        "→ us-east-1b"
+      ]
+    },
+    {
+      "id": "connecting-to-ec2-3-methods",
+      "title": "🔑 Connecting to EC2 — 3 Methods",
+      "type": "concept",
+      "rawMarkdown": "```\nMETHOD 1: SSH (traditional)\n→ Requires: port 22 open in security group\n→ Requires: .pem key file (download at creation, cannot get again)\n→ Command: ssh -i \"key.pem\" ec2-user@PUBLIC_IP\n→ Problem: key management, port 22 exposure\n\nMETHOD 2: EC2 Instance Connect (browser-based)\n→ No key needed, no port 22 (technically uses temporary key)\n→ Browser: EC2 Console → Connect → EC2 Instance Connect\n→ Only for Amazon Linux and Ubuntu (not all AMIs)\n→ Good for: quick one-off tasks without key setup\n\nMETHOD 3: SSM Session Manager (BEST — most secure)\n→ No port 22 needed (security group can block all inbound!)\n→ No key management needed\n→ Requires: SSM Agent on instance (pre-installed on Amazon Linux)\n→ Requires: IAM Role with AmazonSSMManagedInstanceCore policy\n→ Command: aws ssm start-session --target i-0abc123def\n→ Browser: EC2 Console → Connect → Session Manager\n→ ALL sessions logged to CloudWatch + S3 (audit trail!)\n→ This is the enterprise standard. Use this.\n\nPREFER ORDER: SSM Session Manager > EC2 Instance Connect > SSH\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "METHOD 1: SSH (traditional)\n→ Requires: port 22 open in security group\n→ Requires: .pem key file (download at creation, cannot get again)\n→ Command: ssh -i \"key.pem\" ec2-user@PUBLIC_IP\n→ Problem: key management, port 22 exposure\n\nMETHOD 2: EC2 Instance Connect (browser-based)\n→ No key needed, no port 22 (technically uses temporary key)\n→ Browser: EC2 Console → Connect → EC2 Instance Connect\n→ Only for Amazon Linux and Ubuntu (not all AMIs)\n→ Good for: quick one-off tasks without key setup\n\nMETHOD 3: SSM Session Manager (BEST — most secure)\n→ No port 22 needed (security group can block all inbound!)\n→ No key management needed\n→ Requires: SSM Agent on instance (pre-installed on Amazon Linux)\n→ Requires: IAM Role with AmazonSSMManagedInstanceCore policy\n→ Command: aws ssm start-session --target i-0abc123def\n→ Browser: EC2 Console → Connect → Session Manager\n→ ALL sessions logged to CloudWatch + S3 (audit trail!)\n→ This is the enterprise standard. Use this.\n\nPREFER ORDER: SSM Session Manager > EC2 Instance Connect > SSH"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Requires: port 22 open in security group",
+        "→ Requires: .pem key file (download at creation, cannot get again)",
+        "→ Command: ssh -i \"key.pem\" ec2-user@PUBLIC_IP",
+        "→ Problem: key management, port 22 exposure",
+        "→ No key needed, no port 22 (technically uses temporary key)",
+        "→ Browser: EC2 Console → Connect → EC2 Instance Connect",
+        "→ Only for Amazon Linux and Ubuntu (not all AMIs)",
+        "→ Good for: quick one-off tasks without key setup"
+      ]
+    },
+    {
+      "id": "ec2-key-gotchas-and-production-tips",
+      "title": "💡 EC2 Key Gotchas and Production Tips",
+      "type": "warning",
+      "rawMarkdown": "```\nGOTCHA 1: EBS charges even when stopped\n→ You stop EC2 to save money → still charged for attached EBS volumes\n→ To truly pay $0: terminate the instance (deletes EBS)\n→ Or: take EBS snapshot → delete EBS → restore later if needed\n\nGOTCHA 2: Public IP changes on stop/start\n→ Stop and start EC2 → gets new public IP\n→ Your DNS records pointing to old IP → break!\n→ Solutions: Elastic IP (static IP) OR better: Route 53 + ALB (no direct IP)\n→ Elastic IP is free when attached to running instance\n→ Elastic IP costs $0.005/hr when NOT attached (delete unused ones!)\n\nGOTCHA 3: T instances CPU throttle\n→ Cheap t3/t2 instances have CPU credit system\n→ Sustained high CPU burns all credits → throttled to baseline (10–30%)\n→ App slows dramatically, no clear error\n→ Check CloudWatch: CPUCreditBalance metric\n→ Fix: switch to m family for sustained CPU workloads\n\nGOTCHA 4: Termination protection\n→ By default: EC2 can be terminated accidentally with one click\n→ Enable termination protection for production instances\n→ EC2 Console → Actions → Instance Settings → Change Termination Protection\n→ Now requires explicit disable before terminate\n\nGOTCHA 5: Security Group \"0.0.0.0/0\" on port 22\n→ Never open SSH to the entire internet\n→ Bots scan all of AWS IP ranges for open port 22 constantly\n→ Fix: restrict to your VPN IP, use SSM Session Manager, or IP allowlist\n\nPRODUCTION TIPS:\n→ Always attach an IAM Role (even if your app doesn't need AWS services yet)\n→ Enable detailed monitoring (1-min CloudWatch metrics instead of 5-min)\n→ Use placement groups for low-latency cluster computing\n→ Enable IMDSv2 (more secure metadata access)\n→ Tag everything: Name, Environment, Team, CostCenter\n→ Never put databases or sensitive apps in public subnets\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "GOTCHA 1: EBS charges even when stopped\n→ You stop EC2 to save money → still charged for attached EBS volumes\n→ To truly pay $0: terminate the instance (deletes EBS)\n→ Or: take EBS snapshot → delete EBS → restore later if needed\n\nGOTCHA 2: Public IP changes on stop/start\n→ Stop and start EC2 → gets new public IP\n→ Your DNS records pointing to old IP → break!\n→ Solutions: Elastic IP (static IP) OR better: Route 53 + ALB (no direct IP)\n→ Elastic IP is free when attached to running instance\n→ Elastic IP costs $0.005/hr when NOT attached (delete unused ones!)\n\nGOTCHA 3: T instances CPU throttle\n→ Cheap t3/t2 instances have CPU credit system\n→ Sustained high CPU burns all credits → throttled to baseline (10–30%)\n→ App slows dramatically, no clear error\n→ Check CloudWatch: CPUCreditBalance metric\n→ Fix: switch to m family for sustained CPU workloads\n\nGOTCHA 4: Termination protection\n→ By default: EC2 can be terminated accidentally with one click\n→ Enable termination protection for production instances\n→ EC2 Console → Actions → Instance Settings → Change Termination Protection\n→ Now requires explicit disable before terminate\n\nGOTCHA 5: Security Group \"0.0.0.0/0\" on port 22\n→ Never open SSH to the entire internet\n→ Bots scan all of AWS IP ranges for open port 22 constantly\n→ Fix: restrict to your VPN IP, use SSM Session Manager, or IP allowlist\n\nPRODUCTION TIPS:\n→ Always attach an IAM Role (even if your app doesn't need AWS services yet)\n→ Enable detailed monitoring (1-min CloudWatch metrics instead of 5-min)\n→ Use placement groups for low-latency cluster computing\n→ Enable IMDSv2 (more secure metadata access)\n→ Tag everything: Name, Environment, Team, CostCenter\n→ Never put databases or sensitive apps in public subnets"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ You stop EC2 to save money → still charged for attached EBS volumes",
+        "→ To truly pay $0: terminate the instance (deletes EBS)",
+        "→ Or: take EBS snapshot → delete EBS → restore later if needed",
+        "→ Stop and start EC2 → gets new public IP",
+        "→ Your DNS records pointing to old IP → break!",
+        "→ Solutions: Elastic IP (static IP) OR better: Route 53 + ALB (no direct IP)",
+        "→ Elastic IP is free when attached to running instance",
+        "→ Elastic IP costs $0.005/hr when NOT attached (delete unused ones!)"
+      ]
+    },
+    {
+      "id": "interview-qa-ec2",
+      "title": "🎯 Interview Q&A — EC2",
+      "type": "qa",
+      "rawMarkdown": "**Q: When would you choose EC2 vs Lambda vs ECS?**\n```\n\"Three different compute models for different needs.\n\nEC2: choose when you need persistent, long-running processes with specific OS\nrequirements, or when workloads run > 15 minutes, or when you need fine-grained\ncontrol (kernel parameters, GPU access, specific network interfaces). Also for\nstateful applications like databases. Cost-efficient when running 24/7.\n\nLambda: choose for event-driven, short-duration functions (< 15 min).\nZero server management, scales to zero (pay nothing when idle), perfect for\nwebhooks, file processing on upload, scheduled tasks, API backends with\nvariable traffic. Gets expensive for always-on high-traffic APIs.\n\nECS Fargate: choose for containerized applications that need to run continuously\nbut you don't want to manage EC2 servers. Long-running services, microservices,\nAPIs. More predictable cost than Lambda for steady-state traffic. Better than\nEC2 because AWS manages the underlying servers.\"\n```\n\n**Q: Your EC2 instance is running slow. Walk me through diagnosing it.**\n```\n\"Systematic approach, start with observability:\n\n1. CloudWatch Metrics → EC2:\n   → CPUUtilization: is it near 100%? (CPU bottleneck)\n   → NetworkIn/Out: unexpected spike? (network saturation)\n   → EBSReadOps/WriteOps: near IOPS limit? (disk bottleneck)\n   → If t2/t3: CPUCreditBalance → if near 0, CPU is throttled\n\n2. If CPU high → SSH/SSM in → run 'top' or 'htop'\n   → Which process consuming CPU?\n   → Is it our app or something else (crypto miner, log processor)?\n\n3. If memory issue → CloudWatch doesn't show memory by default\n   → Need CloudWatch Agent installed for memory metrics\n   → 'free -m' on the instance to see current memory usage\n   → Low memory → high swap usage → application performance degrades\n\n4. If disk I/O high → check EBS volume type and IOPS limit\n   → gp2: 3 IOPS/GB, max 16,000 IOPS\n   → gp3: 3,000 base IOPS, can provision up to 16,000\n   → Consider: switch from gp2 to gp3, or add more IOPS\n\n5. If it's a T-type instance → check CPUCreditBalance in CloudWatch\n   → If trending toward 0 → that's the throttle causing slowness\n   → Fix: switch to m or c family (no credit system)\n\n6. Network: check if instance type's network bandwidth is saturated\n   → Each instance type has max network bandwidth (in Gbps)\n   → t3.micro: up to 5 Gbps. If you're hitting that → upgrade.\n\nThen: look at application logs. Is the app itself erroring? \nSlow DB queries? External API timeouts? Memory leaks?\"\n```\n\n**Q: How do you deploy to EC2 with zero downtime?**\n```\n\"Several approaches depending on the scale and risk tolerance:\n\nROLLING DEPLOYMENT with Auto Scaling Group:\n→ ASG has 3 instances behind ALB\n→ CodeDeploy updates one instance at a time\n→ ALB keeps routing traffic to healthy instances\n→ After update + health check passes → update next instance\n→ Zero downtime, but slow (one at a time) and rollback takes time\n\nBLUE-GREEN DEPLOYMENT (my recommendation for production):\n→ Blue = current production (3 EC2s behind ALB Target Group A)\n→ Green = new version (3 EC2s behind ALB Target Group B)\n→ Deploy + test on Green completely (no production traffic)\n→ Flip ALB: switch from Target Group A to Target Group B (5 seconds)\n→ Zero downtime. Instant rollback if needed (flip back in 5 seconds)\n→ Keep Blue running for 30 minutes → all good → terminate Blue\n\nCANARY DEPLOYMENT:\n→ Route 5% of traffic to new version\n→ Monitor error rates, latency for 30 minutes\n→ If healthy → route 50% → monitor\n→ If healthy → route 100%\n→ Route 53 weighted routing or ALB weighted target groups\"\n```\n\n**Q: What is the difference between stopping and terminating an EC2 instance?**\n```\n\"Stopping is like turning off a computer — it can be restarted.\nThe EBS volume data is preserved. RAM is cleared. Public IP may change.\nYou stop paying for compute, but still pay for the EBS volume.\n\nTerminating is permanent deletion. By default, the root EBS volume is\ndeleted (DeleteOnTermination=true). The instance cannot be recovered.\nYou stop paying for everything.\n\nImportant: Elastic IPs, additional EBS volumes, and other resources\nattached to the instance are NOT automatically deleted on termination —\nthese must be cleaned up manually or they'll continue to incur charges.\n\nIn production: always enable Termination Protection on critical instances.\nThis prevents accidental termination with a single click.\"\n```\n\n**Q: Spot vs Reserved vs On-Demand — which would you use for a production API?**\n```\n\"For a production REST API:\n\nBaseline capacity → Savings Plans or Reserved Instances (1-year).\nThe API always needs minimum X instances running. Commit to that baseline\nfor 40–72% discount vs on-demand. Use Savings Plans for flexibility.\n\nVariable capacity → On-Demand or mixed with Spot.\nFor the additional instances that Auto Scaling adds during traffic spikes,\nOn-Demand is safest for an API (can't afford interruptions).\n\nAdvanced pattern: ASG with mixed instance policy:\n→ 60% On-Demand (or Reserved) for stable baseline\n→ 40% Spot for burst capacity (with interruption handling)\n→ Multiple Spot instance types/sizes configured\n→ If Spot interrupted → ASG launches On-Demand replacement\n→ Result: 20-30% cost reduction with minor complexity increase\n\nSpot alone for a production API = bad idea. A 2-minute interruption\nwarning on all instances simultaneously could take down the service.\nWith mixed, there's always On-Demand backup.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: When would you choose EC2 vs Lambda vs ECS?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Three different compute models for different needs.\n\nEC2: choose when you need persistent, long-running processes with specific OS\nrequirements, or when workloads run > 15 minutes, or when you need fine-grained\ncontrol (kernel parameters, GPU access, specific network interfaces). Also for\nstateful applications like databases. Cost-efficient when running 24/7.\n\nLambda: choose for event-driven, short-duration functions (< 15 min).\nZero server management, scales to zero (pay nothing when idle), perfect for\nwebhooks, file processing on upload, scheduled tasks, API backends with\nvariable traffic. Gets expensive for always-on high-traffic APIs.\n\nECS Fargate: choose for containerized applications that need to run continuously\nbut you don't want to manage EC2 servers. Long-running services, microservices,\nAPIs. More predictable cost than Lambda for steady-state traffic. Better than\nEC2 because AWS manages the underlying servers.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Your EC2 instance is running slow. Walk me through diagnosing it.**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Systematic approach, start with observability:\n\n1. CloudWatch Metrics → EC2:\n   → CPUUtilization: is it near 100%? (CPU bottleneck)\n   → NetworkIn/Out: unexpected spike? (network saturation)\n   → EBSReadOps/WriteOps: near IOPS limit? (disk bottleneck)\n   → If t2/t3: CPUCreditBalance → if near 0, CPU is throttled\n\n2. If CPU high → SSH/SSM in → run 'top' or 'htop'\n   → Which process consuming CPU?\n   → Is it our app or something else (crypto miner, log processor)?\n\n3. If memory issue → CloudWatch doesn't show memory by default\n   → Need CloudWatch Agent installed for memory metrics\n   → 'free -m' on the instance to see current memory usage\n   → Low memory → high swap usage → application performance degrades\n\n4. If disk I/O high → check EBS volume type and IOPS limit\n   → gp2: 3 IOPS/GB, max 16,000 IOPS\n   → gp3: 3,000 base IOPS, can provision up to 16,000\n   → Consider: switch from gp2 to gp3, or add more IOPS\n\n5. If it's a T-type instance → check CPUCreditBalance in CloudWatch\n   → If trending toward 0 → that's the throttle causing slowness\n   → Fix: switch to m or c family (no credit system)\n\n6. Network: check if instance type's network bandwidth is saturated\n   → Each instance type has max network bandwidth (in Gbps)\n   → t3.micro: up to 5 Gbps. If you're hitting that → upgrade.\n\nThen: look at application logs. Is the app itself erroring? \nSlow DB queries? External API timeouts? Memory leaks?\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How do you deploy to EC2 with zero downtime?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Several approaches depending on the scale and risk tolerance:\n\nROLLING DEPLOYMENT with Auto Scaling Group:\n→ ASG has 3 instances behind ALB\n→ CodeDeploy updates one instance at a time\n→ ALB keeps routing traffic to healthy instances\n→ After update + health check passes → update next instance\n→ Zero downtime, but slow (one at a time) and rollback takes time\n\nBLUE-GREEN DEPLOYMENT (my recommendation for production):\n→ Blue = current production (3 EC2s behind ALB Target Group A)\n→ Green = new version (3 EC2s behind ALB Target Group B)\n→ Deploy + test on Green completely (no production traffic)\n→ Flip ALB: switch from Target Group A to Target Group B (5 seconds)\n→ Zero downtime. Instant rollback if needed (flip back in 5 seconds)\n→ Keep Blue running for 30 minutes → all good → terminate Blue\n\nCANARY DEPLOYMENT:\n→ Route 5% of traffic to new version\n→ Monitor error rates, latency for 30 minutes\n→ If healthy → route 50% → monitor\n→ If healthy → route 100%\n→ Route 53 weighted routing or ALB weighted target groups\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: What is the difference between stopping and terminating an EC2 instance?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Stopping is like turning off a computer — it can be restarted.\nThe EBS volume data is preserved. RAM is cleared. Public IP may change.\nYou stop paying for compute, but still pay for the EBS volume.\n\nTerminating is permanent deletion. By default, the root EBS volume is\ndeleted (DeleteOnTermination=true). The instance cannot be recovered.\nYou stop paying for everything.\n\nImportant: Elastic IPs, additional EBS volumes, and other resources\nattached to the instance are NOT automatically deleted on termination —\nthese must be cleaned up manually or they'll continue to incur charges.\n\nIn production: always enable Termination Protection on critical instances.\nThis prevents accidental termination with a single click.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Spot vs Reserved vs On-Demand — which would you use for a production API?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"For a production REST API:\n\nBaseline capacity → Savings Plans or Reserved Instances (1-year).\nThe API always needs minimum X instances running. Commit to that baseline\nfor 40–72% discount vs on-demand. Use Savings Plans for flexibility.\n\nVariable capacity → On-Demand or mixed with Spot.\nFor the additional instances that Auto Scaling adds during traffic spikes,\nOn-Demand is safest for an API (can't afford interruptions).\n\nAdvanced pattern: ASG with mixed instance policy:\n→ 60% On-Demand (or Reserved) for stable baseline\n→ 40% Spot for burst capacity (with interruption handling)\n→ Multiple Spot instance types/sizes configured\n→ If Spot interrupted → ASG launches On-Demand replacement\n→ Result: 20-30% cost reduction with minor complexity increase\n\nSpot alone for a production API = bad idea. A 2-minute interruption\nwarning on all instances simultaneously could take down the service.\nWith mixed, there's always On-Demand backup.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "03-ec2-elastic-compute-cloud-q1",
+          "question": "When would you choose EC2 vs Lambda vs ECS?",
+          "answer": "\"Three different compute models for different needs.\n\nEC2: choose when you need persistent, long-running processes with specific OS\nrequirements, or when workloads run > 15 minutes, or when you need fine-grained\ncontrol (kernel parameters, GPU access, specific network interfaces). Also for\nstateful applications like databases. Cost-efficient when running 24/7.\n\nLambda: choose for event-driven, short-duration functions (< 15 min).\nZero server management, scales to zero (pay nothing when idle), perfect for\nwebhooks, file processing on upload, scheduled tasks, API backends with\nvariable traffic. Gets expensive for always-on high-traffic APIs.\n\nECS Fargate: choose for containerized applications that need to run continuously\nbut you don't want to manage EC2 servers. Long-running services, microservices,\nAPIs. More predictable cost than Lambda for steady-state traffic. Better than\nEC2 because AWS manages the underlying servers.\"",
+          "topicNumber": 3,
+          "topicSlug": "03-ec2-elastic-compute-cloud",
+          "topic": "EC2 (Elastic Compute Cloud)"
+        },
+        {
+          "id": "03-ec2-elastic-compute-cloud-q2",
+          "question": "Your EC2 instance is running slow. Walk me through diagnosing it.",
+          "answer": "\"Systematic approach, start with observability:\n\n1. CloudWatch Metrics → EC2:\n   → CPUUtilization: is it near 100%? (CPU bottleneck)\n   → NetworkIn/Out: unexpected spike? (network saturation)\n   → EBSReadOps/WriteOps: near IOPS limit? (disk bottleneck)\n   → If t2/t3: CPUCreditBalance → if near 0, CPU is throttled\n\n2. If CPU high → SSH/SSM in → run 'top' or 'htop'\n   → Which process consuming CPU?\n   → Is it our app or something else (crypto miner, log processor)?\n\n3. If memory issue → CloudWatch doesn't show memory by default\n   → Need CloudWatch Agent installed for memory metrics\n   → 'free -m' on the instance to see current memory usage\n   → Low memory → high swap usage → application performance degrades\n\n4. If disk I/O high → check EBS volume type and IOPS limit\n   → gp2: 3 IOPS/GB, max 16,000 IOPS\n   → gp3: 3,000 base IOPS, can provision up to 16,000\n   → Consider: switch from gp2 to gp3, or add more IOPS\n\n5. If it's a T-type instance → check CPUCreditBalance in CloudWatch\n   → If trending toward 0 → that's the throttle causing slowness\n   → Fix: switch to m or c family (no credit system)\n\n6. Network: check if instance type's network bandwidth is saturated\n   → Each instance type has max network bandwidth (in Gbps)\n   → t3.micro: up to 5 Gbps. If you're hitting that → upgrade.\n\nThen: look at application logs. Is the app itself erroring? \nSlow DB queries? External API timeouts? Memory leaks?\"",
+          "topicNumber": 3,
+          "topicSlug": "03-ec2-elastic-compute-cloud",
+          "topic": "EC2 (Elastic Compute Cloud)"
+        },
+        {
+          "id": "03-ec2-elastic-compute-cloud-q3",
+          "question": "How do you deploy to EC2 with zero downtime?",
+          "answer": "\"Several approaches depending on the scale and risk tolerance:\n\nROLLING DEPLOYMENT with Auto Scaling Group:\n→ ASG has 3 instances behind ALB\n→ CodeDeploy updates one instance at a time\n→ ALB keeps routing traffic to healthy instances\n→ After update + health check passes → update next instance\n→ Zero downtime, but slow (one at a time) and rollback takes time\n\nBLUE-GREEN DEPLOYMENT (my recommendation for production):\n→ Blue = current production (3 EC2s behind ALB Target Group A)\n→ Green = new version (3 EC2s behind ALB Target Group B)\n→ Deploy + test on Green completely (no production traffic)\n→ Flip ALB: switch from Target Group A to Target Group B (5 seconds)\n→ Zero downtime. Instant rollback if needed (flip back in 5 seconds)\n→ Keep Blue running for 30 minutes → all good → terminate Blue\n\nCANARY DEPLOYMENT:\n→ Route 5% of traffic to new version\n→ Monitor error rates, latency for 30 minutes\n→ If healthy → route 50% → monitor\n→ If healthy → route 100%\n→ Route 53 weighted routing or ALB weighted target groups\"",
+          "topicNumber": 3,
+          "topicSlug": "03-ec2-elastic-compute-cloud",
+          "topic": "EC2 (Elastic Compute Cloud)"
+        },
+        {
+          "id": "03-ec2-elastic-compute-cloud-q4",
+          "question": "What is the difference between stopping and terminating an EC2 instance?",
+          "answer": "\"Stopping is like turning off a computer — it can be restarted.\nThe EBS volume data is preserved. RAM is cleared. Public IP may change.\nYou stop paying for compute, but still pay for the EBS volume.\n\nTerminating is permanent deletion. By default, the root EBS volume is\ndeleted (DeleteOnTermination=true). The instance cannot be recovered.\nYou stop paying for everything.\n\nImportant: Elastic IPs, additional EBS volumes, and other resources\nattached to the instance are NOT automatically deleted on termination —\nthese must be cleaned up manually or they'll continue to incur charges.\n\nIn production: always enable Termination Protection on critical instances.\nThis prevents accidental termination with a single click.\"",
+          "topicNumber": 3,
+          "topicSlug": "03-ec2-elastic-compute-cloud",
+          "topic": "EC2 (Elastic Compute Cloud)"
+        },
+        {
+          "id": "03-ec2-elastic-compute-cloud-q5",
+          "question": "Spot vs Reserved vs On-Demand — which would you use for a production API?",
+          "answer": "\"For a production REST API:\n\nBaseline capacity → Savings Plans or Reserved Instances (1-year).\nThe API always needs minimum X instances running. Commit to that baseline\nfor 40–72% discount vs on-demand. Use Savings Plans for flexibility.\n\nVariable capacity → On-Demand or mixed with Spot.\nFor the additional instances that Auto Scaling adds during traffic spikes,\nOn-Demand is safest for an API (can't afford interruptions).\n\nAdvanced pattern: ASG with mixed instance policy:\n→ 60% On-Demand (or Reserved) for stable baseline\n→ 40% Spot for burst capacity (with interruption handling)\n→ Multiple Spot instance types/sizes configured\n→ If Spot interrupted → ASG launches On-Demand replacement\n→ Result: 20-30% cost reduction with minor complexity increase\n\nSpot alone for a production API = bad idea. A 2-minute interruption\nwarning on all instances simultaneously could take down the service.\nWith mixed, there's always On-Demand backup.\"",
+          "topicNumber": 3,
+          "topicSlug": "03-ec2-elastic-compute-cloud",
+          "topic": "EC2 (Elastic Compute Cloud)"
+        }
+      ],
+      "revisionPoints": [
+        "→ ASG has 3 instances behind ALB",
+        "→ CodeDeploy updates one instance at a time",
+        "→ ALB keeps routing traffic to healthy instances",
+        "→ After update + health check passes → update next instance",
+        "→ Zero downtime, but slow (one at a time) and rollback takes time",
+        "→ Blue = current production (3 EC2s behind ALB Target Group A)",
+        "→ Green = new version (3 EC2s behind ALB Target Group B)",
+        "→ Deploy + test on Green completely (no production traffic)"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nEC2 connects to almost everything in AWS:\n\nSTORAGE:\n→ EBS: the \"hard drive\" attached to EC2 (next topic)\n→ EFS: shared file system multiple EC2s mount simultaneously  \n→ S3: EC2 reads/writes files to S3 via IAM Role + SDK\n→ Instance Store: temporary disk built into EC2 hardware (fast, ephemeral)\n\nNETWORKING:\n→ VPC: EC2 lives inside a VPC subnet\n→ Security Groups: EC2's firewall\n→ ALB: distributes traffic across multiple EC2 instances\n→ Auto Scaling Group: manages fleet of EC2 instances\n→ Elastic IP: static public IP for EC2\n\nCOMPUTE:\n→ AMI: template used to launch EC2 (you can create your own)\n→ Auto Scaling Group: fleet management for EC2\n→ EC2 → ECS: containers run ON EC2 instances\n→ EC2 → Lambda: Lambda runs on AWS-managed EC2 underneath\n\nNEXT TOPIC: EC2 Storage (EBS, EFS, Instance Store)\nDeep dive into how data persists and what happens when EC2 stops.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "EC2 connects to almost everything in AWS:\n\nSTORAGE:\n→ EBS: the \"hard drive\" attached to EC2 (next topic)\n→ EFS: shared file system multiple EC2s mount simultaneously  \n→ S3: EC2 reads/writes files to S3 via IAM Role + SDK\n→ Instance Store: temporary disk built into EC2 hardware (fast, ephemeral)\n\nNETWORKING:\n→ VPC: EC2 lives inside a VPC subnet\n→ Security Groups: EC2's firewall\n→ ALB: distributes traffic across multiple EC2 instances\n→ Auto Scaling Group: manages fleet of EC2 instances\n→ Elastic IP: static public IP for EC2\n\nCOMPUTE:\n→ AMI: template used to launch EC2 (you can create your own)\n→ Auto Scaling Group: fleet management for EC2\n→ EC2 → ECS: containers run ON EC2 instances\n→ EC2 → Lambda: Lambda runs on AWS-managed EC2 underneath\n\nNEXT TOPIC: EC2 Storage (EBS, EFS, Instance Store)\nDeep dive into how data persists and what happens when EC2 stops."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ EBS: the \"hard drive\" attached to EC2 (next topic)",
+        "→ EFS: shared file system multiple EC2s mount simultaneously",
+        "→ S3: EC2 reads/writes files to S3 via IAM Role + SDK",
+        "→ Instance Store: temporary disk built into EC2 hardware (fast, ephemeral)",
+        "→ VPC: EC2 lives inside a VPC subnet",
+        "→ Security Groups: EC2's firewall",
+        "→ ALB: distributes traffic across multiple EC2 instances",
+        "→ Auto Scaling Group: manages fleet of EC2 instances"
+      ]
+    }
+  ]
+}

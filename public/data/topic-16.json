@@ -1,0 +1,115 @@
+{
+  "number": 16,
+  "slug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+  "title": "Security (KMS, Secrets Manager, WAF, GuardDuty, Shield)",
+  "sections": [
+    {
+      "id": "kms-key-management-service",
+      "title": "🔑 KMS — Key Management Service",
+      "type": "concept",
+      "rawMarkdown": "```\nKMS = managed service to create and control encryption keys\n\nWHY NOT MANAGE KEYS YOURSELF?\n→ Key storage: where do you keep the key? (Not with data — that defeats purpose)\n→ Key rotation: change key without re-encrypting all data\n→ Audit: who used the key to decrypt what, when?\n→ Access control: fine-grained IAM on who can use each key\n→ KMS solves all of these\n\nKEY TYPES:\nAWS Managed Keys: \n  → Created automatically by AWS services (free)\n  → \"aws/s3\", \"aws/rds\", \"aws/lambda\"\n  → AWS manages everything, rotate every year automatically\n  → Cannot change rotation schedule or policy\n  \nCustomer Managed Keys (CMK):\n  → YOU create and manage\n  → $1/key/month + $0.03 per 10,000 API calls\n  → You control: rotation, key policy, key deletion\n  → Can rotate automatically (once per year) or manually\n  → Can be imported (bring your own key material)\n  → Delete: 7-30 day waiting period (cannot undo!)\n\nENVELOPE ENCRYPTION (how it actually works):\nNEVER use KMS to encrypt large data directly:\n→ KMS has 4KB limit per API call\n→ Encrypting 1 GB directly would require thousands of KMS API calls ($$$)\n\nInstead: Envelope Encryption\n1. Generate DATA KEY: aws kms generate-data-key --key-id my-key\n   → Returns: plaintext data key + encrypted data key\n2. Use PLAINTEXT data key to encrypt your data (fast, local)\n3. Store: encrypted data + encrypted data key together\n4. Discard plaintext data key from memory\n\nTo decrypt:\n1. Call KMS: decrypt the encrypted data key → get plaintext data key\n   (One KMS API call regardless of data size)\n2. Use plaintext data key to decrypt data locally\n3. Discard plaintext data key\n\n→ This is how S3 SSE-KMS, RDS encryption, EBS encryption ALL work internally\n\nKEY POLICY:\n→ Defines who can use the key\n→ Without key policy allowing you → even admin cannot use it\n→ Root account always has access (emergency)\n→ Common policy: allow specific roles to Encrypt/Decrypt, restrict others\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "KMS = managed service to create and control encryption keys\n\nWHY NOT MANAGE KEYS YOURSELF?\n→ Key storage: where do you keep the key? (Not with data — that defeats purpose)\n→ Key rotation: change key without re-encrypting all data\n→ Audit: who used the key to decrypt what, when?\n→ Access control: fine-grained IAM on who can use each key\n→ KMS solves all of these\n\nKEY TYPES:\nAWS Managed Keys: \n  → Created automatically by AWS services (free)\n  → \"aws/s3\", \"aws/rds\", \"aws/lambda\"\n  → AWS manages everything, rotate every year automatically\n  → Cannot change rotation schedule or policy\n  \nCustomer Managed Keys (CMK):\n  → YOU create and manage\n  → $1/key/month + $0.03 per 10,000 API calls\n  → You control: rotation, key policy, key deletion\n  → Can rotate automatically (once per year) or manually\n  → Can be imported (bring your own key material)\n  → Delete: 7-30 day waiting period (cannot undo!)\n\nENVELOPE ENCRYPTION (how it actually works):\nNEVER use KMS to encrypt large data directly:\n→ KMS has 4KB limit per API call\n→ Encrypting 1 GB directly would require thousands of KMS API calls ($$$)\n\nInstead: Envelope Encryption\n1. Generate DATA KEY: aws kms generate-data-key --key-id my-key\n   → Returns: plaintext data key + encrypted data key\n2. Use PLAINTEXT data key to encrypt your data (fast, local)\n3. Store: encrypted data + encrypted data key together\n4. Discard plaintext data key from memory\n\nTo decrypt:\n1. Call KMS: decrypt the encrypted data key → get plaintext data key\n   (One KMS API call regardless of data size)\n2. Use plaintext data key to decrypt data locally\n3. Discard plaintext data key\n\n→ This is how S3 SSE-KMS, RDS encryption, EBS encryption ALL work internally\n\nKEY POLICY:\n→ Defines who can use the key\n→ Without key policy allowing you → even admin cannot use it\n→ Root account always has access (emergency)\n→ Common policy: allow specific roles to Encrypt/Decrypt, restrict others"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Key storage: where do you keep the key? (Not with data — that defeats purpose)",
+        "→ Key rotation: change key without re-encrypting all data",
+        "→ Audit: who used the key to decrypt what, when?",
+        "→ Access control: fine-grained IAM on who can use each key",
+        "→ KMS solves all of these",
+        "→ KMS has 4KB limit per API call",
+        "→ Encrypting 1 GB directly would require thousands of KMS API calls ($$$)",
+        "→ This is how S3 SSE-KMS, RDS encryption, EBS encryption ALL work internally"
+      ]
+    },
+    {
+      "id": "secrets-manager",
+      "title": "🔐 Secrets Manager",
+      "type": "concept",
+      "rawMarkdown": "```\nWHAT IT IS:\n→ Managed service to store and rotate secrets (passwords, API keys, tokens)\n\nSECRETS MANAGER vs SSM PARAMETER STORE:\nFeature              Secrets Manager          SSM Parameter Store\nCost                 $0.40/secret/month       Free (standard tier)\nAuto-rotation        YES (built-in for RDS)   Manual only\nMax value size       65KB                     4KB (standard)\nCross-account        YES                      Limited\nVersioning           YES (AWSCURRENT,AWSPREV) YES (labels)\nEncryption           KMS (required)           Optional (SecureString)\nAPI calls            $0.05/10K calls          Free (standard)\n\nUSE SECRETS MANAGER FOR:\n→ Database passwords (auto-rotation is killer feature)\n→ API keys for external services\n→ Any secret requiring rotation\n→ Secrets shared across multiple accounts\n\nUSE PARAMETER STORE FOR:\n→ Application configuration (non-sensitive)\n→ Feature flags\n→ Simple string parameters that don't need rotation\n→ Cost-sensitive (free vs $0.40/month each)\n\nAUTO ROTATION:\n→ Secrets Manager + Lambda rotator function\n→ AWS provides rotation functions for: RDS MySQL, PostgreSQL, Oracle, SQL Server\n→ Rotation: creates new secret → tests it → updates application → marks old as previous\n→ Applications should always read secret fresh (not cache forever)\n→ In Lambda: cache secret with TTL (re-read every 5 minutes, not every invocation)\n\nREADING SECRETS IN LAMBDA:\nconst { SecretsManagerClient, GetSecretValueCommand } = require(\"@aws-sdk/client-secrets-manager\");\n\n// Cache the secret (refresh every 5 minutes)\nlet cachedSecret = null;\nlet cacheExpiry = 0;\n\nasync function getSecret() {\n  if (cachedSecret && Date.now() < cacheExpiry) return cachedSecret;\n  \n  const client = new SecretsManagerClient({ region: 'us-east-1' });\n  const response = await client.send(new GetSecretValueCommand({\n    SecretId: 'prod/myapp/db-password'\n  }));\n  \n  cachedSecret = JSON.parse(response.SecretString);\n  cacheExpiry = Date.now() + 5 * 60 * 1000; // Cache 5 minutes\n  return cachedSecret;\n}\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "WHAT IT IS:\n→ Managed service to store and rotate secrets (passwords, API keys, tokens)\n\nSECRETS MANAGER vs SSM PARAMETER STORE:\nFeature              Secrets Manager          SSM Parameter Store\nCost                 $0.40/secret/month       Free (standard tier)\nAuto-rotation        YES (built-in for RDS)   Manual only\nMax value size       65KB                     4KB (standard)\nCross-account        YES                      Limited\nVersioning           YES (AWSCURRENT,AWSPREV) YES (labels)\nEncryption           KMS (required)           Optional (SecureString)\nAPI calls            $0.05/10K calls          Free (standard)\n\nUSE SECRETS MANAGER FOR:\n→ Database passwords (auto-rotation is killer feature)\n→ API keys for external services\n→ Any secret requiring rotation\n→ Secrets shared across multiple accounts\n\nUSE PARAMETER STORE FOR:\n→ Application configuration (non-sensitive)\n→ Feature flags\n→ Simple string parameters that don't need rotation\n→ Cost-sensitive (free vs $0.40/month each)\n\nAUTO ROTATION:\n→ Secrets Manager + Lambda rotator function\n→ AWS provides rotation functions for: RDS MySQL, PostgreSQL, Oracle, SQL Server\n→ Rotation: creates new secret → tests it → updates application → marks old as previous\n→ Applications should always read secret fresh (not cache forever)\n→ In Lambda: cache secret with TTL (re-read every 5 minutes, not every invocation)\n\nREADING SECRETS IN LAMBDA:\nconst { SecretsManagerClient, GetSecretValueCommand } = require(\"@aws-sdk/client-secrets-manager\");\n\n// Cache the secret (refresh every 5 minutes)\nlet cachedSecret = null;\nlet cacheExpiry = 0;\n\nasync function getSecret() {\n  if (cachedSecret && Date.now() < cacheExpiry) return cachedSecret;\n  \n  const client = new SecretsManagerClient({ region: 'us-east-1' });\n  const response = await client.send(new GetSecretValueCommand({\n    SecretId: 'prod/myapp/db-password'\n  }));\n  \n  cachedSecret = JSON.parse(response.SecretString);\n  cacheExpiry = Date.now() + 5 * 60 * 1000; // Cache 5 minutes\n  return cachedSecret;\n}"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Managed service to store and rotate secrets (passwords, API keys, tokens)",
+        "→ Database passwords (auto-rotation is killer feature)",
+        "→ API keys for external services",
+        "→ Any secret requiring rotation",
+        "→ Secrets shared across multiple accounts",
+        "→ Application configuration (non-sensitive)",
+        "→ Feature flags",
+        "→ Simple string parameters that don't need rotation"
+      ]
+    },
+    {
+      "id": "waf-web-application-firewall",
+      "title": "🛡️ WAF — Web Application Firewall",
+      "type": "concept",
+      "rawMarkdown": "```\nWAF = HTTP/HTTPS layer firewall that inspects and filters web requests\n\nWHAT WAF PROTECTS AGAINST (OWASP Top 10):\n→ SQL Injection: SELECT * FROM users WHERE 1=1--\n→ Cross-Site Scripting (XSS): <script>document.cookie</script>\n→ Path Traversal: ../../../etc/passwd\n→ Remote Code Execution attempts\n→ Bad bots and scrapers\n→ DDoS at application layer (L7)\n→ Known malicious IPs\n\nWHERE TO ATTACH WAF:\n→ CloudFront (best — blocks at edge, globally)\n→ ALB (blocks at load balancer layer)\n→ API Gateway (blocks at API layer)\n→ AppSync (GraphQL)\n\nRULE TYPES:\nAWS Managed Rules (recommended starting point):\n→ AWSManagedRulesCommonRuleSet: OWASP Top 10 protection\n→ AWSManagedRulesAmazonIpReputationList: known bad IPs\n→ AWSManagedRulesSQLiRuleSet: SQL injection specific\n→ AWSManagedRulesBotControlRuleSet: bot detection/management\n→ No config needed — AWS updates these automatically\n\nCustom Rules:\n→ Rate-based: block IP sending > 1000 req/5min\n→ IP match: allow only specific IPs (allowlist) or block (denylist)\n→ Geo-match: block requests from specific countries\n→ String match: block requests containing specific string\n→ Regex: block patterns matching regular expression\n→ Size constraint: block requests with body > X bytes\n\nPRICING:\n→ $5/WebACL/month\n→ $1/rule/month\n→ $0.60/million requests inspected\n\nWAF MODES:\nCount mode: log but don't block (use to test rules before enabling)\nBlock mode: actively block matching requests\nChallenge: serve CAPTCHA challenge (bot verification)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "WAF = HTTP/HTTPS layer firewall that inspects and filters web requests\n\nWHAT WAF PROTECTS AGAINST (OWASP Top 10):\n→ SQL Injection: SELECT * FROM users WHERE 1=1--\n→ Cross-Site Scripting (XSS): <script>document.cookie</script>\n→ Path Traversal: ../../../etc/passwd\n→ Remote Code Execution attempts\n→ Bad bots and scrapers\n→ DDoS at application layer (L7)\n→ Known malicious IPs\n\nWHERE TO ATTACH WAF:\n→ CloudFront (best — blocks at edge, globally)\n→ ALB (blocks at load balancer layer)\n→ API Gateway (blocks at API layer)\n→ AppSync (GraphQL)\n\nRULE TYPES:\nAWS Managed Rules (recommended starting point):\n→ AWSManagedRulesCommonRuleSet: OWASP Top 10 protection\n→ AWSManagedRulesAmazonIpReputationList: known bad IPs\n→ AWSManagedRulesSQLiRuleSet: SQL injection specific\n→ AWSManagedRulesBotControlRuleSet: bot detection/management\n→ No config needed — AWS updates these automatically\n\nCustom Rules:\n→ Rate-based: block IP sending > 1000 req/5min\n→ IP match: allow only specific IPs (allowlist) or block (denylist)\n→ Geo-match: block requests from specific countries\n→ String match: block requests containing specific string\n→ Regex: block patterns matching regular expression\n→ Size constraint: block requests with body > X bytes\n\nPRICING:\n→ $5/WebACL/month\n→ $1/rule/month\n→ $0.60/million requests inspected\n\nWAF MODES:\nCount mode: log but don't block (use to test rules before enabling)\nBlock mode: actively block matching requests\nChallenge: serve CAPTCHA challenge (bot verification)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ SQL Injection: SELECT * FROM users WHERE 1=1--",
+        "→ Cross-Site Scripting (XSS): <script>document.cookie</script>",
+        "→ Path Traversal: ../../../etc/passwd",
+        "→ Remote Code Execution attempts",
+        "→ Bad bots and scrapers",
+        "→ DDoS at application layer (L7)",
+        "→ Known malicious IPs",
+        "→ CloudFront (best — blocks at edge, globally)"
+      ]
+    },
+    {
+      "id": "guardduty-threat-detection",
+      "title": "🔍 GuardDuty — Threat Detection",
+      "type": "concept",
+      "rawMarkdown": "```\nGuardDuty = intelligent threat detection using ML and threat intelligence\n\nWHAT IT ANALYZES:\n→ CloudTrail management events (API calls)\n→ CloudTrail S3 data events (S3 access patterns)\n→ VPC Flow Logs (network traffic)\n→ DNS logs (domain lookups)\n→ Kubernetes audit logs (EKS threats)\n→ RDS login activity\n→ Lambda network activity\n\nWHAT IT DETECTS:\nCompromised accounts:\n→ \"API calls from known malicious IP\" (unusual location)\n→ \"Root credentials used\" (should never happen)\n→ \"Unusual API calls from new geographic location\"\n\nCompromised EC2:\n→ \"EC2 communicating with known cryptocurrency mining pool\"\n→ \"EC2 scanning for open ports\" (reconnaissance activity)\n→ \"EC2 sending unusually high volumes of traffic\" (C2 exfiltration)\n\nInsider threats:\n→ \"IAM user accessing S3 buckets they've never accessed\"\n→ \"Large data download at unusual time\"\n\nData exfiltration:\n→ \"S3 data accessed from external IP\"\n→ \"Unusual API activity consistent with exfiltration\"\n\nFINDING SEVERITY: Low, Medium, High, Critical\nRESPONSE TO FINDINGS:\n→ GuardDuty → EventBridge → Lambda → automated response\n→ Quarantine compromised EC2 (isolate security group)\n→ Revoke compromised IAM credentials\n→ Alert security team via SNS\n\nCOST:\n→ Per GB of analyzed logs\n→ ~$1-5/month for small accounts, more for large traffic\n→ 30-day FREE TRIAL\n→ ENABLE THIS. The cost is minimal vs the protection provided.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "GuardDuty = intelligent threat detection using ML and threat intelligence\n\nWHAT IT ANALYZES:\n→ CloudTrail management events (API calls)\n→ CloudTrail S3 data events (S3 access patterns)\n→ VPC Flow Logs (network traffic)\n→ DNS logs (domain lookups)\n→ Kubernetes audit logs (EKS threats)\n→ RDS login activity\n→ Lambda network activity\n\nWHAT IT DETECTS:\nCompromised accounts:\n→ \"API calls from known malicious IP\" (unusual location)\n→ \"Root credentials used\" (should never happen)\n→ \"Unusual API calls from new geographic location\"\n\nCompromised EC2:\n→ \"EC2 communicating with known cryptocurrency mining pool\"\n→ \"EC2 scanning for open ports\" (reconnaissance activity)\n→ \"EC2 sending unusually high volumes of traffic\" (C2 exfiltration)\n\nInsider threats:\n→ \"IAM user accessing S3 buckets they've never accessed\"\n→ \"Large data download at unusual time\"\n\nData exfiltration:\n→ \"S3 data accessed from external IP\"\n→ \"Unusual API activity consistent with exfiltration\"\n\nFINDING SEVERITY: Low, Medium, High, Critical\nRESPONSE TO FINDINGS:\n→ GuardDuty → EventBridge → Lambda → automated response\n→ Quarantine compromised EC2 (isolate security group)\n→ Revoke compromised IAM credentials\n→ Alert security team via SNS\n\nCOST:\n→ Per GB of analyzed logs\n→ ~$1-5/month for small accounts, more for large traffic\n→ 30-day FREE TRIAL\n→ ENABLE THIS. The cost is minimal vs the protection provided."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ CloudTrail management events (API calls)",
+        "→ CloudTrail S3 data events (S3 access patterns)",
+        "→ VPC Flow Logs (network traffic)",
+        "→ DNS logs (domain lookups)",
+        "→ Kubernetes audit logs (EKS threats)",
+        "→ RDS login activity",
+        "→ Lambda network activity",
+        "→ \"API calls from known malicious IP\" (unusual location)"
+      ]
+    }
+  ]
+}

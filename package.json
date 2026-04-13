@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "npm run build:content && next dev",
-    "build": "npm run build:content && next build",
+    "build": "next build",
+    "build:local": "npm run build:content && next build",
     "build:content": "ts-node --project tsconfig.scripts.json scripts/build-content.ts",
     "validate": "ts-node --project tsconfig.scripts.json scripts/validate-content.ts",
     "start": "next start",

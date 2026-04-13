@@ -1,0 +1,411 @@
+{
+  "number": 1,
+  "slug": "01-cloud-computing",
+  "title": "Cloud Computing",
+  "sections": [
+    {
+      "id": "the-story-why-cloud-was-invented",
+      "title": "🧒 The Story — Why Cloud Was Invented",
+      "type": "story",
+      "rawMarkdown": "Imagine it's 2004. You want to build a website like Facebook.\n\n**What you had to do before cloud:**\n\n```\nMonth 1-3  → Order servers ($5,000–$20,000 each). Wait for delivery.\nMonth 4    → Rent space in a data center. Pay for power + cooling + internet.\nMonth 5-6  → Set up OS, networking, firewalls, DNS, load balancers.\nMonth 6+   → Finally write your app. But how many servers did you buy?\n             Too few  → site crashes when popular. Revenue lost.\n             Too many → paying for idle machines. Money wasted.\nForever    → Your engineers maintain hardware instead of building features.\n\nTotal cost before writing ONE line of code: $200,000+\nTime before launch: 6+ months\n```\n\n**Amazon had this exact problem internally.** Every team waited months for servers. In ~2003, they built an internal platform: any team could get a server in minutes, pay per hour, return when done.\n\nIn 2006 they realized: *every company has this problem.* They opened it to the public → **AWS was born.**\n\n- **March 2006** → S3 launched ($0.15/GB/month)  \n- **August 2006** → EC2 launched (beta)  \n- **2010** → Amazon.com itself migrated to AWS  \n- **2023** → AWS revenue: $91 billion/year, 31% of global cloud market\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "Imagine it's 2004. You want to build a website like Facebook.\n\n**What you had to do before cloud:**"
+        },
+        {
+          "type": "diagram",
+          "content": "Month 1-3  → Order servers ($5,000–$20,000 each). Wait for delivery.\nMonth 4    → Rent space in a data center. Pay for power + cooling + internet.\nMonth 5-6  → Set up OS, networking, firewalls, DNS, load balancers.\nMonth 6+   → Finally write your app. But how many servers did you buy?\n             Too few  → site crashes when popular. Revenue lost.\n             Too many → paying for idle machines. Money wasted.\nForever    → Your engineers maintain hardware instead of building features.\n\nTotal cost before writing ONE line of code: $200,000+\nTime before launch: 6+ months"
+        },
+        {
+          "type": "paragraph",
+          "content": "**Amazon had this exact problem internally.** Every team waited months for servers. In ~2003, they built an internal platform: any team could get a server in minutes, pay per hour, return when done.\n\nIn 2006 they realized: *every company has this problem.* They opened it to the public → **AWS was born.**\n\n- **March 2006** → S3 launched ($0.15/GB/month)  \n- **August 2006** → EC2 launched (beta)  \n- **2010** → Amazon.com itself migrated to AWS  \n- **2023** → AWS revenue: $91 billion/year, 31% of global cloud market\n\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "Imagine it's 2004. You want to build a website like Facebook."
+      ]
+    },
+    {
+      "id": "what-cloud-computing-actually-is",
+      "title": "📐 What Cloud Computing Actually Is",
+      "type": "concept",
+      "rawMarkdown": "> **Simple version:** Renting computing power over the internet, paying only for what you use, scaling up or down in seconds.\n\n**Official NIST definition (broken down):**\n\n| Term | Plain English |\n|------|--------------|\n| On-demand | Get it when you need it. No waiting, no approval. |\n| Network access | Access over the internet from anywhere |\n| Shared pool | AWS's millions of servers, you borrow some |\n| Rapidly provisioned | Server in 90 seconds. Delete in 30 seconds. |\n| Minimal effort | You don't manage the building, power, or hardware |\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "> **Simple version:** Renting computing power over the internet, paying only for what you use, scaling up or down in seconds.\n\n**Official NIST definition (broken down):**\n\n| Term | Plain English |\n|------|--------------|\n| On-demand | Get it when you need it. No waiting, no approval. |\n| Network access | Access over the internet from anywhere |\n| Shared pool | AWS's millions of servers, you borrow some |\n| Rapidly provisioned | Server in 90 seconds. Delete in 30 seconds. |\n| Minimal effort | You don't manage the building, power, or hardware |\n\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "> **Simple version:** Renting computing power over the internet, paying only for what you use, scaling up or down in seconds."
+      ]
+    },
+    {
+      "id": "5-the-5-characteristics-of-cloud-nist-must-know",
+      "title": "5️⃣ The 5 Characteristics of Cloud (NIST — Must Know)",
+      "type": "concept",
+      "rawMarkdown": "> If a service is missing even one of these → it is NOT truly cloud. Use this to challenge any vendor's \"cloud\" claim.\n\n### 1. On-Demand Self-Service\n```\nYou → AWS Console → Click \"Launch\" → Server ready in 90 seconds\nNo phone call. No ticket. No waiting for human approval. 24/7/365.\n\nVIOLATION EXAMPLE: \"Managed hosting where you email support to add a server\"\n→ On-demand? Yes. Self-service? NO. Not real cloud.\n```\n\n### 2. Broad Network Access\n```\nAccess your AWS infrastructure from:\n→ Laptop in India, phone in USA, tablet in Brazil → all same console\n→ Standard protocols: HTTPS, SSH, RDP — no special software\n→ Your app in AWS reachable from anywhere on Earth instantly\n\nIMPORTANT: \"Broad network access\" ≠ your data is public.\nIt means ACCESSIBLE VIA network, not EXPOSED TO the internet.\n```\n\n### 3. Resource Pooling (Multi-tenancy)\n```\nONE physical AWS server → runs HUNDREDS of virtual machines\nYour EC2 might share hardware with Netflix's EC2.\nBut they are COMPLETELY ISOLATED. You cannot see each other.\n\nHow isolation works:\n→ Hypervisor (Nitro) creates virtual boundaries in hardware\n→ Your VM: dedicated virtual CPU, RAM, disk, network\n→ If Netflix's app crashes → yours is fine. Always.\n\nWhy this enables low cost:\n→ AWS buys millions of servers\n→ Costs divided across millions of customers\n→ Your share: tiny fraction of actual hardware cost\n→ This is why $0.01/hour for a server is possible\n```\n\n### 4. Rapid Elasticity\n```\nNormal day:    2 servers  ──────────────────────\nBlack Friday:  2 → 50 servers in 3 minutes  ████████████████\nAfter sale:    50 → 2 servers. Stop paying.  ──────────────────────\n\n\"Appears unlimited\" → AWS has finite resources but so massive,\nyou can request thousands of servers in seconds.\n\nVIOLATION EXAMPLE: \"Shared hosting where you fill a form to upgrade plan\"\n→ Not rapid. Takes hours/days. Not elastic.\n\nOLD WORLD PROBLEM eliminated:\n\"How many servers will we need next year?\" → Nobody knows.\nBuy too few → crashes. Buy too many → wasteful.\nAWS → start with 2, auto-scale to 500, back to 2. Pay exactly.\n```\n\n### 5. Measured Service (Pay-as-you-go)\n```\nEVERYTHING is metered:\nEC2      → per second (min 60 seconds)\nLambda   → per millisecond\nS3       → per GB stored/month + per 1000 API calls\nRDS      → per hour + per GB storage\nTransfer → per GB out to internet\n\nLike electricity: you pay for exact units consumed.\nUse nothing → pay $0. Use a lot → pay for exactly that.\n\nGOTCHA: Some pricing is complex. Set billing alerts IMMEDIATELY\n        after creating an AWS account. First bill shocks beginners.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "> If a service is missing even one of these → it is NOT truly cloud. Use this to challenge any vendor's \"cloud\" claim.\n\n### 1. On-Demand Self-Service"
+        },
+        {
+          "type": "diagram",
+          "content": "You → AWS Console → Click \"Launch\" → Server ready in 90 seconds\nNo phone call. No ticket. No waiting for human approval. 24/7/365.\n\nVIOLATION EXAMPLE: \"Managed hosting where you email support to add a server\"\n→ On-demand? Yes. Self-service? NO. Not real cloud."
+        },
+        {
+          "type": "paragraph",
+          "content": "### 2. Broad Network Access"
+        },
+        {
+          "type": "diagram",
+          "content": "Access your AWS infrastructure from:\n→ Laptop in India, phone in USA, tablet in Brazil → all same console\n→ Standard protocols: HTTPS, SSH, RDP — no special software\n→ Your app in AWS reachable from anywhere on Earth instantly\n\nIMPORTANT: \"Broad network access\" ≠ your data is public.\nIt means ACCESSIBLE VIA network, not EXPOSED TO the internet."
+        },
+        {
+          "type": "paragraph",
+          "content": "### 3. Resource Pooling (Multi-tenancy)"
+        },
+        {
+          "type": "diagram",
+          "content": "ONE physical AWS server → runs HUNDREDS of virtual machines\nYour EC2 might share hardware with Netflix's EC2.\nBut they are COMPLETELY ISOLATED. You cannot see each other.\n\nHow isolation works:\n→ Hypervisor (Nitro) creates virtual boundaries in hardware\n→ Your VM: dedicated virtual CPU, RAM, disk, network\n→ If Netflix's app crashes → yours is fine. Always.\n\nWhy this enables low cost:\n→ AWS buys millions of servers\n→ Costs divided across millions of customers\n→ Your share: tiny fraction of actual hardware cost\n→ This is why $0.01/hour for a server is possible"
+        },
+        {
+          "type": "paragraph",
+          "content": "### 4. Rapid Elasticity"
+        },
+        {
+          "type": "diagram",
+          "content": "Normal day:    2 servers  ──────────────────────\nBlack Friday:  2 → 50 servers in 3 minutes  ████████████████\nAfter sale:    50 → 2 servers. Stop paying.  ──────────────────────\n\n\"Appears unlimited\" → AWS has finite resources but so massive,\nyou can request thousands of servers in seconds.\n\nVIOLATION EXAMPLE: \"Shared hosting where you fill a form to upgrade plan\"\n→ Not rapid. Takes hours/days. Not elastic.\n\nOLD WORLD PROBLEM eliminated:\n\"How many servers will we need next year?\" → Nobody knows.\nBuy too few → crashes. Buy too many → wasteful.\nAWS → start with 2, auto-scale to 500, back to 2. Pay exactly."
+        },
+        {
+          "type": "paragraph",
+          "content": "### 5. Measured Service (Pay-as-you-go)"
+        },
+        {
+          "type": "diagram",
+          "content": "EVERYTHING is metered:\nEC2      → per second (min 60 seconds)\nLambda   → per millisecond\nS3       → per GB stored/month + per 1000 API calls\nRDS      → per hour + per GB storage\nTransfer → per GB out to internet\n\nLike electricity: you pay for exact units consumed.\nUse nothing → pay $0. Use a lot → pay for exactly that.\n\nGOTCHA: Some pricing is complex. Set billing alerts IMMEDIATELY\n        after creating an AWS account. First bill shocks beginners."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ On-demand? Yes. Self-service? NO. Not real cloud.",
+        "→ Laptop in India, phone in USA, tablet in Brazil → all same console",
+        "→ Standard protocols: HTTPS, SSH, RDP — no special software",
+        "→ Your app in AWS reachable from anywhere on Earth instantly",
+        "→ Hypervisor (Nitro) creates virtual boundaries in hardware",
+        "→ Your VM: dedicated virtual CPU, RAM, disk, network",
+        "→ If Netflix's app crashes → yours is fine. Always.",
+        "→ AWS buys millions of servers"
+      ]
+    },
+    {
+      "id": "service-models-iaas-paas-saas",
+      "title": "🏗️ Service Models — IaaS, PaaS, SaaS",
+      "type": "concept",
+      "rawMarkdown": "> **Pizza analogy:** Made at home = you do everything. Restaurant dine-in = they cook, you eat there. Delivery = they do everything.\n\n```\n                        YOU MANAGE ←————————————→ AWS MANAGES\n                        \nOn-Premise    IaaS          PaaS              SaaS\n(your DC)    (EC2)    (Elastic Beanstalk)   (Gmail)\n    │            │              │                │\nApp code       YOU            YOU             THEM\nOS patches     YOU           THEM             THEM\nRuntime        YOU           THEM             THEM\nScaling        YOU           THEM             THEM\nHardware      THEM           THEM             THEM\nData center   THEM           THEM             THEM\n```\n\n### IaaS — Infrastructure as a Service\n```\nYou get    → raw virtual server (CPU, RAM, disk, network)\nYou manage → everything from OS upward\nAWS manages → physical hardware, hypervisor, data center\n\nAWS examples: EC2, VPC, EBS, EFS\nBest for: teams needing full control, custom OS config, lift-and-shift migrations\n\nANALOGY: Renting a plot of land with foundation.\nYou build the house, furnish it, fix it when it breaks.\n```\n\n### PaaS — Platform as a Service  \n```\nYou get    → a platform to deploy your code\nYou manage → application code + data only\nAWS manages → OS patches, runtime, scaling, servers, networking\n\nAWS examples: Elastic Beanstalk, RDS, Lambda (partially)\nBest for: small teams, focus on code not infrastructure, rapid prototyping\n\nANALOGY: Renting a fully equipped kitchen.\nOven, pots, fridge all there. You just cook.\n```\n\n### SaaS — Software as a Service\n```\nYou get    → complete working software over the internet\nYou manage → your data and user settings\nAWS manages → everything (app, OS, hardware, networking, scaling)\n\nExamples: Gmail, Salesforce, Zoom, Slack, GitHub\nAWS SaaS products: WorkMail, Amazon Chime, Connect\nBest for: end users needing a tool, not developers building one\n\nANALOGY: Going to a restaurant. You just eat.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "> **Pizza analogy:** Made at home = you do everything. Restaurant dine-in = they cook, you eat there. Delivery = they do everything."
+        },
+        {
+          "type": "diagram",
+          "content": "YOU MANAGE ←————————————→ AWS MANAGES\n                        \nOn-Premise    IaaS          PaaS              SaaS\n(your DC)    (EC2)    (Elastic Beanstalk)   (Gmail)\n    │            │              │                │\nApp code       YOU            YOU             THEM\nOS patches     YOU           THEM             THEM\nRuntime        YOU           THEM             THEM\nScaling        YOU           THEM             THEM\nHardware      THEM           THEM             THEM\nData center   THEM           THEM             THEM"
+        },
+        {
+          "type": "paragraph",
+          "content": "### IaaS — Infrastructure as a Service"
+        },
+        {
+          "type": "diagram",
+          "content": "You get    → raw virtual server (CPU, RAM, disk, network)\nYou manage → everything from OS upward\nAWS manages → physical hardware, hypervisor, data center\n\nAWS examples: EC2, VPC, EBS, EFS\nBest for: teams needing full control, custom OS config, lift-and-shift migrations\n\nANALOGY: Renting a plot of land with foundation.\nYou build the house, furnish it, fix it when it breaks."
+        },
+        {
+          "type": "paragraph",
+          "content": "### PaaS — Platform as a Service"
+        },
+        {
+          "type": "diagram",
+          "content": "You get    → a platform to deploy your code\nYou manage → application code + data only\nAWS manages → OS patches, runtime, scaling, servers, networking\n\nAWS examples: Elastic Beanstalk, RDS, Lambda (partially)\nBest for: small teams, focus on code not infrastructure, rapid prototyping\n\nANALOGY: Renting a fully equipped kitchen.\nOven, pots, fridge all there. You just cook."
+        },
+        {
+          "type": "paragraph",
+          "content": "### SaaS — Software as a Service"
+        },
+        {
+          "type": "diagram",
+          "content": "You get    → complete working software over the internet\nYou manage → your data and user settings\nAWS manages → everything (app, OS, hardware, networking, scaling)\n\nExamples: Gmail, Salesforce, Zoom, Slack, GitHub\nAWS SaaS products: WorkMail, Amazon Chime, Connect\nBest for: end users needing a tool, not developers building one\n\nANALOGY: Going to a restaurant. You just eat."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "> **Pizza analogy:** Made at home = you do everything. Restaurant dine-in = they cook, you eat there. Delivery = they do everything."
+      ]
+    },
+    {
+      "id": "deployment-models",
+      "title": "🌍 Deployment Models",
+      "type": "concept",
+      "rawMarkdown": "### Public Cloud\n```\nInfrastructure: owned + operated by AWS\nTenancy:        shared (multi-tenant, isolated)\nCost:           pay-as-you-go, no CAPEX\nScale:          unlimited (practically)\n\nBest for: startups, variable workloads, global reach\nExamples: Netflix, Airbnb, Slack, Zoom → all on AWS\n\nLimitation: data sovereignty concerns for some regulated industries\n```\n\n### Private Cloud\n```\nInfrastructure: company owns and operates their own data center\nTenancy:        single-tenant (dedicated to one org)\nCost:           high upfront CAPEX, ongoing OPEX\nScale:          limited by hardware you own\n\nBest for: classified government, highly regulated banking, defense\nTools: VMware vSphere, OpenStack, Microsoft Hyper-V\nProblem: still has capacity planning issues. Just YOUR servers.\n```\n\n### Hybrid Cloud\n```\nMix: on-premise (or private cloud) + public cloud, connected securely\n\nCOMMON PATTERNS:\n1. Bursting → normal on-premise, spike to AWS during peak\n2. Data separation → sensitive data on-prem, app layer on AWS\n3. Migration phase → gradually moving services to AWS\n\nAWS tools for hybrid:\n→ AWS Direct Connect: dedicated fiber from your office to AWS\n→ AWS VPN: encrypted tunnel from your network to AWS VPC  \n→ AWS Outposts: AWS hardware IN your data center (AWS-managed)\n→ Storage Gateway: sync on-premise storage with S3\n\nREAL EXAMPLE:\nLarge hospital:\n→ Patient records: on-premise (HIPAA, never leaves building)\n→ Hospital website: AWS (public, scalable)\n→ Medical imaging processing: AWS (compute-intensive bursts)\n→ Connection: Direct Connect (private fiber, not internet)\n```\n\n### Multi-Cloud\n```\nUsing AWS + GCP + Azure simultaneously\n\nWHY companies say they do it:\n→ Avoid vendor lock-in\n→ Best service from each (AWS for EC2, GCP for ML, Azure for Office)\n→ Some regulatory requirements\n\nREALITY CHECK:\n→ 80% of workloads on one provider anyway\n→ True multi-cloud = 2x the complexity, 2x the skills needed\n→ Data transfer BETWEEN clouds = expensive\n→ Most \"multi-cloud\" companies just have different teams on different clouds\n\nTools that help: Kubernetes (same containers anywhere), Terraform (IaC across clouds)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Public Cloud"
+        },
+        {
+          "type": "diagram",
+          "content": "Infrastructure: owned + operated by AWS\nTenancy:        shared (multi-tenant, isolated)\nCost:           pay-as-you-go, no CAPEX\nScale:          unlimited (practically)\n\nBest for: startups, variable workloads, global reach\nExamples: Netflix, Airbnb, Slack, Zoom → all on AWS\n\nLimitation: data sovereignty concerns for some regulated industries"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Private Cloud"
+        },
+        {
+          "type": "text-panel",
+          "content": "Infrastructure: company owns and operates their own data center\nTenancy:        single-tenant (dedicated to one org)\nCost:           high upfront CAPEX, ongoing OPEX\nScale:          limited by hardware you own\n\nBest for: classified government, highly regulated banking, defense\nTools: VMware vSphere, OpenStack, Microsoft Hyper-V\nProblem: still has capacity planning issues. Just YOUR servers."
+        },
+        {
+          "type": "paragraph",
+          "content": "### Hybrid Cloud"
+        },
+        {
+          "type": "diagram",
+          "content": "Mix: on-premise (or private cloud) + public cloud, connected securely\n\nCOMMON PATTERNS:\n1. Bursting → normal on-premise, spike to AWS during peak\n2. Data separation → sensitive data on-prem, app layer on AWS\n3. Migration phase → gradually moving services to AWS\n\nAWS tools for hybrid:\n→ AWS Direct Connect: dedicated fiber from your office to AWS\n→ AWS VPN: encrypted tunnel from your network to AWS VPC  \n→ AWS Outposts: AWS hardware IN your data center (AWS-managed)\n→ Storage Gateway: sync on-premise storage with S3\n\nREAL EXAMPLE:\nLarge hospital:\n→ Patient records: on-premise (HIPAA, never leaves building)\n→ Hospital website: AWS (public, scalable)\n→ Medical imaging processing: AWS (compute-intensive bursts)\n→ Connection: Direct Connect (private fiber, not internet)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Multi-Cloud"
+        },
+        {
+          "type": "diagram",
+          "content": "Using AWS + GCP + Azure simultaneously\n\nWHY companies say they do it:\n→ Avoid vendor lock-in\n→ Best service from each (AWS for EC2, GCP for ML, Azure for Office)\n→ Some regulatory requirements\n\nREALITY CHECK:\n→ 80% of workloads on one provider anyway\n→ True multi-cloud = 2x the complexity, 2x the skills needed\n→ Data transfer BETWEEN clouds = expensive\n→ Most \"multi-cloud\" companies just have different teams on different clouds\n\nTools that help: Kubernetes (same containers anywhere), Terraform (IaC across clouds)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ AWS Direct Connect: dedicated fiber from your office to AWS",
+        "→ AWS VPN: encrypted tunnel from your network to AWS VPC",
+        "→ AWS Outposts: AWS hardware IN your data center (AWS-managed)",
+        "→ Storage Gateway: sync on-premise storage with S3",
+        "→ Patient records: on-premise (HIPAA, never leaves building)",
+        "→ Hospital website: AWS (public, scalable)",
+        "→ Medical imaging processing: AWS (compute-intensive bursts)",
+        "→ Connection: Direct Connect (private fiber, not internet)"
+      ]
+    },
+    {
+      "id": "pricing-deep-dive",
+      "title": "💰 Pricing Deep Dive",
+      "type": "pricing",
+      "rawMarkdown": "### The 3 Fundamentals\n\n```\n1. COMPUTE — pay for what you RUN\n   ┌─────────────────────────────────────────────────────────┐\n   │ EC2       → per second (min 60s)                        │\n   │ Lambda    → per millisecond of execution                │\n   │ Fargate   → per vCPU-hour + per GB-memory-hour         │\n   │ Stopped EC2 → $0 compute (still pay EBS volume!)       │\n   └─────────────────────────────────────────────────────────┘\n\n2. STORAGE — pay for what you STORE\n   ┌─────────────────────────────────────────────────────────┐\n   │ S3 Standard  → $0.023 /GB/month                        │\n   │ EBS gp3      → $0.08  /GB/month (even if empty!)      │\n   │ RDS          → per hour (instance) + per GB (storage)  │\n   │ DynamoDB     → per GB stored + per million requests    │\n   └─────────────────────────────────────────────────────────┘\n\n3. DATA TRANSFER — pay for what moves OUT\n   ┌─────────────────────────────────────────────────────────┐\n   │ IN to AWS           → FREE (always)                    │\n   │ Within same AZ      → FREE                             │\n   │ Between AZs         → ~$0.01/GB each direction         │\n   │ Between regions     → $0.02–$0.09/GB                  │\n   │ OUT to internet     → $0.09/GB (first 10TB/month)     │\n   │ OUT via CloudFront  → $0.0085/GB (much cheaper!)      │\n   └─────────────────────────────────────────────────────────┘\n```\n\n> ⚠️ **Hidden cost trap:** Serving 100TB/month directly from EC2 = **$9,000 just in transfer fees.** Use CloudFront — same content, 90% cheaper transfer cost.\n\n### Real Cost Example — Lambda\n```\nFunction: 128MB memory, 200ms execution, 10 million calls/month\n\nRequests: (10M - 1M free) × $0.20/million          = $1.80\nDuration: 0.128GB × 0.200s × 10M × $0.0000166667  = $4.27\n                                              TOTAL  = $6.07/month\n\nSame workload on t3.micro EC2 (24/7): $7.49/month\n→ Lambda is cheaper for event-driven, intermittent workloads\n→ Lambda gets EXPENSIVE when called constantly 24/7 → use EC2 then\n```\n\n### Pricing Models for EC2\n```\nON-DEMAND      → pay per second, no commitment, highest price\n                 Best for: testing, unpredictable workloads, new projects\n\nRESERVED (1-3yr) → up to 72% discount, commit to usage\n                   Best for: steady 24/7 production servers you'll run 1+ years\n                   Types: Standard (specific instance), Convertible (can change)\n\nSAVINGS PLANS  → commit to $/hour spend, applies automatically\n                 More flexible than Reserved. AWS recommends over Reserved.\n                 Best for: production workloads, want flexibility across types\n\nSPOT           → up to 90% discount, use AWS spare capacity\n                 CATCH: AWS can terminate with 2-minute warning\n                 Best for: batch jobs, ML training, fault-tolerant processing\n                 NEVER for: databases, real-time APIs, anything stateful\n\nDEDICATED HOST → physical server dedicated to you\n                 Most expensive. For: per-socket software licenses (Oracle)\n\nFREE TIER      → new accounts get 12 months:\n                 750 hrs t2.micro/month, 5GB S3, 750hrs RDS t2.micro\n                 FOREVER free: 1M Lambda requests/month, 25GB DynamoDB\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### The 3 Fundamentals"
+        },
+        {
+          "type": "diagram",
+          "content": "1. COMPUTE — pay for what you RUN\n   ┌─────────────────────────────────────────────────────────┐\n   │ EC2       → per second (min 60s)                        │\n   │ Lambda    → per millisecond of execution                │\n   │ Fargate   → per vCPU-hour + per GB-memory-hour         │\n   │ Stopped EC2 → $0 compute (still pay EBS volume!)       │\n   └─────────────────────────────────────────────────────────┘\n\n2. STORAGE — pay for what you STORE\n   ┌─────────────────────────────────────────────────────────┐\n   │ S3 Standard  → $0.023 /GB/month                        │\n   │ EBS gp3      → $0.08  /GB/month (even if empty!)      │\n   │ RDS          → per hour (instance) + per GB (storage)  │\n   │ DynamoDB     → per GB stored + per million requests    │\n   └─────────────────────────────────────────────────────────┘\n\n3. DATA TRANSFER — pay for what moves OUT\n   ┌─────────────────────────────────────────────────────────┐\n   │ IN to AWS           → FREE (always)                    │\n   │ Within same AZ      → FREE                             │\n   │ Between AZs         → ~$0.01/GB each direction         │\n   │ Between regions     → $0.02–$0.09/GB                  │\n   │ OUT to internet     → $0.09/GB (first 10TB/month)     │\n   │ OUT via CloudFront  → $0.0085/GB (much cheaper!)      │\n   └─────────────────────────────────────────────────────────┘"
+        },
+        {
+          "type": "paragraph",
+          "content": "> ⚠️ **Hidden cost trap:** Serving 100TB/month directly from EC2 = **$9,000 just in transfer fees.** Use CloudFront — same content, 90% cheaper transfer cost.\n\n### Real Cost Example — Lambda"
+        },
+        {
+          "type": "diagram",
+          "content": "Function: 128MB memory, 200ms execution, 10 million calls/month\n\nRequests: (10M - 1M free) × $0.20/million          = $1.80\nDuration: 0.128GB × 0.200s × 10M × $0.0000166667  = $4.27\n                                              TOTAL  = $6.07/month\n\nSame workload on t3.micro EC2 (24/7): $7.49/month\n→ Lambda is cheaper for event-driven, intermittent workloads\n→ Lambda gets EXPENSIVE when called constantly 24/7 → use EC2 then"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Pricing Models for EC2"
+        },
+        {
+          "type": "diagram",
+          "content": "ON-DEMAND      → pay per second, no commitment, highest price\n                 Best for: testing, unpredictable workloads, new projects\n\nRESERVED (1-3yr) → up to 72% discount, commit to usage\n                   Best for: steady 24/7 production servers you'll run 1+ years\n                   Types: Standard (specific instance), Convertible (can change)\n\nSAVINGS PLANS  → commit to $/hour spend, applies automatically\n                 More flexible than Reserved. AWS recommends over Reserved.\n                 Best for: production workloads, want flexibility across types\n\nSPOT           → up to 90% discount, use AWS spare capacity\n                 CATCH: AWS can terminate with 2-minute warning\n                 Best for: batch jobs, ML training, fault-tolerant processing\n                 NEVER for: databases, real-time APIs, anything stateful\n\nDEDICATED HOST → physical server dedicated to you\n                 Most expensive. For: per-socket software licenses (Oracle)\n\nFREE TIER      → new accounts get 12 months:\n                 750 hrs t2.micro/month, 5GB S3, 750hrs RDS t2.micro\n                 FOREVER free: 1M Lambda requests/month, 25GB DynamoDB"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Lambda is cheaper for event-driven, intermittent workloads",
+        "→ Lambda gets EXPENSIVE when called constantly 24/7 → use EC2 then"
+      ]
+    },
+    {
+      "id": "shared-responsibility-model",
+      "title": "🔐 Shared Responsibility Model",
+      "type": "concept",
+      "rawMarkdown": "> **Core rule:** AWS secures the cloud (the building). You secure IN the cloud (your apartment). Most breaches happen on YOUR side.\n\n```\n┌─────────────────────────────────────────────────────────────────┐\n│                    CUSTOMER RESPONSIBILITY                      │\n│              \"Security IN the Cloud\"                            │\n│                                                                 │\n│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐              │\n│  │ Your Data   │ │ IAM Policies│ │ App Code    │              │\n│  │ (encrypt it)│ │ (least priv)│ │ (secure it) │              │\n│  └─────────────┘ └─────────────┘ └─────────────┘              │\n│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐              │\n│  │ OS Patches  │ │Security Grps│ │ Network Cfg │              │\n│  │ (EC2 only!) │ │ (firewalls) │ │ (VPC/subnet)│              │\n│  └─────────────┘ └─────────────┘ └─────────────┘              │\n├─────────────────────────────────────────────────────────────────┤\n│                    AWS RESPONSIBILITY                           │\n│              \"Security OF the Cloud\"                            │\n│                                                                 │\n│  Physical DCs  │  Hardware  │  Hypervisor  │  Global Network   │\n│  (guards,      │  (servers, │  (isolation) │  (fiber, routing) │\n│   cameras)     │   disks)   │              │                   │\n└─────────────────────────────────────────────────────────────────┘\n```\n\n### Responsibility Changes by Service Type\n\n```\nEC2 (IaaS) — YOU handle the most:\n  YOUR job:  OS patches, runtime, app code, security groups, data encryption\n  AWS job:   Physical hardware, hypervisor\n\nRDS (PaaS) — AWS handles more:\n  YOUR job:  DB schema, user permissions, what data you store, backup settings\n  AWS job:   OS patches, DB engine patches, hardware failure, Multi-AZ failover\n\nLambda (Serverless) — AWS handles almost everything:\n  YOUR job:  Function code, IAM execution role, data your function processes\n  AWS job:   OS, runtime patches, scaling, HA, hardware, everything below code\n\nRULE: More managed the service → more AWS takes → less YOUR security work\n```\n\n### Where Breaches Actually Happen\n```\nIAM access key leaked to GitHub          → YOUR fault (99% of cases)\nS3 bucket made public with sensitive data → YOUR misconfiguration\nSecurity Group: port 3306 open to 0.0.0.0/0 → YOUR rule\nEC2 running unpatched OS for 6 months    → YOUR responsibility\nDatabase password hardcoded in code      → YOUR code\n\nAWS infrastructure breached: essentially NEVER at customer-visible level\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "> **Core rule:** AWS secures the cloud (the building). You secure IN the cloud (your apartment). Most breaches happen on YOUR side."
+        },
+        {
+          "type": "diagram",
+          "content": "┌─────────────────────────────────────────────────────────────────┐\n│                    CUSTOMER RESPONSIBILITY                      │\n│              \"Security IN the Cloud\"                            │\n│                                                                 │\n│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐              │\n│  │ Your Data   │ │ IAM Policies│ │ App Code    │              │\n│  │ (encrypt it)│ │ (least priv)│ │ (secure it) │              │\n│  └─────────────┘ └─────────────┘ └─────────────┘              │\n│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐              │\n│  │ OS Patches  │ │Security Grps│ │ Network Cfg │              │\n│  │ (EC2 only!) │ │ (firewalls) │ │ (VPC/subnet)│              │\n│  └─────────────┘ └─────────────┘ └─────────────┘              │\n├─────────────────────────────────────────────────────────────────┤\n│                    AWS RESPONSIBILITY                           │\n│              \"Security OF the Cloud\"                            │\n│                                                                 │\n│  Physical DCs  │  Hardware  │  Hypervisor  │  Global Network   │\n│  (guards,      │  (servers, │  (isolation) │  (fiber, routing) │\n│   cameras)     │   disks)   │              │                   │\n└─────────────────────────────────────────────────────────────────┘"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Responsibility Changes by Service Type"
+        },
+        {
+          "type": "diagram",
+          "content": "EC2 (IaaS) — YOU handle the most:\n  YOUR job:  OS patches, runtime, app code, security groups, data encryption\n  AWS job:   Physical hardware, hypervisor\n\nRDS (PaaS) — AWS handles more:\n  YOUR job:  DB schema, user permissions, what data you store, backup settings\n  AWS job:   OS patches, DB engine patches, hardware failure, Multi-AZ failover\n\nLambda (Serverless) — AWS handles almost everything:\n  YOUR job:  Function code, IAM execution role, data your function processes\n  AWS job:   OS, runtime patches, scaling, HA, hardware, everything below code\n\nRULE: More managed the service → more AWS takes → less YOUR security work"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Where Breaches Actually Happen"
+        },
+        {
+          "type": "diagram",
+          "content": "IAM access key leaked to GitHub          → YOUR fault (99% of cases)\nS3 bucket made public with sensitive data → YOUR misconfiguration\nSecurity Group: port 3306 open to 0.0.0.0/0 → YOUR rule\nEC2 running unpatched OS for 6 months    → YOUR responsibility\nDatabase password hardcoded in code      → YOUR code\n\nAWS infrastructure breached: essentially NEVER at customer-visible level"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "> **Core rule:** AWS secures the cloud (the building). You secure IN the cloud (your apartment). Most breaches happen on YOUR side."
+      ]
+    },
+    {
+      "id": "interview-qa-cloud-computing",
+      "title": "🎯 Interview Q&A — Cloud Computing",
+      "type": "qa",
+      "rawMarkdown": "> 💬 **Practice tip:** Say each answer OUT LOUD. Target 60–90 seconds per answer.\n\n**Q: Explain cloud computing to a non-technical executive.**\n```\n\"Cloud computing means renting computing power instead of buying it.\nInstead of spending $500,000 upfront on servers, we pay AWS a monthly bill\nand scale up or down based on actual demand. Three business benefits:\nFirst, we only pay for what we use — no wasted idle capacity.\nSecond, we can launch in a new country in 30 minutes instead of 6 months.\nThird, our engineers focus on building our product, not managing hardware.\nNetflix, Airbnb, and Slack built billion-dollar companies on AWS without\nowning a single server.\"\n```\n\n**Q: What is the Shared Responsibility Model? Where do most breaches happen?**\n```\n\"AWS secures the infrastructure — physical data centers, hardware, hypervisor,\nand managed services. Customers secure their configuration — IAM policies,\nsecurity groups, encryption choices, OS patches on EC2, application code.\n\nWhere breaches actually happen: 99% on the customer side.\nMost common: leaked IAM access keys, public S3 buckets with sensitive data,\nsecurity groups with open ports to the internet, unpatched EC2 instances,\ndatabase passwords hardcoded in GitHub.\nAWS's physical infrastructure has essentially never been breached at the\ncustomer-visible level. The cloud is secure. Misconfigured clouds are not.\"\n```\n\n**Q: Why would a company NOT move to cloud?**\n```\n\"There are legitimate reasons to stay on-premise or go hybrid:\n1. Strict data sovereignty laws — some countries require data stays physically\n   within borders. Even though AWS has local regions, some regulations need\n   on-premise physical control.\n2. Cost at extreme scale — running 10,000 servers at 95% utilization 24/7\n   for 5+ years: owned bare-metal hardware CAN be cheaper. This is why\n   Facebook and Google built their own data centers.\n3. Sub-millisecond latency — high-frequency trading needs < 1ms that cloud\n   virtualization overhead can't guarantee. On-premise or colocation wins.\n4. Existing hardware investment — spent $50M on hardware last year.\n   Hard to justify abandoning immediately.\n\nFor most companies building new applications today: cloud is the right choice.\nFor large enterprises with stable, fully-utilized workloads: hybrid makes sense.\"\n```\n\n**Q: Is multi-tenancy safe? My code runs on the same hardware as other companies?**\n```\n\"Yes, demonstrably safe for the vast majority of workloads. AWS uses hardware-\nlevel isolation via the Nitro hypervisor — each VM gets dedicated virtual CPU,\nRAM, and storage. Memory isolation is hardware-enforced, not just software.\nEven if a neighboring VM crashes or is compromised, yours is unaffected.\n\nFor specific regulated workloads with strict compliance needs — classified\ngovernment, some financial systems — EC2 Dedicated Hosts provide physical\nhardware dedicated solely to your account, eliminating the multi-tenancy\nconcern while keeping all other cloud benefits.\"\n```\n\n**Q: What are the 5 characteristics of cloud and can you give an example that violates each?**\n```\n\"1. On-demand self-service — violated by: managed hosting where you email\n   support to add capacity. On-demand yes, self-service no.\n\n2. Broad network access — violated by: a mainframe accessible only via\n   proprietary terminal software on a company VPN. Not broad.\n\n3. Resource pooling — violated by: a Dedicated Host. Still cloud but\n   breaks multi-tenancy. Technically a gray area.\n\n4. Rapid elasticity — violated by: shared hosting where you fill a form\n   and wait 24 hours to upgrade. Not rapid.\n\n5. Measured service — violated by: flat-rate unlimited hosting.\n   Not measured, can't optimize cost per actual usage.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "> 💬 **Practice tip:** Say each answer OUT LOUD. Target 60–90 seconds per answer.\n\n**Q: Explain cloud computing to a non-technical executive.**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Cloud computing means renting computing power instead of buying it.\nInstead of spending $500,000 upfront on servers, we pay AWS a monthly bill\nand scale up or down based on actual demand. Three business benefits:\nFirst, we only pay for what we use — no wasted idle capacity.\nSecond, we can launch in a new country in 30 minutes instead of 6 months.\nThird, our engineers focus on building our product, not managing hardware.\nNetflix, Airbnb, and Slack built billion-dollar companies on AWS without\nowning a single server.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: What is the Shared Responsibility Model? Where do most breaches happen?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"AWS secures the infrastructure — physical data centers, hardware, hypervisor,\nand managed services. Customers secure their configuration — IAM policies,\nsecurity groups, encryption choices, OS patches on EC2, application code.\n\nWhere breaches actually happen: 99% on the customer side.\nMost common: leaked IAM access keys, public S3 buckets with sensitive data,\nsecurity groups with open ports to the internet, unpatched EC2 instances,\ndatabase passwords hardcoded in GitHub.\nAWS's physical infrastructure has essentially never been breached at the\ncustomer-visible level. The cloud is secure. Misconfigured clouds are not.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Why would a company NOT move to cloud?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"There are legitimate reasons to stay on-premise or go hybrid:\n1. Strict data sovereignty laws — some countries require data stays physically\n   within borders. Even though AWS has local regions, some regulations need\n   on-premise physical control.\n2. Cost at extreme scale — running 10,000 servers at 95% utilization 24/7\n   for 5+ years: owned bare-metal hardware CAN be cheaper. This is why\n   Facebook and Google built their own data centers.\n3. Sub-millisecond latency — high-frequency trading needs < 1ms that cloud\n   virtualization overhead can't guarantee. On-premise or colocation wins.\n4. Existing hardware investment — spent $50M on hardware last year.\n   Hard to justify abandoning immediately.\n\nFor most companies building new applications today: cloud is the right choice.\nFor large enterprises with stable, fully-utilized workloads: hybrid makes sense.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Is multi-tenancy safe? My code runs on the same hardware as other companies?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Yes, demonstrably safe for the vast majority of workloads. AWS uses hardware-\nlevel isolation via the Nitro hypervisor — each VM gets dedicated virtual CPU,\nRAM, and storage. Memory isolation is hardware-enforced, not just software.\nEven if a neighboring VM crashes or is compromised, yours is unaffected.\n\nFor specific regulated workloads with strict compliance needs — classified\ngovernment, some financial systems — EC2 Dedicated Hosts provide physical\nhardware dedicated solely to your account, eliminating the multi-tenancy\nconcern while keeping all other cloud benefits.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: What are the 5 characteristics of cloud and can you give an example that violates each?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"1. On-demand self-service — violated by: managed hosting where you email\n   support to add capacity. On-demand yes, self-service no.\n\n2. Broad network access — violated by: a mainframe accessible only via\n   proprietary terminal software on a company VPN. Not broad.\n\n3. Resource pooling — violated by: a Dedicated Host. Still cloud but\n   breaks multi-tenancy. Technically a gray area.\n\n4. Rapid elasticity — violated by: shared hosting where you fill a form\n   and wait 24 hours to upgrade. Not rapid.\n\n5. Measured service — violated by: flat-rate unlimited hosting.\n   Not measured, can't optimize cost per actual usage.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "01-cloud-computing-q1",
+          "question": "Explain cloud computing to a non-technical executive.",
+          "answer": "\"Cloud computing means renting computing power instead of buying it.\nInstead of spending $500,000 upfront on servers, we pay AWS a monthly bill\nand scale up or down based on actual demand. Three business benefits:\nFirst, we only pay for what we use — no wasted idle capacity.\nSecond, we can launch in a new country in 30 minutes instead of 6 months.\nThird, our engineers focus on building our product, not managing hardware.\nNetflix, Airbnb, and Slack built billion-dollar companies on AWS without\nowning a single server.\"",
+          "topicNumber": 1,
+          "topicSlug": "01-cloud-computing",
+          "topic": "Cloud Computing"
+        },
+        {
+          "id": "01-cloud-computing-q2",
+          "question": "What is the Shared Responsibility Model? Where do most breaches happen?",
+          "answer": "\"AWS secures the infrastructure — physical data centers, hardware, hypervisor,\nand managed services. Customers secure their configuration — IAM policies,\nsecurity groups, encryption choices, OS patches on EC2, application code.\n\nWhere breaches actually happen: 99% on the customer side.\nMost common: leaked IAM access keys, public S3 buckets with sensitive data,\nsecurity groups with open ports to the internet, unpatched EC2 instances,\ndatabase passwords hardcoded in GitHub.\nAWS's physical infrastructure has essentially never been breached at the\ncustomer-visible level. The cloud is secure. Misconfigured clouds are not.\"",
+          "topicNumber": 1,
+          "topicSlug": "01-cloud-computing",
+          "topic": "Cloud Computing"
+        },
+        {
+          "id": "01-cloud-computing-q3",
+          "question": "Why would a company NOT move to cloud?",
+          "answer": "\"There are legitimate reasons to stay on-premise or go hybrid:\n1. Strict data sovereignty laws — some countries require data stays physically\n   within borders. Even though AWS has local regions, some regulations need\n   on-premise physical control.\n2. Cost at extreme scale — running 10,000 servers at 95% utilization 24/7\n   for 5+ years: owned bare-metal hardware CAN be cheaper. This is why\n   Facebook and Google built their own data centers.\n3. Sub-millisecond latency — high-frequency trading needs < 1ms that cloud\n   virtualization overhead can't guarantee. On-premise or colocation wins.\n4. Existing hardware investment — spent $50M on hardware last year.\n   Hard to justify abandoning immediately.\n\nFor most companies building new applications today: cloud is the right choice.\nFor large enterprises with stable, fully-utilized workloads: hybrid makes sense.\"",
+          "topicNumber": 1,
+          "topicSlug": "01-cloud-computing",
+          "topic": "Cloud Computing"
+        },
+        {
+          "id": "01-cloud-computing-q4",
+          "question": "Is multi-tenancy safe? My code runs on the same hardware as other companies?",
+          "answer": "\"Yes, demonstrably safe for the vast majority of workloads. AWS uses hardware-\nlevel isolation via the Nitro hypervisor — each VM gets dedicated virtual CPU,\nRAM, and storage. Memory isolation is hardware-enforced, not just software.\nEven if a neighboring VM crashes or is compromised, yours is unaffected.\n\nFor specific regulated workloads with strict compliance needs — classified\ngovernment, some financial systems — EC2 Dedicated Hosts provide physical\nhardware dedicated solely to your account, eliminating the multi-tenancy\nconcern while keeping all other cloud benefits.\"",
+          "topicNumber": 1,
+          "topicSlug": "01-cloud-computing",
+          "topic": "Cloud Computing"
+        },
+        {
+          "id": "01-cloud-computing-q5",
+          "question": "What are the 5 characteristics of cloud and can you give an example that violates each?",
+          "answer": "\"1. On-demand self-service — violated by: managed hosting where you email\n   support to add capacity. On-demand yes, self-service no.\n\n2. Broad network access — violated by: a mainframe accessible only via\n   proprietary terminal software on a company VPN. Not broad.\n\n3. Resource pooling — violated by: a Dedicated Host. Still cloud but\n   breaks multi-tenancy. Technically a gray area.\n\n4. Rapid elasticity — violated by: shared hosting where you fill a form\n   and wait 24 hours to upgrade. Not rapid.\n\n5. Measured service — violated by: flat-rate unlimited hosting.\n   Not measured, can't optimize cost per actual usage.\"",
+          "topicNumber": 1,
+          "topicSlug": "01-cloud-computing",
+          "topic": "Cloud Computing"
+        }
+      ],
+      "revisionPoints": [
+        "> 💬 **Practice tip:** Say each answer OUT LOUD. Target 60–90 seconds per answer."
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nCloud Computing is the WHY behind everything else.\n\nNEXT: IAM → controls WHO can use your cloud\nTHEN: EC2 → the first WHAT you can run in the cloud\nTHEN: S3  → WHERE you store things in the cloud\nTHEN: VPC → HOW things connect inside the cloud\n```\n\n---\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Cloud Computing is the WHY behind everything else.\n\nNEXT: IAM → controls WHO can use your cloud\nTHEN: EC2 → the first WHAT you can run in the cloud\nTHEN: S3  → WHERE you store things in the cloud\nTHEN: VPC → HOW things connect inside the cloud"
+        },
+        {
+          "type": "paragraph",
+          "content": "---\n\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "Cloud Computing is the WHY behind everything else."
+      ]
+    }
+  ]
+}

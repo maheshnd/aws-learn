@@ -1,0 +1,108 @@
+{
+  "number": 15,
+  "slug": "15-observability-cloudwatch-cloudtrail-x-ray",
+  "title": "Observability (CloudWatch, CloudTrail, X-Ray)",
+  "sections": [
+    {
+      "id": "cloudwatch-deep-dive",
+      "title": "📊 CloudWatch — Deep Dive",
+      "type": "concept",
+      "rawMarkdown": "### Metrics\n```\nNAMESPACE: logical grouping of metrics\n→ AWS/EC2, AWS/Lambda, AWS/RDS, YourApp/BusinessMetrics\n\nDIMENSIONS: attributes to filter metrics\n→ EC2: InstanceId=i-abc123, InstanceType=t3.medium\n→ Lambda: FunctionName=myFunction, Resource=myFunction:PROD\n\nRESOLUTION:\nStandard: 1-minute granularity (default for most AWS services)\nHigh-resolution: 1-second granularity (for your custom metrics)\n\nBUILT-IN METRICS BY SERVICE:\n\nEC2:\nCPUUtilization, NetworkIn, NetworkOut, DiskReadOps, DiskWriteOps\nStatusCheckFailed (hardware or software check failed)\nNOT included by default: Memory, disk space (need CloudWatch Agent)\n\nLambda:\nInvocations, Errors, Duration, Throttles, ConcurrentExecutions\nDeadLetterErrors, IteratorAge (for stream-based triggers — staleness)\n\nRDS/Aurora:\nCPUUtilization, DatabaseConnections, FreeStorageSpace\nReadLatency, WriteLatency, FreeableMemory, ReplicaLag\n\nALB:\nRequestCount, TargetResponseTime (latency), HTTPCode_Target_5XX_Count\nHealthyHostCount, UnHealthyHostCount\n\nSQS:\nApproximateNumberOfMessagesVisible (queue depth)\nApproximateAgeOfOldestMessage, NumberOfMessagesSent\n\nCUSTOM METRICS:\naws cloudwatch put-metric-data \\\n  --namespace \"MyApp/Business\" \\\n  --metric-name \"OrdersPlaced\" \\\n  --value 47 \\\n  --unit Count \\\n  --dimensions Environment=Production\n\n→ Track: active users, orders placed, revenue, API errors, custom business KPIs\n→ Cost: $0.30/metric/month (first 10,000 metrics free)\n```\n\n### CloudWatch Alarms\n```\nALARM STATES:\nOK: metric within threshold\nALARM: metric breached threshold\nINSUFFICIENT_DATA: not enough data to determine\n\nACTIONS ON ALARM:\n→ SNS notification → email/Slack/PagerDuty\n→ EC2 Auto Scaling: scale in or scale out\n→ EC2 action: stop, terminate, reboot, recover instance\n→ Systems Manager OpsItem\n\nALARM TYPES:\nMetric Alarm: watch one metric vs threshold\nComposite Alarm: combine multiple alarms with AND/OR logic\n\"ALARM if CPU > 80% AND Memory > 90% (both must be true)\"\n\nMUST-HAVE ALARMS FOR PRODUCTION:\nEC2:      CPUUtilization > 80%, StatusCheckFailed > 0\nLambda:   Errors > 0.1%, Throttles > 0, Duration P99 > 5000ms\nRDS:      CPUUtilization > 80%, DatabaseConnections > 80% of max\n          FreeStorageSpace < 20% of total, ReplicaLag > 60s\nALB:      HTTPCode_Target_5XX_Count > 10, TargetResponseTime P99 > 2000ms\nSQS:      ApproximateNumberOfMessagesVisible on DLQ > 0 (something failing!)\nBilling:  EstimatedCharges > your monthly budget threshold\n```\n\n### CloudWatch Logs\n```\nLOG GROUP: container for a service's logs (/aws/lambda/myFunction)\nLOG STREAM: one log stream per instance/invocation\nRETENTION: 1 day to NEVER (default: never = costly! Set retention!)\n\nSENDING LOGS:\n→ Lambda: automatic (via execution role + awslogs)\n→ EC2: install CloudWatch Agent (needed for app logs, not just console output)\n→ ECS: awslogs log driver in task definition (no agent needed)\n→ API Gateway: enable in stage settings\n→ Your app: CloudWatch SDK or structured logging to stdout\n\nCLOUDWATCH LOGS INSIGHTS (query language):\n# Find all errors in last hour\nfields @timestamp, @message\n| filter @message like /ERROR/\n| sort @timestamp desc\n| limit 100\n\n# Lambda cold start analysis\nfilter @type = \"REPORT\"\n| stats avg(@initDuration), max(@initDuration) by bin(5m)\n\n# P99 Lambda duration\nfilter @type = \"REPORT\"\n| stats pct(@duration, 99) as p99Duration by bin(1h)\n\n# Count 5xx errors per minute\nfilter status >= 500\n| stats count(*) as error_count by bin(1m)\n| sort error_count desc\n\nMETRIC FILTERS:\n→ Extract metrics FROM log patterns\n→ Example: count lines matching \"ERROR\" → publish as metric → alarm on it\n→ Count specific exception type → metric → alarm\n→ No need to instrument code separately if logs already contain the data\n\nSUBSCRIPTION FILTERS:\n→ Stream logs in real-time to Lambda (process) or Kinesis (stream)\n→ Use for: real-time log analytics, sending to Elasticsearch, alerting\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Metrics"
+        },
+        {
+          "type": "diagram",
+          "content": "NAMESPACE: logical grouping of metrics\n→ AWS/EC2, AWS/Lambda, AWS/RDS, YourApp/BusinessMetrics\n\nDIMENSIONS: attributes to filter metrics\n→ EC2: InstanceId=i-abc123, InstanceType=t3.medium\n→ Lambda: FunctionName=myFunction, Resource=myFunction:PROD\n\nRESOLUTION:\nStandard: 1-minute granularity (default for most AWS services)\nHigh-resolution: 1-second granularity (for your custom metrics)\n\nBUILT-IN METRICS BY SERVICE:\n\nEC2:\nCPUUtilization, NetworkIn, NetworkOut, DiskReadOps, DiskWriteOps\nStatusCheckFailed (hardware or software check failed)\nNOT included by default: Memory, disk space (need CloudWatch Agent)\n\nLambda:\nInvocations, Errors, Duration, Throttles, ConcurrentExecutions\nDeadLetterErrors, IteratorAge (for stream-based triggers — staleness)\n\nRDS/Aurora:\nCPUUtilization, DatabaseConnections, FreeStorageSpace\nReadLatency, WriteLatency, FreeableMemory, ReplicaLag\n\nALB:\nRequestCount, TargetResponseTime (latency), HTTPCode_Target_5XX_Count\nHealthyHostCount, UnHealthyHostCount\n\nSQS:\nApproximateNumberOfMessagesVisible (queue depth)\nApproximateAgeOfOldestMessage, NumberOfMessagesSent\n\nCUSTOM METRICS:\naws cloudwatch put-metric-data \\\n  --namespace \"MyApp/Business\" \\\n  --metric-name \"OrdersPlaced\" \\\n  --value 47 \\\n  --unit Count \\\n  --dimensions Environment=Production\n\n→ Track: active users, orders placed, revenue, API errors, custom business KPIs\n→ Cost: $0.30/metric/month (first 10,000 metrics free)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### CloudWatch Alarms"
+        },
+        {
+          "type": "diagram",
+          "content": "ALARM STATES:\nOK: metric within threshold\nALARM: metric breached threshold\nINSUFFICIENT_DATA: not enough data to determine\n\nACTIONS ON ALARM:\n→ SNS notification → email/Slack/PagerDuty\n→ EC2 Auto Scaling: scale in or scale out\n→ EC2 action: stop, terminate, reboot, recover instance\n→ Systems Manager OpsItem\n\nALARM TYPES:\nMetric Alarm: watch one metric vs threshold\nComposite Alarm: combine multiple alarms with AND/OR logic\n\"ALARM if CPU > 80% AND Memory > 90% (both must be true)\"\n\nMUST-HAVE ALARMS FOR PRODUCTION:\nEC2:      CPUUtilization > 80%, StatusCheckFailed > 0\nLambda:   Errors > 0.1%, Throttles > 0, Duration P99 > 5000ms\nRDS:      CPUUtilization > 80%, DatabaseConnections > 80% of max\n          FreeStorageSpace < 20% of total, ReplicaLag > 60s\nALB:      HTTPCode_Target_5XX_Count > 10, TargetResponseTime P99 > 2000ms\nSQS:      ApproximateNumberOfMessagesVisible on DLQ > 0 (something failing!)\nBilling:  EstimatedCharges > your monthly budget threshold"
+        },
+        {
+          "type": "paragraph",
+          "content": "### CloudWatch Logs"
+        },
+        {
+          "type": "diagram",
+          "content": "LOG GROUP: container for a service's logs (/aws/lambda/myFunction)\nLOG STREAM: one log stream per instance/invocation\nRETENTION: 1 day to NEVER (default: never = costly! Set retention!)\n\nSENDING LOGS:\n→ Lambda: automatic (via execution role + awslogs)\n→ EC2: install CloudWatch Agent (needed for app logs, not just console output)\n→ ECS: awslogs log driver in task definition (no agent needed)\n→ API Gateway: enable in stage settings\n→ Your app: CloudWatch SDK or structured logging to stdout\n\nCLOUDWATCH LOGS INSIGHTS (query language):\n# Find all errors in last hour\nfields @timestamp, @message\n| filter @message like /ERROR/\n| sort @timestamp desc\n| limit 100\n\n# Lambda cold start analysis\nfilter @type = \"REPORT\"\n| stats avg(@initDuration), max(@initDuration) by bin(5m)\n\n# P99 Lambda duration\nfilter @type = \"REPORT\"\n| stats pct(@duration, 99) as p99Duration by bin(1h)\n\n# Count 5xx errors per minute\nfilter status >= 500\n| stats count(*) as error_count by bin(1m)\n| sort error_count desc\n\nMETRIC FILTERS:\n→ Extract metrics FROM log patterns\n→ Example: count lines matching \"ERROR\" → publish as metric → alarm on it\n→ Count specific exception type → metric → alarm\n→ No need to instrument code separately if logs already contain the data\n\nSUBSCRIPTION FILTERS:\n→ Stream logs in real-time to Lambda (process) or Kinesis (stream)\n→ Use for: real-time log analytics, sending to Elasticsearch, alerting"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ AWS/EC2, AWS/Lambda, AWS/RDS, YourApp/BusinessMetrics",
+        "→ EC2: InstanceId=i-abc123, InstanceType=t3.medium",
+        "→ Lambda: FunctionName=myFunction, Resource=myFunction:PROD",
+        "→ Track: active users, orders placed, revenue, API errors, custom business KPIs",
+        "→ Cost: $0.30/metric/month (first 10,000 metrics free)",
+        "→ SNS notification → email/Slack/PagerDuty",
+        "→ EC2 Auto Scaling: scale in or scale out",
+        "→ EC2 action: stop, terminate, reboot, recover instance"
+      ]
+    },
+    {
+      "id": "cloudtrail-audit-trail",
+      "title": "🔍 CloudTrail — Audit Trail",
+      "type": "concept",
+      "rawMarkdown": "```\nCloudTrail records EVERY API call in your AWS account.\nWho did what, when, from where, with what result.\n\nEVENT TYPES:\nManagement Events (control plane):\n→ CreateBucket, DeleteInstance, CreateUser, AttachPolicy\n→ Free for first copy in CloudTrail console (Event History: 90 days)\n→ Additional trails: charges apply\n\nData Events (data plane):\n→ S3 GetObject, PutObject, DeleteObject (object-level)\n→ Lambda InvokeFunction\n→ DynamoDB GetItem, PutItem\n→ Not captured by default (very high volume, extra cost)\n→ Enable selectively for sensitive buckets/functions\n\nCLOUDTRAIL LAKE:\n→ Managed data lake for CloudTrail events\n→ Query with SQL via Athena integration\n→ Run complex audit queries: \"all API calls by user X in last 6 months\"\n→ Retention: 7 years (for compliance)\n\nWHAT CLOUDTRAIL CAPTURES:\n{\n  \"userIdentity\": {\n    \"type\": \"IAMUser\",\n    \"arn\": \"arn:aws:iam::123456:user/alice\",\n    \"accessKeyId\": \"AKIA...\"\n  },\n  \"eventTime\": \"2024-01-15T14:30:00Z\",\n  \"eventSource\": \"s3.amazonaws.com\",\n  \"eventName\": \"DeleteObject\",\n  \"awsRegion\": \"us-east-1\",\n  \"sourceIPAddress\": \"203.0.113.50\",\n  \"requestParameters\": {\n    \"bucketName\": \"prod-customer-data\",\n    \"key\": \"users/12345/personal.pdf\"\n  }\n}\n\nENABLE CLOUDTRAIL BEST PRACTICES:\n✅ Enable in ALL regions (attackers often use less-watched regions)\n✅ Enable log file validation (detects tampering with logs)\n✅ Store in dedicated S3 bucket (separate account ideally)\n✅ Enable CloudWatch Logs integration (query + alarm on specific events)\n✅ Retain logs: 1+ year for security, 7 years for compliance\n\nUSEFUL CLOUDTRAIL ALERTS:\n→ Root account login (should never happen)\n→ IAM policy change (unexpected permission escalation)\n→ CloudTrail disabled (attacker covering tracks)\n→ Failed console login 5+ times (brute force attempt)\n→ New IAM user with admin access created\n→ Security Group modified to allow port 22 from 0.0.0.0/0\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "CloudTrail records EVERY API call in your AWS account.\nWho did what, when, from where, with what result.\n\nEVENT TYPES:\nManagement Events (control plane):\n→ CreateBucket, DeleteInstance, CreateUser, AttachPolicy\n→ Free for first copy in CloudTrail console (Event History: 90 days)\n→ Additional trails: charges apply\n\nData Events (data plane):\n→ S3 GetObject, PutObject, DeleteObject (object-level)\n→ Lambda InvokeFunction\n→ DynamoDB GetItem, PutItem\n→ Not captured by default (very high volume, extra cost)\n→ Enable selectively for sensitive buckets/functions\n\nCLOUDTRAIL LAKE:\n→ Managed data lake for CloudTrail events\n→ Query with SQL via Athena integration\n→ Run complex audit queries: \"all API calls by user X in last 6 months\"\n→ Retention: 7 years (for compliance)\n\nWHAT CLOUDTRAIL CAPTURES:\n{\n  \"userIdentity\": {\n    \"type\": \"IAMUser\",\n    \"arn\": \"arn:aws:iam::123456:user/alice\",\n    \"accessKeyId\": \"AKIA...\"\n  },\n  \"eventTime\": \"2024-01-15T14:30:00Z\",\n  \"eventSource\": \"s3.amazonaws.com\",\n  \"eventName\": \"DeleteObject\",\n  \"awsRegion\": \"us-east-1\",\n  \"sourceIPAddress\": \"203.0.113.50\",\n  \"requestParameters\": {\n    \"bucketName\": \"prod-customer-data\",\n    \"key\": \"users/12345/personal.pdf\"\n  }\n}\n\nENABLE CLOUDTRAIL BEST PRACTICES:\n✅ Enable in ALL regions (attackers often use less-watched regions)\n✅ Enable log file validation (detects tampering with logs)\n✅ Store in dedicated S3 bucket (separate account ideally)\n✅ Enable CloudWatch Logs integration (query + alarm on specific events)\n✅ Retain logs: 1+ year for security, 7 years for compliance\n\nUSEFUL CLOUDTRAIL ALERTS:\n→ Root account login (should never happen)\n→ IAM policy change (unexpected permission escalation)\n→ CloudTrail disabled (attacker covering tracks)\n→ Failed console login 5+ times (brute force attempt)\n→ New IAM user with admin access created\n→ Security Group modified to allow port 22 from 0.0.0.0/0"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ CreateBucket, DeleteInstance, CreateUser, AttachPolicy",
+        "→ Free for first copy in CloudTrail console (Event History: 90 days)",
+        "→ Additional trails: charges apply",
+        "→ S3 GetObject, PutObject, DeleteObject (object-level)",
+        "→ Lambda InvokeFunction",
+        "→ DynamoDB GetItem, PutItem",
+        "→ Not captured by default (very high volume, extra cost)",
+        "→ Enable selectively for sensitive buckets/functions"
+      ]
+    },
+    {
+      "id": "xray-distributed-tracing",
+      "title": "🔭 X-Ray — Distributed Tracing",
+      "type": "concept",
+      "rawMarkdown": "```\nWHAT X-RAY DOES:\n→ Traces requests through your entire application\n→ Shows: which service handled it, how long each step took, where errors occurred\n→ Works across: Lambda, EC2, ECS, API Gateway, SQS, DynamoDB, RDS, HTTP calls\n\nWITHOUT X-RAY:\nUser reports: \"my checkout is slow\"\nYou: look at Lambda logs → look at RDS logs → look at external API logs...\n→ Manually correlate across 5 different log streams\n→ Takes hours to find the bottleneck\n\nWITH X-RAY:\n→ Single trace shows complete request journey\n→ Timeline visualization: API Gateway (10ms) → Lambda (50ms) → RDS query (2000ms!)\n→ Found it: RDS query is the bottleneck → add index → fixed\n\nCONCEPTS:\nTrace: one end-to-end request (has unique trace ID)\nSegment: one service's contribution (Lambda segment, RDS segment)\nSubsegment: detailed breakdown within a segment (specific DB query)\nAnnotation: key-value pairs for filtering traces (userId, orderId)\nMetadata: additional data (not indexed, not searchable)\n\nSERVICE MAP:\n→ Visual graph of your architecture\n→ Shows: services, their connections, error rates, latency\n→ Color-coded health: green = healthy, yellow = slow, red = errors\n→ Click a service → see its traces\n\nENABLE X-RAY:\nLambda: Enable Active Tracing in function config\n         (or POWERTOOLS_TRACER_CAPTURE_RESPONSE=true env var)\nECS: Add X-Ray sidecar container to task definition\nEC2: Install X-Ray daemon on instance\nAPI Gateway: Enable X-Ray tracing on stage\nSDK: Wrap SDK clients with X-Ray (automatic segment creation)\n\nSAMPLING:\n→ Tracing every request = high cost (large apps = millions of requests)\n→ Sampling: trace a percentage of requests\n→ Default: 1 request/second + 5% of additional requests\n→ Custom rules: trace 100% of requests with errors, 1% of successful\n→ Cost: $5.00 per million traces recorded (first 100K/month free)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "WHAT X-RAY DOES:\n→ Traces requests through your entire application\n→ Shows: which service handled it, how long each step took, where errors occurred\n→ Works across: Lambda, EC2, ECS, API Gateway, SQS, DynamoDB, RDS, HTTP calls\n\nWITHOUT X-RAY:\nUser reports: \"my checkout is slow\"\nYou: look at Lambda logs → look at RDS logs → look at external API logs...\n→ Manually correlate across 5 different log streams\n→ Takes hours to find the bottleneck\n\nWITH X-RAY:\n→ Single trace shows complete request journey\n→ Timeline visualization: API Gateway (10ms) → Lambda (50ms) → RDS query (2000ms!)\n→ Found it: RDS query is the bottleneck → add index → fixed\n\nCONCEPTS:\nTrace: one end-to-end request (has unique trace ID)\nSegment: one service's contribution (Lambda segment, RDS segment)\nSubsegment: detailed breakdown within a segment (specific DB query)\nAnnotation: key-value pairs for filtering traces (userId, orderId)\nMetadata: additional data (not indexed, not searchable)\n\nSERVICE MAP:\n→ Visual graph of your architecture\n→ Shows: services, their connections, error rates, latency\n→ Color-coded health: green = healthy, yellow = slow, red = errors\n→ Click a service → see its traces\n\nENABLE X-RAY:\nLambda: Enable Active Tracing in function config\n         (or POWERTOOLS_TRACER_CAPTURE_RESPONSE=true env var)\nECS: Add X-Ray sidecar container to task definition\nEC2: Install X-Ray daemon on instance\nAPI Gateway: Enable X-Ray tracing on stage\nSDK: Wrap SDK clients with X-Ray (automatic segment creation)\n\nSAMPLING:\n→ Tracing every request = high cost (large apps = millions of requests)\n→ Sampling: trace a percentage of requests\n→ Default: 1 request/second + 5% of additional requests\n→ Custom rules: trace 100% of requests with errors, 1% of successful\n→ Cost: $5.00 per million traces recorded (first 100K/month free)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Traces requests through your entire application",
+        "→ Shows: which service handled it, how long each step took, where errors occurred",
+        "→ Works across: Lambda, EC2, ECS, API Gateway, SQS, DynamoDB, RDS, HTTP calls",
+        "→ Manually correlate across 5 different log streams",
+        "→ Takes hours to find the bottleneck",
+        "→ Single trace shows complete request journey",
+        "→ Timeline visualization: API Gateway (10ms) → Lambda (50ms) → RDS query (2000ms!)",
+        "→ Found it: RDS query is the bottleneck → add index → fixed"
+      ]
+    }
+  ]
+}

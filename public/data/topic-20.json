@@ -1,0 +1,178 @@
+{
+  "number": 20,
+  "slug": "20-aws-well-architected-architecture-patterns",
+  "title": "AWS Well-Architected + Architecture Patterns",
+  "sections": [
+    {
+      "id": "wellarchitected-framework-6-pillars",
+      "title": "🏛️ Well-Architected Framework — 6 Pillars",
+      "type": "concept",
+      "rawMarkdown": "```\nAWS's official framework for evaluating cloud architectures.\nMaster this → structure ANY architecture question in interviews.\n\nTHE 6 PILLARS:\n1. Operational Excellence\n2. Security\n3. Reliability\n4. Performance Efficiency\n5. Cost Optimization\n6. Sustainability (newest)\n```\n\n### Pillar 1: Operational Excellence\n```\nGOAL: Run and improve systems effectively\n\nKEY PRACTICES:\n→ Everything as code (Infrastructure as Code — CloudFormation, CDK, Terraform)\n→ Frequent, small, reversible changes (CI/CD pipelines)\n→ Anticipate failure (chaos engineering, game days, runbooks)\n→ Learn from failures (blameless post-mortems)\n→ Make operations procedures code (automated runbooks in Systems Manager)\n\nINTERVIEW: \"How do you ensure operational excellence?\"\n\"We use Infrastructure as Code so all changes are reviewed, versioned,\nand reversible. CI/CD pipelines with automated tests before production.\nCloudWatch dashboards for real-time visibility. Documented runbooks\nfor incident response. Regular chaos engineering to find failure modes.\"\n```\n\n### Pillar 2: Security\n```\nGOAL: Protect data, systems, and assets\n\nKEY PRACTICES:\n→ Strong identity: IAM least privilege, MFA everywhere, roles not users for services\n→ Enable traceability: CloudTrail, CloudWatch, GuardDuty\n→ Apply security at all layers (defense in depth)\n→ Automate security best practices (Config rules, Security Hub)\n→ Protect data in transit and at rest (TLS + KMS)\n→ Keep people away from data (automation > human access to production)\n→ Prepare for security events (incident response plan, documented and tested)\n\nINTERVIEW: \"How do you approach security in AWS?\"\n\"Defense in depth across multiple layers:\nNetwork: VPC private subnets, security groups, WAF at CloudFront.\nIdentity: IAM roles with least privilege, MFA enforced, no access keys for services.\nData: SSE-KMS for sensitive data, TLS for all transit, Secrets Manager for creds.\nDetection: CloudTrail for audit, GuardDuty for threat detection, Macie for PII.\nResponse: automated quarantine via EventBridge + Lambda for GuardDuty findings.\"\n```\n\n### Pillar 3: Reliability\n```\nGOAL: Perform intended function correctly and consistently\n\nKEY PRACTICES:\n→ Auto-recover from failure (Multi-AZ, Auto Scaling, health checks)\n→ Test recovery procedures (backup restoration drills, failover tests)\n→ Scale horizontally (more small servers > one big server)\n→ Stop guessing capacity (Auto Scaling)\n→ Manage change through automation (IaC)\n\nRECOVERY METRICS:\nRTO (Recovery Time Objective): how long to restore after failure?\nRPO (Recovery Point Objective): how much data can we lose?\n\nDISASTER RECOVERY STRATEGIES (cheapest → most expensive, slowest → fastest):\nBackup & Restore:   Backup data to S3. Restore when disaster hits.\n                    RTO: hours-days. RPO: hours. Cost: $\nPilot Light:        Core infra always running (DB replication). Scale on disaster.\n                    RTO: minutes-hours. RPO: seconds-minutes. Cost: $$\nWarm Standby:       Scaled-down version always running in DR region.\n                    RTO: seconds-minutes. RPO: seconds. Cost: $$$\nMulti-Site Active:  Full scale in 2+ regions simultaneously.\n                    RTO: seconds. RPO: near-zero. Cost: $$$$\n```\n\n### Pillar 4: Performance Efficiency\n```\nGOAL: Use resources efficiently as demand changes\n\nKEY PRACTICES:\n→ Select right resource types (GPU for ML, memory-optimized for DBs)\n→ Democratize advanced tech (use managed services instead of building)\n→ Go global in minutes (multi-region, CloudFront)\n→ Use serverless architectures (no capacity management)\n→ Experiment more often (cloud makes it cheap to try things)\n\nPERFORMANCE TUNING HIERARCHY:\n1. Profile first (find actual bottleneck with X-Ray, CloudWatch)\n2. Fix the algorithm/query (no hardware can fix O(n²))\n3. Cache (ElastiCache, CloudFront, DAX)\n4. Scale horizontally (more instances)\n5. Scale vertically (bigger instance)\n6. Optimize data storage (indexes, partition key design, storage class)\n```\n\n### Pillar 5: Cost Optimization\n```\nGOAL: Deliver business value at lowest price point\n\nKEY PRACTICES:\n→ Adopt consumption model (pay for what you use)\n→ Measure overall efficiency (cost per transaction, not just total cost)\n→ Eliminate undifferentiated heavy lifting (managed services)\n→ Analyze and attribute expenditure (tagging, Cost Explorer)\n→ Right-size continuously (Compute Optimizer recommendations)\n```\n\n### Pillar 6: Sustainability\n```\nGOAL: Minimize environmental impact\n\nKEY PRACTICES:\n→ Use managed services (AWS optimizes their infrastructure globally)\n→ Use efficient hardware (Graviton3 ARM: 60% better performance/watt vs x86)\n→ Maximize utilization (right-size, don't over-provision)\n→ Use modern programming patterns (event-driven vs polling)\n→ Reduce data movement (cache at edge, process where data lives)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "AWS's official framework for evaluating cloud architectures.\nMaster this → structure ANY architecture question in interviews.\n\nTHE 6 PILLARS:\n1. Operational Excellence\n2. Security\n3. Reliability\n4. Performance Efficiency\n5. Cost Optimization\n6. Sustainability (newest)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Pillar 1: Operational Excellence"
+        },
+        {
+          "type": "diagram",
+          "content": "GOAL: Run and improve systems effectively\n\nKEY PRACTICES:\n→ Everything as code (Infrastructure as Code — CloudFormation, CDK, Terraform)\n→ Frequent, small, reversible changes (CI/CD pipelines)\n→ Anticipate failure (chaos engineering, game days, runbooks)\n→ Learn from failures (blameless post-mortems)\n→ Make operations procedures code (automated runbooks in Systems Manager)\n\nINTERVIEW: \"How do you ensure operational excellence?\"\n\"We use Infrastructure as Code so all changes are reviewed, versioned,\nand reversible. CI/CD pipelines with automated tests before production.\nCloudWatch dashboards for real-time visibility. Documented runbooks\nfor incident response. Regular chaos engineering to find failure modes.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "### Pillar 2: Security"
+        },
+        {
+          "type": "diagram",
+          "content": "GOAL: Protect data, systems, and assets\n\nKEY PRACTICES:\n→ Strong identity: IAM least privilege, MFA everywhere, roles not users for services\n→ Enable traceability: CloudTrail, CloudWatch, GuardDuty\n→ Apply security at all layers (defense in depth)\n→ Automate security best practices (Config rules, Security Hub)\n→ Protect data in transit and at rest (TLS + KMS)\n→ Keep people away from data (automation > human access to production)\n→ Prepare for security events (incident response plan, documented and tested)\n\nINTERVIEW: \"How do you approach security in AWS?\"\n\"Defense in depth across multiple layers:\nNetwork: VPC private subnets, security groups, WAF at CloudFront.\nIdentity: IAM roles with least privilege, MFA enforced, no access keys for services.\nData: SSE-KMS for sensitive data, TLS for all transit, Secrets Manager for creds.\nDetection: CloudTrail for audit, GuardDuty for threat detection, Macie for PII.\nResponse: automated quarantine via EventBridge + Lambda for GuardDuty findings.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "### Pillar 3: Reliability"
+        },
+        {
+          "type": "diagram",
+          "content": "GOAL: Perform intended function correctly and consistently\n\nKEY PRACTICES:\n→ Auto-recover from failure (Multi-AZ, Auto Scaling, health checks)\n→ Test recovery procedures (backup restoration drills, failover tests)\n→ Scale horizontally (more small servers > one big server)\n→ Stop guessing capacity (Auto Scaling)\n→ Manage change through automation (IaC)\n\nRECOVERY METRICS:\nRTO (Recovery Time Objective): how long to restore after failure?\nRPO (Recovery Point Objective): how much data can we lose?\n\nDISASTER RECOVERY STRATEGIES (cheapest → most expensive, slowest → fastest):\nBackup & Restore:   Backup data to S3. Restore when disaster hits.\n                    RTO: hours-days. RPO: hours. Cost: $\nPilot Light:        Core infra always running (DB replication). Scale on disaster.\n                    RTO: minutes-hours. RPO: seconds-minutes. Cost: $$\nWarm Standby:       Scaled-down version always running in DR region.\n                    RTO: seconds-minutes. RPO: seconds. Cost: $$$\nMulti-Site Active:  Full scale in 2+ regions simultaneously.\n                    RTO: seconds. RPO: near-zero. Cost: $$$$"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Pillar 4: Performance Efficiency"
+        },
+        {
+          "type": "diagram",
+          "content": "GOAL: Use resources efficiently as demand changes\n\nKEY PRACTICES:\n→ Select right resource types (GPU for ML, memory-optimized for DBs)\n→ Democratize advanced tech (use managed services instead of building)\n→ Go global in minutes (multi-region, CloudFront)\n→ Use serverless architectures (no capacity management)\n→ Experiment more often (cloud makes it cheap to try things)\n\nPERFORMANCE TUNING HIERARCHY:\n1. Profile first (find actual bottleneck with X-Ray, CloudWatch)\n2. Fix the algorithm/query (no hardware can fix O(n²))\n3. Cache (ElastiCache, CloudFront, DAX)\n4. Scale horizontally (more instances)\n5. Scale vertically (bigger instance)\n6. Optimize data storage (indexes, partition key design, storage class)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Pillar 5: Cost Optimization"
+        },
+        {
+          "type": "diagram",
+          "content": "GOAL: Deliver business value at lowest price point\n\nKEY PRACTICES:\n→ Adopt consumption model (pay for what you use)\n→ Measure overall efficiency (cost per transaction, not just total cost)\n→ Eliminate undifferentiated heavy lifting (managed services)\n→ Analyze and attribute expenditure (tagging, Cost Explorer)\n→ Right-size continuously (Compute Optimizer recommendations)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Pillar 6: Sustainability"
+        },
+        {
+          "type": "diagram",
+          "content": "GOAL: Minimize environmental impact\n\nKEY PRACTICES:\n→ Use managed services (AWS optimizes their infrastructure globally)\n→ Use efficient hardware (Graviton3 ARM: 60% better performance/watt vs x86)\n→ Maximize utilization (right-size, don't over-provision)\n→ Use modern programming patterns (event-driven vs polling)\n→ Reduce data movement (cache at edge, process where data lives)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Everything as code (Infrastructure as Code — CloudFormation, CDK, Terraform)",
+        "→ Frequent, small, reversible changes (CI/CD pipelines)",
+        "→ Anticipate failure (chaos engineering, game days, runbooks)",
+        "→ Learn from failures (blameless post-mortems)",
+        "→ Make operations procedures code (automated runbooks in Systems Manager)",
+        "→ Strong identity: IAM least privilege, MFA everywhere, roles not users for services",
+        "→ Enable traceability: CloudTrail, CloudWatch, GuardDuty",
+        "→ Apply security at all layers (defense in depth)"
+      ]
+    },
+    {
+      "id": "big-picture-everything-connected-bigpicture",
+      "title": "🗺️ BIG PICTURE — Everything Connected {#big-picture}",
+      "type": "concept",
+      "rawMarkdown": "```\nThis is how all AWS services connect in a real production application.\nRead from left (users) to right (data).\n\n╔══════════════════════════════════════════════════════════════════════════════╗\n║                        PRODUCTION AWS ARCHITECTURE                          ║\n╚══════════════════════════════════════════════════════════════════════════════╝\n\nUSERS (worldwide)\n    │\n    ▼\n┌─────────────┐\n│  Route 53   │ ← DNS, health checks, latency routing, failover\n└──────┬──────┘\n       │\n       ▼\n┌─────────────┐\n│ CloudFront  │ ← CDN, WAF, SSL termination, caches static content\n│  (400+ PoP) │   Lambda@Edge for custom logic at edge\n└──────┬──────┘\n       │\n       ├─────────────────────────────────────────┐\n       │                                         │\n       ▼                                         ▼\n┌─────────────┐                          ┌─────────────┐\n│  S3 Bucket  │                          │  ALB        │\n│ (static web)│                          │(public subnet│\n│ OAC secured │                          │  multi-AZ)  │\n└─────────────┘                          └──────┬──────┘\n                                                │\n                     ┌──────────────────────────┤\n                     │                          │\n                     ▼                          ▼\n              ┌─────────────┐          ┌─────────────┐\n              │  API Gateway│          │  ECS Fargate│\n              │  (REST/HTTP)│          │ (app servers │\n              └──────┬──────┘          │  private SN) │\n                     │                └──────┬──────┘\n                     │                       │\n              ┌──────┴──────┐                │\n              ▼             ▼                │\n         ┌────────┐   ┌────────┐            │\n         │Lambda  │   │Lambda  │            │\n         │Function│   │Function│            │\n         └────┬───┘   └────┬───┘            │\n              └──────┬──────┘               │\n                     │                      │\n    ┌────────────────┼──────────────────────┤\n    │                │                      │\n    ▼                ▼                      ▼\n┌────────┐    ┌──────────┐         ┌──────────────┐\n│DynamoDB│    │Aurora    │         │ ElastiCache  │\n│(NoSQL) │    │(MySQL PG)│         │ Redis        │\n│Global  │    │Multi-AZ  │         │ (sessions,   │\n│Tables  │    │Read Reps │         │  cache)      │\n└────────┘    └──────────┘         └──────────────┘\n\nASYNC / EVENT-DRIVEN LAYER:\nECS/Lambda → SNS Topic → SQS Queue A (Email) → Lambda (sends via SES)\n                       → SQS Queue B (Inventory) → Lambda (updates stock)\n                       → SQS Queue C (Analytics) → Kinesis → S3 Data Lake\n\nBACKGROUND WORKFLOWS:\nEventBridge → Step Functions → Lambda (validate) → Lambda (process) → Lambda (notify)\nEventBridge Scheduler → Lambda (nightly cleanup, weekly reports)\n\nSECURITY LAYER (everywhere):\nIAM Roles → every service call authenticated\nKMS → encrypts: EBS, RDS, S3, Lambda env vars, Secrets Manager\nWAF → on CloudFront (blocks SQL injection, XSS, bad bots)\nGuardDuty → threat detection on CloudTrail + VPC Flow Logs + DNS\nSecrets Manager → DB passwords, API keys (auto-rotated)\nVPC → everything in private subnets, public only ALB/CloudFront\n\nOBSERVABILITY LAYER (everywhere):\nCloudWatch Metrics → all services emit metrics\nCloudWatch Logs → Lambda, ECS, RDS, ALB, API Gateway logs\nCloudWatch Alarms → alert on thresholds → SNS → PagerDuty/Slack\nCloudTrail → every API call logged → S3 → Athena for audit queries\nX-Ray → distributed traces from API Gateway → Lambda → RDS → find bottlenecks\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "This is how all AWS services connect in a real production application.\nRead from left (users) to right (data).\n\n╔══════════════════════════════════════════════════════════════════════════════╗\n║                        PRODUCTION AWS ARCHITECTURE                          ║\n╚══════════════════════════════════════════════════════════════════════════════╝\n\nUSERS (worldwide)\n    │\n    ▼\n┌─────────────┐\n│  Route 53   │ ← DNS, health checks, latency routing, failover\n└──────┬──────┘\n       │\n       ▼\n┌─────────────┐\n│ CloudFront  │ ← CDN, WAF, SSL termination, caches static content\n│  (400+ PoP) │   Lambda@Edge for custom logic at edge\n└──────┬──────┘\n       │\n       ├─────────────────────────────────────────┐\n       │                                         │\n       ▼                                         ▼\n┌─────────────┐                          ┌─────────────┐\n│  S3 Bucket  │                          │  ALB        │\n│ (static web)│                          │(public subnet│\n│ OAC secured │                          │  multi-AZ)  │\n└─────────────┘                          └──────┬──────┘\n                                                │\n                     ┌──────────────────────────┤\n                     │                          │\n                     ▼                          ▼\n              ┌─────────────┐          ┌─────────────┐\n              │  API Gateway│          │  ECS Fargate│\n              │  (REST/HTTP)│          │ (app servers │\n              └──────┬──────┘          │  private SN) │\n                     │                └──────┬──────┘\n                     │                       │\n              ┌──────┴──────┐                │\n              ▼             ▼                │\n         ┌────────┐   ┌────────┐            │\n         │Lambda  │   │Lambda  │            │\n         │Function│   │Function│            │\n         └────┬───┘   └────┬───┘            │\n              └──────┬──────┘               │\n                     │                      │\n    ┌────────────────┼──────────────────────┤\n    │                │                      │\n    ▼                ▼                      ▼\n┌────────┐    ┌──────────┐         ┌──────────────┐\n│DynamoDB│    │Aurora    │         │ ElastiCache  │\n│(NoSQL) │    │(MySQL PG)│         │ Redis        │\n│Global  │    │Multi-AZ  │         │ (sessions,   │\n│Tables  │    │Read Reps │         │  cache)      │\n└────────┘    └──────────┘         └──────────────┘\n\nASYNC / EVENT-DRIVEN LAYER:\nECS/Lambda → SNS Topic → SQS Queue A (Email) → Lambda (sends via SES)\n                       → SQS Queue B (Inventory) → Lambda (updates stock)\n                       → SQS Queue C (Analytics) → Kinesis → S3 Data Lake\n\nBACKGROUND WORKFLOWS:\nEventBridge → Step Functions → Lambda (validate) → Lambda (process) → Lambda (notify)\nEventBridge Scheduler → Lambda (nightly cleanup, weekly reports)\n\nSECURITY LAYER (everywhere):\nIAM Roles → every service call authenticated\nKMS → encrypts: EBS, RDS, S3, Lambda env vars, Secrets Manager\nWAF → on CloudFront (blocks SQL injection, XSS, bad bots)\nGuardDuty → threat detection on CloudTrail + VPC Flow Logs + DNS\nSecrets Manager → DB passwords, API keys (auto-rotated)\nVPC → everything in private subnets, public only ALB/CloudFront\n\nOBSERVABILITY LAYER (everywhere):\nCloudWatch Metrics → all services emit metrics\nCloudWatch Logs → Lambda, ECS, RDS, ALB, API Gateway logs\nCloudWatch Alarms → alert on thresholds → SNS → PagerDuty/Slack\nCloudTrail → every API call logged → S3 → Athena for audit queries\nX-Ray → distributed traces from API Gateway → Lambda → RDS → find bottlenecks"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "This is how all AWS services connect in a real production application."
+      ]
+    },
+    {
+      "id": "top-20-architecture-interview-answers",
+      "title": "🎯 Top 20 Architecture Interview Answers",
+      "type": "qa",
+      "rawMarkdown": "**Q1: Design a URL shortener at scale (bit.ly)**\n```\nWrite path: API Gateway → Lambda → generate short code (nanoid) → DynamoDB (shortCode:longURL, TTL)\nRead path: Route 53 → CloudFront → Lambda@Edge → DynamoDB lookup → 301 redirect\nScale: DynamoDB handles unlimited reads. CloudFront caches popular URLs (cache hit = no Lambda).\nCost: nearly zero at low scale. Scales to millions with same architecture.\n```\n\n**Q2: Design system to process 1M images per day**\n```\nUpload: Pre-signed URL → user uploads directly to S3\nProcess: S3 event → SQS queue (buffer) → Lambda (auto-scales) → Rekognition + resize\nStore: processed images to S3, metadata to DynamoDB\nMonitor: SQS queue depth alarm, Lambda error alarm, DLQ for failed images\nScale: 1M/day = ~12/second → Lambda handles easily with SQS batching\n```\n\n**Q3: Design a real-time chat application**\n```\nConnection: API Gateway WebSocket API\nState: connection store in DynamoDB (connectionId → userId, roomId)\nSend message: Lambda → broadcast to all connections in room via API Gateway Management API\nHistory: DynamoDB (roomId + timestamp), TTL for old messages\nMedia: S3 pre-signed upload URLs, CloudFront for delivery\nScale: API Gateway WebSocket handles millions of connections\n```\n\n**Q4: How would you achieve 99.99% availability?**\n```\nMulti-AZ everything: ALB (built-in), ECS/EC2 across 3 AZs, Aurora Multi-AZ, ElastiCache Multi-AZ\nAuto Scaling: replace failed instances automatically\nHealth checks: ALB + Route 53 health checks\nCloudFront: cached content serves even if origin is down\nMulti-region: Route 53 failover routing + Aurora Global Database (< 1 min failover)\nCircuit breakers: don't let one failing service cascade to others\nRegular failover tests: verify the failover actually works (chaos engineering)\n```\n\n**Q5: Design database migration with zero downtime**\n```\nPhase 1 (weeks): set up DMS (Database Migration Service) for continuous replication\nPhase 2 (day): enable dual-write in application (write to OLD and NEW database)\nPhase 3 (day): let replication catch up → verify data consistency\nPhase 4 (minutes): switch read traffic to new database (Route 53 weighted: 10% → 100%)\nPhase 5: stop writing to old database → verify → decommission old database\nKey: DMS handles schema conversion + continuous replication. App dual-write = safety net.\nRollback: any step → switch traffic back to old DB (still receiving dual-writes during cutover)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q1: Design a URL shortener at scale (bit.ly)**"
+        },
+        {
+          "type": "diagram",
+          "content": "Write path: API Gateway → Lambda → generate short code (nanoid) → DynamoDB (shortCode:longURL, TTL)\nRead path: Route 53 → CloudFront → Lambda@Edge → DynamoDB lookup → 301 redirect\nScale: DynamoDB handles unlimited reads. CloudFront caches popular URLs (cache hit = no Lambda).\nCost: nearly zero at low scale. Scales to millions with same architecture."
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q2: Design system to process 1M images per day**"
+        },
+        {
+          "type": "diagram",
+          "content": "Upload: Pre-signed URL → user uploads directly to S3\nProcess: S3 event → SQS queue (buffer) → Lambda (auto-scales) → Rekognition + resize\nStore: processed images to S3, metadata to DynamoDB\nMonitor: SQS queue depth alarm, Lambda error alarm, DLQ for failed images\nScale: 1M/day = ~12/second → Lambda handles easily with SQS batching"
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q3: Design a real-time chat application**"
+        },
+        {
+          "type": "diagram",
+          "content": "Connection: API Gateway WebSocket API\nState: connection store in DynamoDB (connectionId → userId, roomId)\nSend message: Lambda → broadcast to all connections in room via API Gateway Management API\nHistory: DynamoDB (roomId + timestamp), TTL for old messages\nMedia: S3 pre-signed upload URLs, CloudFront for delivery\nScale: API Gateway WebSocket handles millions of connections"
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q4: How would you achieve 99.99% availability?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "Multi-AZ everything: ALB (built-in), ECS/EC2 across 3 AZs, Aurora Multi-AZ, ElastiCache Multi-AZ\nAuto Scaling: replace failed instances automatically\nHealth checks: ALB + Route 53 health checks\nCloudFront: cached content serves even if origin is down\nMulti-region: Route 53 failover routing + Aurora Global Database (< 1 min failover)\nCircuit breakers: don't let one failing service cascade to others\nRegular failover tests: verify the failover actually works (chaos engineering)"
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q5: Design database migration with zero downtime**"
+        },
+        {
+          "type": "diagram",
+          "content": "Phase 1 (weeks): set up DMS (Database Migration Service) for continuous replication\nPhase 2 (day): enable dual-write in application (write to OLD and NEW database)\nPhase 3 (day): let replication catch up → verify data consistency\nPhase 4 (minutes): switch read traffic to new database (Route 53 weighted: 10% → 100%)\nPhase 5: stop writing to old database → verify → decommission old database\nKey: DMS handles schema conversion + continuous replication. App dual-write = safety net.\nRollback: any step → switch traffic back to old DB (still receiving dual-writes during cutover)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "**Q1: Design a URL shortener at scale (bit.ly)**"
+      ]
+    },
+    {
+      "id": "quick-reference-service-decision-trees",
+      "title": "📋 Quick Reference — Service Decision Trees",
+      "type": "concept",
+      "rawMarkdown": "```\nCOMPUTE:\nNeed to run code:\n  → Runs occasionally, short duration (< 15min), event-driven? → Lambda\n  → Runs continuously, containerized? → ECS Fargate\n  → Need specific OS/hardware, full control? → EC2\n  → Need GPU? → EC2 p/g family\n  → Batch processing, variable scale? → AWS Batch\n\nSTORAGE:\nNeed to store data:\n  → Files/objects (images, documents, backups)? → S3\n  → Block storage for EC2? → EBS gp3\n  → Shared filesystem (multiple EC2)? → EFS\n  → Temporary scratch space (ultra-fast)? → Instance Store\n\nDATABASE:\nNeed a database:\n  → Relational SQL (complex queries, joins)? → Aurora PostgreSQL/MySQL\n  → NoSQL, need < 10ms at any scale? → DynamoDB\n  → Cache in front of database? → ElastiCache Redis\n  → Analytics on petabytes? → Redshift\n  → Full-text search? → OpenSearch\n\nNETWORKING:\nNeed to connect:\n  → Users → your app → ALB (HTTP/HTTPS, path routing)\n  → Users → gaming/IoT → NLB (TCP/UDP, ultra-low latency)\n  → Global users, low latency → CloudFront (CDN)\n  → Your domain → AWS → Route 53 (DNS)\n  → Private VPC connection → VPC Peering or Transit Gateway\n  → On-premise to AWS → Direct Connect or VPN\n\nMESSAGING:\nNeed to decouple:\n  → Buffer between two services → SQS\n  → Fan-out one event to many → SNS\n  → Complex event routing, AWS service events → EventBridge\n  → Multi-step workflow → Step Functions\n  → Real-time streaming → Kinesis\n\nSECURITY:\nNeed to secure:\n  → Who can access what → IAM\n  → Encrypt data → KMS\n  → Store secrets → Secrets Manager\n  → Filter bad HTTP → WAF\n  → Detect threats → GuardDuty\n  → Find PII in S3 → Macie\n  → Scan containers → Inspector\n```\n\n---\n\n*AWS Master Notes — Complete*\n*Topics: 01 Cloud Computing → 20 Architecture + Big Picture*\n*Every service. Every concept. Every interview answer.*\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "COMPUTE:\nNeed to run code:\n  → Runs occasionally, short duration (< 15min), event-driven? → Lambda\n  → Runs continuously, containerized? → ECS Fargate\n  → Need specific OS/hardware, full control? → EC2\n  → Need GPU? → EC2 p/g family\n  → Batch processing, variable scale? → AWS Batch\n\nSTORAGE:\nNeed to store data:\n  → Files/objects (images, documents, backups)? → S3\n  → Block storage for EC2? → EBS gp3\n  → Shared filesystem (multiple EC2)? → EFS\n  → Temporary scratch space (ultra-fast)? → Instance Store\n\nDATABASE:\nNeed a database:\n  → Relational SQL (complex queries, joins)? → Aurora PostgreSQL/MySQL\n  → NoSQL, need < 10ms at any scale? → DynamoDB\n  → Cache in front of database? → ElastiCache Redis\n  → Analytics on petabytes? → Redshift\n  → Full-text search? → OpenSearch\n\nNETWORKING:\nNeed to connect:\n  → Users → your app → ALB (HTTP/HTTPS, path routing)\n  → Users → gaming/IoT → NLB (TCP/UDP, ultra-low latency)\n  → Global users, low latency → CloudFront (CDN)\n  → Your domain → AWS → Route 53 (DNS)\n  → Private VPC connection → VPC Peering or Transit Gateway\n  → On-premise to AWS → Direct Connect or VPN\n\nMESSAGING:\nNeed to decouple:\n  → Buffer between two services → SQS\n  → Fan-out one event to many → SNS\n  → Complex event routing, AWS service events → EventBridge\n  → Multi-step workflow → Step Functions\n  → Real-time streaming → Kinesis\n\nSECURITY:\nNeed to secure:\n  → Who can access what → IAM\n  → Encrypt data → KMS\n  → Store secrets → Secrets Manager\n  → Filter bad HTTP → WAF\n  → Detect threats → GuardDuty\n  → Find PII in S3 → Macie\n  → Scan containers → Inspector"
+        },
+        {
+          "type": "paragraph",
+          "content": "---\n\n*AWS Master Notes — Complete*\n*Topics: 01 Cloud Computing → 20 Architecture + Big Picture*\n*Every service. Every concept. Every interview answer.*\n\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Runs occasionally, short duration (< 15min), event-driven? → Lambda"
+      ]
+    }
+  ]
+}

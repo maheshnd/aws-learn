@@ -1,0 +1,1030 @@
+{
+  "entries": [
+    {
+      "id": "01-cloud-computing-the-story-why-cloud-was-invented",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "sectionId": "the-story-why-cloud-was-invented",
+      "sectionTitle": "🧒 The Story — Why Cloud Was Invented",
+      "type": "story",
+      "text": "Imagine it's 2004. You want to build a website like Facebook. What you had to do before cloud: Amazon had this exact problem internally. Every team waited months for servers. In ~2003, they built an internal platform: any team could get a server in minutes, pay per hour, return when done. In 2006 they realized: every company has this problem. They opened it to the public → AWS was born. - March 2006 → S3 launched ($0.15/GB/month) - August 2006 → EC2 launched (beta) - 2010 → Amazon.com itself mig"
+    },
+    {
+      "id": "01-cloud-computing-what-cloud-computing-actually-is",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "sectionId": "what-cloud-computing-actually-is",
+      "sectionTitle": "📐 What Cloud Computing Actually Is",
+      "type": "concept",
+      "text": "> Simple version: Renting computing power over the internet, paying only for what you use, scaling up or down in seconds. Official NIST definition (broken down): | Term | Plain English | |------|--------------| | On-demand | Get it when you need it. No waiting, no approval. | | Network access | Access over the internet from anywhere | | Shared pool | AWS's millions of servers, you borrow some | | Rapidly provisioned | Server in 90 seconds. Delete in 30 seconds. | | Minimal effort | You don't man"
+    },
+    {
+      "id": "01-cloud-computing-5-the-5-characteristics-of-cloud-nist-must-know",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "sectionId": "5-the-5-characteristics-of-cloud-nist-must-know",
+      "sectionTitle": "5️⃣ The 5 Characteristics of Cloud (NIST — Must Know)",
+      "type": "concept",
+      "text": "> If a service is missing even one of these → it is NOT truly cloud. Use this to challenge any vendor's \"cloud\" claim. 1. On-Demand Self-Service 2. Broad Network Access 3. Resource Pooling (Multi-tenancy) 4. Rapid Elasticity 5. Measured Service (Pay-as-you-go) ---"
+    },
+    {
+      "id": "01-cloud-computing-service-models-iaas-paas-saas",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "sectionId": "service-models-iaas-paas-saas",
+      "sectionTitle": "🏗️ Service Models — IaaS, PaaS, SaaS",
+      "type": "concept",
+      "text": "> Pizza analogy: Made at home = you do everything. Restaurant dine-in = they cook, you eat there. Delivery = they do everything. IaaS — Infrastructure as a Service PaaS — Platform as a Service SaaS — Software as a Service ---"
+    },
+    {
+      "id": "01-cloud-computing-deployment-models",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "sectionId": "deployment-models",
+      "sectionTitle": "🌍 Deployment Models",
+      "type": "concept",
+      "text": " Public Cloud Private Cloud Hybrid Cloud Multi-Cloud ---"
+    },
+    {
+      "id": "01-cloud-computing-pricing-deep-dive",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "sectionId": "pricing-deep-dive",
+      "sectionTitle": "💰 Pricing Deep Dive",
+      "type": "pricing",
+      "text": " The 3 Fundamentals > ⚠️ Hidden cost trap: Serving 100TB/month directly from EC2 = $9,000 just in transfer fees. Use CloudFront — same content, 90% cheaper transfer cost. Real Cost Example — Lambda Pricing Models for EC2 ---"
+    },
+    {
+      "id": "01-cloud-computing-shared-responsibility-model",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "sectionId": "shared-responsibility-model",
+      "sectionTitle": "🔐 Shared Responsibility Model",
+      "type": "concept",
+      "text": "> Core rule: AWS secures the cloud (the building). You secure IN the cloud (your apartment). Most breaches happen on YOUR side. Responsibility Changes by Service Type Where Breaches Actually Happen ---"
+    },
+    {
+      "id": "01-cloud-computing-interview-qa-cloud-computing",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "sectionId": "interview-qa-cloud-computing",
+      "sectionTitle": "🎯 Interview Q&A — Cloud Computing",
+      "type": "qa",
+      "text": "> 💬 Practice tip: Say each answer OUT LOUD. Target 60–90 seconds per answer. Q: Explain cloud computing to a non-technical executive. Q: What is the Shared Responsibility Model? Where do most breaches happen? Q: Why would a company NOT move to cloud? Q: Is multi-tenancy safe? My code runs on the same hardware as other companies? Q: What are the 5 characteristics of cloud and can you give an example that violates each? ---"
+    },
+    {
+      "id": "01-cloud-computing-connects-to",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " --- ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-the-story-why-iam-exists",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "the-story-why-iam-exists",
+      "sectionTitle": "🧒 The Story — Why IAM Exists",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-iam-is-global",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "iam-is-global",
+      "sectionTitle": "🌐 IAM is Global",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-root-account-vs-iam-users",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "root-account-vs-iam-users",
+      "sectionTitle": "🔑 Root Account vs IAM Users",
+      "type": "concept",
+      "text": " Root Account IAM Users ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-iam-groups",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "iam-groups",
+      "sectionTitle": "👥 IAM Groups",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-iam-roles",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "iam-roles",
+      "sectionTitle": "🎭 IAM Roles",
+      "type": "concept",
+      "text": "> Key insight: Roles are for AWS services and temporary access. They're actually MORE secure than users because credentials auto-expire. Why Roles Instead of Access Keys for Services Common Role Examples ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-iam-policies-the-core-of-everything",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "iam-policies-the-core-of-everything",
+      "sectionTitle": "📜 IAM Policies — The Core of Everything",
+      "type": "concept",
+      "text": "> Policies are JSON documents that define what is ALLOWED or DENIED. Understanding policies is the difference between a junior and senior engineer. Policy Structure Every field explained: | Field | Values | Meaning | |-------|--------|---------| | Version | Always \"2012-10-17\" | Policy language version (don't change this) | | Sid | Any string | Statement ID — optional label for humans | | Effect | \"Allow\" or \"Deny\" | Explicitly allow or deny this action | | Action | \"service:action\" | What AWS A"
+    },
+    {
+      "id": "02-iam-identity-access-management-mfa-multifactor-authentication",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "mfa-multifactor-authentication",
+      "sectionTitle": "🔐 MFA — Multi-Factor Authentication",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-how-to-access-aws-3-ways",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "how-to-access-aws-3-ways",
+      "sectionTitle": "💻 How to Access AWS (3 Ways)",
+      "type": "concept",
+      "text": " 1. AWS Management Console (Browser) 2. AWS CLI (Command Line) 3. AWS SDK (In Your Code) ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-iam-advanced-concepts",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "iam-advanced-concepts",
+      "sectionTitle": "🔬 IAM Advanced Concepts",
+      "type": "concept",
+      "text": " Permission Boundaries IAM Conditions (Fine-Grained Control) Service Control Policies (SCPs) IAM Access Analyzer ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-iam-best-practices-checklist",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "iam-best-practices-checklist",
+      "sectionTitle": "✅ IAM Best Practices Checklist",
+      "type": "checklist",
+      "text": " ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-interview-qa-iam",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "interview-qa-iam",
+      "sectionTitle": "🎯 Interview Q&A — IAM",
+      "type": "qa",
+      "text": " Q: What is the difference between an IAM User, Group, and Role? Q: Why should you use IAM Roles for EC2 instead of storing access keys? Q: A Deny policy and an Allow policy exist for the same action. What happens? Q: How would you design IAM for a startup with 20 developers, 5 DevOps, 2 admins? Q: You discover an IAM access key was committed to a public GitHub repo. What do you do? Q: What is the principle of least privilege and how do you implement it at scale? ---"
+    },
+    {
+      "id": "02-iam-identity-access-management-connects-to",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " --- ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-the-story",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-what-you-get-with-an-ec2-instance",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "what-you-get-with-an-ec2-instance",
+      "sectionTitle": "🖥️ What You Get with an EC2 Instance",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-instance-types-the-complete-guide",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "instance-types-the-complete-guide",
+      "sectionTitle": "📊 Instance Types — The Complete Guide",
+      "type": "concept",
+      "text": " Naming Convention Instance Families Size Progression Burstable Instances (T family) — CPU Credits ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-ec2-pricing-all-6-models",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "ec2-pricing-all-6-models",
+      "sectionTitle": "💵 EC2 Pricing — All 6 Models",
+      "type": "pricing",
+      "text": " On-Demand Deep Dive Reserved Instances Deep Dive Savings Plans Deep Dive Spot Instances Deep Dive ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-security-groups-ec2-firewalls",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "security-groups-ec2-firewalls",
+      "sectionTitle": "🔒 Security Groups — EC2 Firewalls",
+      "type": "concept",
+      "text": " Security Group Referencing (Advanced) Common Security Group Configurations ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-ec2-instance-lifecycle",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "ec2-instance-lifecycle",
+      "sectionTitle": "💾 EC2 Instance Lifecycle",
+      "type": "concept",
+      "text": " Stop vs Terminate ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-user-data-startup-scripts",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "user-data-startup-scripts",
+      "sectionTitle": "🚀 User Data — Startup Scripts",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-instance-metadata-service-imds",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "instance-metadata-service-imds",
+      "sectionTitle": "🔍 Instance Metadata Service (IMDS)",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-connecting-to-ec2-3-methods",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "connecting-to-ec2-3-methods",
+      "sectionTitle": "🔑 Connecting to EC2 — 3 Methods",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-ec2-key-gotchas-and-production-tips",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "ec2-key-gotchas-and-production-tips",
+      "sectionTitle": "💡 EC2 Key Gotchas and Production Tips",
+      "type": "warning",
+      "text": " ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-interview-qa-ec2",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "interview-qa-ec2",
+      "sectionTitle": "🎯 Interview Q&A — EC2",
+      "type": "qa",
+      "text": " Q: When would you choose EC2 vs Lambda vs ECS? Q: Your EC2 instance is running slow. Walk me through diagnosing it. Q: How do you deploy to EC2 with zero downtime? Q: What is the difference between stopping and terminating an EC2 instance? Q: Spot vs Reserved vs On-Demand — which would you use for a production API? ---"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-connects-to",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " ---"
+    },
+    {
+      "id": "04-ec2-storage-ebs-efs-instance-store-the-story",
+      "topicNumber": 4,
+      "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "04-ec2-storage-ebs-efs-instance-store-ebs-elastic-block-store",
+      "topicNumber": 4,
+      "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+      "sectionId": "ebs-elastic-block-store",
+      "sectionTitle": "💾 EBS — Elastic Block Store",
+      "type": "concept",
+      "text": " What is EBS? EBS Volume Types gp2 vs gp3 — Always Use gp3 EBS — Important Behaviours EBS Snapshots ---"
+    },
+    {
+      "id": "04-ec2-storage-ebs-efs-instance-store-instance-store-ephemeral-storage",
+      "topicNumber": 4,
+      "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+      "sectionId": "instance-store-ephemeral-storage",
+      "sectionTitle": "⚡ Instance Store — Ephemeral Storage",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "04-ec2-storage-ebs-efs-instance-store-efs-elastic-file-system",
+      "topicNumber": 4,
+      "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+      "sectionId": "efs-elastic-file-system",
+      "sectionTitle": "🗄️ EFS — Elastic File System",
+      "type": "concept",
+      "text": " EFS Storage Classes EFS vs EBS vs S3 — Decision Matrix ---"
+    },
+    {
+      "id": "04-ec2-storage-ebs-efs-instance-store-interview-qa-ec2-storage",
+      "topicNumber": 4,
+      "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+      "sectionId": "interview-qa-ec2-storage",
+      "sectionTitle": "🎯 Interview Q&A — EC2 Storage",
+      "type": "qa",
+      "text": " Q: What happens to EBS data when an EC2 instance is terminated? Q: Our database EC2 instance is hitting IOPS limits. What do you do? Q: When would you use Instance Store over EBS? Q: EBS vs EFS — when do you choose each? ---"
+    },
+    {
+      "id": "04-ec2-storage-ebs-efs-instance-store-connects-to",
+      "topicNumber": 4,
+      "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " --- ---"
+    },
+    {
+      "id": "05-ami-auto-scaling-group-load-balancing-ami-amazon-machine-image",
+      "topicNumber": 5,
+      "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+      "sectionId": "ami-amazon-machine-image",
+      "sectionTitle": "🖼️ AMI — Amazon Machine Image",
+      "type": "concept",
+      "text": " What is an AMI? AMI Types Creating a Custom AMI (Golden Image Pattern) ---"
+    },
+    {
+      "id": "05-ami-auto-scaling-group-load-balancing-load-balancing-elb",
+      "topicNumber": 5,
+      "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+      "sectionId": "load-balancing-elb",
+      "sectionTitle": "⚖️ Load Balancing — ELB",
+      "type": "concept",
+      "text": " Why Load Balancing? The 3 Types of AWS Load Balancers ALB — Application Load Balancer (Most Common) NLB — Network Load Balancer GLB — Gateway Load Balancer ALB Target Groups ---"
+    },
+    {
+      "id": "05-ami-auto-scaling-group-load-balancing-auto-scaling-group-asg",
+      "topicNumber": 5,
+      "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+      "sectionId": "auto-scaling-group-asg",
+      "sectionTitle": "📈 Auto Scaling Group (ASG)",
+      "type": "concept",
+      "text": " What is an ASG? Launch Template vs Launch Configuration Scaling Policies — 3 Types ASG + ALB Integration ASG Lifecycle Hooks ASG Key Settings and Gotchas ---"
+    },
+    {
+      "id": "05-ami-auto-scaling-group-load-balancing-interview-qa-ami-asg-alb",
+      "topicNumber": 5,
+      "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+      "sectionId": "interview-qa-ami-asg-alb",
+      "sectionTitle": "🎯 Interview Q&A — AMI + ASG + ALB",
+      "type": "qa",
+      "text": " Q: How does Auto Scaling work with a Load Balancer? Q: Our app is having a Black Friday traffic spike. How do you prepare? Q: What is the difference between ALB and NLB? ---"
+    },
+    {
+      "id": "05-ami-auto-scaling-group-load-balancing-connects-to",
+      "topicNumber": 5,
+      "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " --- ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-the-story",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-s3-core-concepts",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "s3-core-concepts",
+      "sectionTitle": "🪣 S3 Core Concepts",
+      "type": "concept",
+      "text": " Buckets Objects S3 URL Formats ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-s3-security-access-control",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "s3-security-access-control",
+      "sectionTitle": "🔒 S3 Security — Access Control",
+      "type": "concept",
+      "text": " The Hierarchy Bucket Policies Block Public Access — Enable This Always ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-s3-encryption",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "s3-encryption",
+      "sectionTitle": "🔐 S3 Encryption",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-s3-storage-classes",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "s3-storage-classes",
+      "sectionTitle": "📁 S3 Storage Classes",
+      "type": "concept",
+      "text": " S3 Lifecycle Policies ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-s3-versioning",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "s3-versioning",
+      "sectionTitle": "🔄 S3 Versioning",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-s3-replication",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "s3-replication",
+      "sectionTitle": "🌍 S3 Replication",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-s3-static-website-hosting",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "s3-static-website-hosting",
+      "sectionTitle": "🌐 S3 Static Website Hosting",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-s3-advanced-features",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "s3-advanced-features",
+      "sectionTitle": "🔗 S3 Advanced Features",
+      "type": "concept",
+      "text": " Pre-signed URLs S3 Event Notifications S3 Select and Glacier Select S3 Object Lock ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-interview-qa-s3",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "interview-qa-s3",
+      "sectionTitle": "🎯 Interview Q&A — S3",
+      "type": "qa",
+      "text": " Q: How would you design an image upload system for 1 million users? Q: S3 bucket contains sensitive data. How do you secure it? Q: How does S3 achieve 11 nines of durability? Q: Your S3 costs jumped from $500 to $2000 this month. How do you investigate? ---"
+    },
+    {
+      "id": "06-s3-simple-storage-service-connects-to",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " --- ---"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-the-story-choosing-the-right-database",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "sectionId": "the-story-choosing-the-right-database",
+      "sectionTitle": "🧒 The Story — Choosing the Right Database",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-rds-relational-database-service",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "sectionId": "rds-relational-database-service",
+      "sectionTitle": "🗃️ RDS — Relational Database Service",
+      "type": "concept",
+      "text": " What is RDS? RDS Storage Multi-AZ Deployment — High Availability Read Replicas — Performance Scaling RDS Backup ---"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-aurora-awss-premium-database",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "sectionId": "aurora-awss-premium-database",
+      "sectionTitle": "⚡ Aurora — AWS's Premium Database",
+      "type": "concept",
+      "text": " What Makes Aurora Different Aurora Cluster Architecture Aurora Serverless Aurora Global Database ---"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-dynamodb-nosql-at-any-scale",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "sectionId": "dynamodb-nosql-at-any-scale",
+      "sectionTitle": "⚡ DynamoDB — NoSQL at Any Scale",
+      "type": "concept",
+      "text": " Core Philosophy DynamoDB Fundamentals DynamoDB Capacity Modes DynamoDB Indexes DynamoDB Advanced Features SQL vs DynamoDB — Decision Framework ---"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-elasticache-inmemory-caching",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "sectionId": "elasticache-inmemory-caching",
+      "sectionTitle": "🚀 ElastiCache — In-Memory Caching",
+      "type": "concept",
+      "text": " What is ElastiCache? Redis vs Memcached ElastiCache Patterns ElastiCache for Session Management ---"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-interview-qa-databases",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "sectionId": "interview-qa-databases",
+      "sectionTitle": "🎯 Interview Q&A — Databases",
+      "type": "qa",
+      "text": " Q: Aurora vs RDS MySQL — which would you choose and why? Q: DynamoDB is showing throttling errors. What's happening and how do you fix it? Q: When would you use ElastiCache vs DynamoDB for caching? Q: Design a database architecture for a multi-tenant SaaS application with 10,000 tenants. ---"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-connects-to",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " ---"
+    },
+    {
+      "id": "08-vpc-virtual-private-cloud-the-story",
+      "topicNumber": 8,
+      "topicSlug": "08-vpc-virtual-private-cloud",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "08-vpc-virtual-private-cloud-vpc-core-concepts",
+      "topicNumber": 8,
+      "topicSlug": "08-vpc-virtual-private-cloud",
+      "sectionId": "vpc-core-concepts",
+      "sectionTitle": "🏗️ VPC Core Concepts",
+      "type": "concept",
+      "text": " VPC and CIDR Blocks Subnets Internet Gateway (IGW) NAT Gateway — Private Subnet Internet Access Route Tables ---"
+    },
+    {
+      "id": "08-vpc-virtual-private-cloud-network-security-sg-vs-nacl",
+      "topicNumber": 8,
+      "topicSlug": "08-vpc-virtual-private-cloud",
+      "sectionId": "network-security-sg-vs-nacl",
+      "sectionTitle": "🔒 Network Security — SG vs NACL",
+      "type": "concept",
+      "text": " Security Groups (Reviewed Deeply) Network ACLs (NACLs) ---"
+    },
+    {
+      "id": "08-vpc-virtual-private-cloud-vpc-connectivity-options",
+      "topicNumber": 8,
+      "topicSlug": "08-vpc-virtual-private-cloud",
+      "sectionId": "vpc-connectivity-options",
+      "sectionTitle": "🔌 VPC Connectivity Options",
+      "type": "concept",
+      "text": " VPC Peering Transit Gateway (TGW) VPC Endpoints — Access AWS Services Without Internet AWS Direct Connect ---"
+    },
+    {
+      "id": "08-vpc-virtual-private-cloud-vpc-design-production-reference-architecture",
+      "topicNumber": 8,
+      "topicSlug": "08-vpc-virtual-private-cloud",
+      "sectionId": "vpc-design-production-reference-architecture",
+      "sectionTitle": "📐 VPC Design — Production Reference Architecture",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "08-vpc-virtual-private-cloud-interview-qa-vpc",
+      "topicNumber": 8,
+      "topicSlug": "08-vpc-virtual-private-cloud",
+      "sectionId": "interview-qa-vpc",
+      "sectionTitle": "🎯 Interview Q&A — VPC",
+      "type": "qa",
+      "text": " Q: Walk me through what happens when a user requests your web app. Q: Our Lambda can't connect to our RDS database. How do you debug? Q: How do you reduce NAT Gateway costs? ---"
+    },
+    {
+      "id": "08-vpc-virtual-private-cloud-connects-to",
+      "topicNumber": 8,
+      "topicSlug": "08-vpc-virtual-private-cloud",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " --- ---"
+    },
+    {
+      "id": "09-route-53-dns-the-story",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "09-route-53-dns-dns-record-types",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "sectionId": "dns-record-types",
+      "sectionTitle": "📋 DNS Record Types",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "09-route-53-dns-hosted-zones",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "sectionId": "hosted-zones",
+      "sectionTitle": "🗂️ Hosted Zones",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "09-route-53-dns-routing-policies-the-core-of-route-53",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "sectionId": "routing-policies-the-core-of-route-53",
+      "sectionTitle": "🌍 Routing Policies — The Core of Route 53",
+      "type": "concept",
+      "text": " 1. Simple Routing 2. Weighted Routing 3. Latency-Based Routing 4. Failover Routing 5. Geolocation Routing 6. Geoproximity Routing (Traffic Flow) 7. Multi-Value Answer Routing 8. IP-Based Routing ---"
+    },
+    {
+      "id": "09-route-53-dns-health-checks",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "sectionId": "health-checks",
+      "sectionTitle": "💚 Health Checks",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "09-route-53-dns-interview-qa-route-53",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "sectionId": "interview-qa-route-53",
+      "sectionTitle": "🎯 Interview Q&A — Route 53",
+      "type": "qa",
+      "text": " Q: What's the difference between CNAME and Alias records? Q: How do you implement blue-green deployment with Route 53? ---"
+    },
+    {
+      "id": "09-route-53-dns-connects-to",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " ---"
+    },
+    {
+      "id": "10-cloudfront-cdn-the-story",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "10-cloudfront-cdn-cloudfront-components",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "sectionId": "cloudfront-components",
+      "sectionTitle": "⚙️ CloudFront Components",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "10-cloudfront-cdn-cloudfront-security",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "sectionId": "cloudfront-security",
+      "sectionTitle": "🔒 CloudFront Security",
+      "type": "concept",
+      "text": " OAC — Origin Access Control (for S3) WAF + CloudFront HTTPS + Custom Certificates ---"
+    },
+    {
+      "id": "10-cloudfront-cdn-caching-and-ttl",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "sectionId": "caching-and-ttl",
+      "sectionTitle": "⏱️ Caching and TTL",
+      "type": "concept",
+      "text": " Cache Invalidation ---"
+    },
+    {
+      "id": "10-cloudfront-cdn-cloudfront-use-cases",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "sectionId": "cloudfront-use-cases",
+      "sectionTitle": "🌐 CloudFront Use Cases",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "10-cloudfront-cdn-interview-qa-cloudfront",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "sectionId": "interview-qa-cloudfront",
+      "sectionTitle": "🎯 Interview Q&A — CloudFront",
+      "type": "qa",
+      "text": " Q: Why use CloudFront in front of S3 instead of serving directly from S3? Q: How do you ensure users always get the latest version of your SPA after deployment? ---"
+    },
+    {
+      "id": "10-cloudfront-cdn-connects-to",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " --- ---"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-the-story-why-decoupling-matters",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "sectionId": "the-story-why-decoupling-matters",
+      "sectionTitle": "🧒 The Story — Why Decoupling Matters",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-sqs-simple-queue-service",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "sectionId": "sqs-simple-queue-service",
+      "sectionTitle": "📬 SQS — Simple Queue Service",
+      "type": "concept",
+      "text": " Core Concepts Visibility Timeout — Critical Concept Standard vs FIFO Queue Dead Letter Queue (DLQ) Long Polling vs Short Polling SQS Pricing ---"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-sns-simple-notification-service",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "sectionId": "sns-simple-notification-service",
+      "sectionTitle": "📢 SNS — Simple Notification Service",
+      "type": "concept",
+      "text": " What is SNS? SNS Components SNS + SQS Fan-Out Pattern SNS Message Filtering ---"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-eventbridge-event-bus",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "sectionId": "eventbridge-event-bus",
+      "sectionTitle": "🚌 EventBridge — Event Bus",
+      "type": "concept",
+      "text": " What is EventBridge? EventBridge Components EventBridge vs SNS vs SQS ---"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-step-functions-workflow-orchestration",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "sectionId": "step-functions-workflow-orchestration",
+      "sectionTitle": "🔄 Step Functions — Workflow Orchestration",
+      "type": "concept",
+      "text": " What is Step Functions? State Machine Concepts Express vs Standard Workflows ---"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-interview-qa-messaging",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "sectionId": "interview-qa-messaging",
+      "sectionTitle": "🎯 Interview Q&A — Messaging",
+      "type": "qa",
+      "text": " Q: SQS vs SNS vs EventBridge — explain the difference and when to use each. Q: How would you handle a situation where SQS messages are failing repeatedly? ---"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-connects-to",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " --- ---"
+    },
+    {
+      "id": "12-lambda-serverless-compute-deep-dive-lambda-internals-how-it-actually-works",
+      "topicNumber": 12,
+      "topicSlug": "12-lambda-serverless-compute-deep-dive",
+      "sectionId": "lambda-internals-how-it-actually-works",
+      "sectionTitle": "⚙️ Lambda Internals — How it Actually Works",
+      "type": "concept",
+      "text": " Cold Starts — Deep Understanding Concurrency — How Lambda Scales ---"
+    },
+    {
+      "id": "12-lambda-serverless-compute-deep-dive-lambda-triggers-event-sources",
+      "topicNumber": 12,
+      "topicSlug": "12-lambda-serverless-compute-deep-dive",
+      "sectionId": "lambda-triggers-event-sources",
+      "sectionTitle": "🔌 Lambda Triggers (Event Sources)",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "12-lambda-serverless-compute-deep-dive-lambda-in-vpc",
+      "topicNumber": 12,
+      "topicSlug": "12-lambda-serverless-compute-deep-dive",
+      "sectionId": "lambda-in-vpc",
+      "sectionTitle": "🌐 Lambda in VPC",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "12-lambda-serverless-compute-deep-dive-lambda-best-practices",
+      "topicNumber": 12,
+      "topicSlug": "12-lambda-serverless-compute-deep-dive",
+      "sectionId": "lambda-best-practices",
+      "sectionTitle": "💡 Lambda Best Practices",
+      "type": "checklist",
+      "text": " ---"
+    },
+    {
+      "id": "13-containers-ecs-ecr-eks-docker-quick-review",
+      "topicNumber": 13,
+      "topicSlug": "13-containers-ecs-ecr-eks",
+      "sectionId": "docker-quick-review",
+      "sectionTitle": "🐳 Docker Quick Review",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "13-containers-ecs-ecr-eks-ecr-elastic-container-registry",
+      "topicNumber": 13,
+      "topicSlug": "13-containers-ecs-ecr-eks",
+      "sectionId": "ecr-elastic-container-registry",
+      "sectionTitle": "📦 ECR — Elastic Container Registry",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "13-containers-ecs-ecr-eks-ecs-elastic-container-service",
+      "topicNumber": 13,
+      "topicSlug": "13-containers-ecs-ecr-eks",
+      "sectionId": "ecs-elastic-container-service",
+      "sectionTitle": "🚢 ECS — Elastic Container Service",
+      "type": "concept",
+      "text": " Task Definition — The Blueprint ECS Launch Types ECS Service — Long-Running Apps ECS vs EKS ---"
+    },
+    {
+      "id": "13-containers-ecs-ecr-eks-interview-qa-lambda-containers",
+      "topicNumber": 13,
+      "topicSlug": "13-containers-ecs-ecr-eks",
+      "sectionId": "interview-qa-lambda-containers",
+      "sectionTitle": "🎯 Interview Q&A — Lambda & Containers",
+      "type": "qa",
+      "text": " Q: Lambda vs ECS Fargate — how do you decide? Q: How do you manage secrets in ECS containers? ---"
+    },
+    {
+      "id": "13-containers-ecs-ecr-eks-connects-to",
+      "topicNumber": 13,
+      "topicSlug": "13-containers-ecs-ecr-eks",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " --- ---"
+    },
+    {
+      "id": "14-api-gateway-what-is-api-gateway",
+      "topicNumber": 14,
+      "topicSlug": "14-api-gateway",
+      "sectionId": "what-is-api-gateway",
+      "sectionTitle": "🚪 What is API Gateway?",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "14-api-gateway-api-gateway-types",
+      "topicNumber": 14,
+      "topicSlug": "14-api-gateway",
+      "sectionId": "api-gateway-types",
+      "sectionTitle": "🔧 API Gateway Types",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "14-api-gateway-key-features",
+      "topicNumber": 14,
+      "topicSlug": "14-api-gateway",
+      "sectionId": "key-features",
+      "sectionTitle": "🔑 Key Features",
+      "type": "concept",
+      "text": " Authentication Options Throttling and Caching ---"
+    },
+    {
+      "id": "15-observability-cloudwatch-cloudtrail-x-ray-cloudwatch-deep-dive",
+      "topicNumber": 15,
+      "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+      "sectionId": "cloudwatch-deep-dive",
+      "sectionTitle": "📊 CloudWatch — Deep Dive",
+      "type": "concept",
+      "text": " Metrics CloudWatch Alarms CloudWatch Logs ---"
+    },
+    {
+      "id": "15-observability-cloudwatch-cloudtrail-x-ray-cloudtrail-audit-trail",
+      "topicNumber": 15,
+      "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+      "sectionId": "cloudtrail-audit-trail",
+      "sectionTitle": "🔍 CloudTrail — Audit Trail",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "15-observability-cloudwatch-cloudtrail-x-ray-xray-distributed-tracing",
+      "topicNumber": 15,
+      "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+      "sectionId": "xray-distributed-tracing",
+      "sectionTitle": "🔭 X-Ray — Distributed Tracing",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-kms-key-management-service",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "sectionId": "kms-key-management-service",
+      "sectionTitle": "🔑 KMS — Key Management Service",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-secrets-manager",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "sectionId": "secrets-manager",
+      "sectionTitle": "🔐 Secrets Manager",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-waf-web-application-firewall",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "sectionId": "waf-web-application-firewall",
+      "sectionTitle": "🛡️ WAF — Web Application Firewall",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-guardduty-threat-detection",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "sectionId": "guardduty-threat-detection",
+      "sectionTitle": "🔍 GuardDuty — Threat Detection",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "17-cost-optimization-aws-cost-optimization-complete-guide",
+      "topicNumber": 17,
+      "topicSlug": "17-cost-optimization",
+      "sectionId": "aws-cost-optimization-complete-guide",
+      "sectionTitle": "💰 AWS Cost Optimization — Complete Guide",
+      "type": "pricing",
+      "text": " Finding Where Money Goes EC2 Cost Optimization Database Cost Optimization S3 Cost Optimization Data Transfer Cost Optimization Cost Allocation Tags ---"
+    },
+    {
+      "id": "20-aws-well-architected-architecture-patterns-wellarchitected-framework-6-pillars",
+      "topicNumber": 20,
+      "topicSlug": "20-aws-well-architected-architecture-patterns",
+      "sectionId": "wellarchitected-framework-6-pillars",
+      "sectionTitle": "🏛️ Well-Architected Framework — 6 Pillars",
+      "type": "concept",
+      "text": " Pillar 1: Operational Excellence Pillar 2: Security Pillar 3: Reliability Pillar 4: Performance Efficiency Pillar 5: Cost Optimization Pillar 6: Sustainability ---"
+    },
+    {
+      "id": "20-aws-well-architected-architecture-patterns-big-picture-everything-connected-bigpicture",
+      "topicNumber": 20,
+      "topicSlug": "20-aws-well-architected-architecture-patterns",
+      "sectionId": "big-picture-everything-connected-bigpicture",
+      "sectionTitle": "🗺️ BIG PICTURE — Everything Connected {#big-picture}",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "20-aws-well-architected-architecture-patterns-top-20-architecture-interview-answers",
+      "topicNumber": 20,
+      "topicSlug": "20-aws-well-architected-architecture-patterns",
+      "sectionId": "top-20-architecture-interview-answers",
+      "sectionTitle": "🎯 Top 20 Architecture Interview Answers",
+      "type": "qa",
+      "text": " Q1: Design a URL shortener at scale (bit.ly) Q2: Design system to process 1M images per day Q3: Design a real-time chat application Q4: How would you achieve 99.99% availability? Q5: Design database migration with zero downtime ---"
+    },
+    {
+      "id": "20-aws-well-architected-architecture-patterns-quick-reference-service-decision-trees",
+      "topicNumber": 20,
+      "topicSlug": "20-aws-well-architected-architecture-patterns",
+      "sectionId": "quick-reference-service-decision-trees",
+      "sectionTitle": "📋 Quick Reference — Service Decision Trees",
+      "type": "concept",
+      "text": " --- AWS Master Notes — Complete Topics: 01 Cloud Computing → 20 Architecture + Big Picture Every service. Every concept. Every interview answer. ---"
+    }
+  ]
+}

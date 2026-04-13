@@ -1,0 +1,415 @@
+{
+  "number": 6,
+  "slug": "06-s3-simple-storage-service",
+  "title": "S3 (Simple Storage Service)",
+  "sections": [
+    {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nYou're building an app. Users upload profile photos.\n\nOPTION A — Store on EC2:\n→ Photo saved to /uploads/ on EC2 disk (EBS)\n→ App scales to 3 EC2 instances → only ONE has the photo!\n→ User hits different instance → photo missing!\n→ Instance terminates → EBS deleted → photos GONE forever\n→ 10 million users, 5MB each = 50TB → one EBS volume fills up\n\nOPTION B — Store in S3:\n→ Photo uploaded to S3 bucket (completely separate from EC2)\n→ Any EC2 instance retrieves same photo via URL/SDK\n→ Instances come and go — S3 holds everything safely\n→ 10 million users, 5MB each = 50TB → S3 handles this. Unlimited.\n→ S3 stores 3+ copies across 3 AZs automatically\n→ 11 nines of durability (99.999999999%)\n\nS3 is the RIGHT answer for all object storage needs.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "You're building an app. Users upload profile photos.\n\nOPTION A — Store on EC2:\n→ Photo saved to /uploads/ on EC2 disk (EBS)\n→ App scales to 3 EC2 instances → only ONE has the photo!\n→ User hits different instance → photo missing!\n→ Instance terminates → EBS deleted → photos GONE forever\n→ 10 million users, 5MB each = 50TB → one EBS volume fills up\n\nOPTION B — Store in S3:\n→ Photo uploaded to S3 bucket (completely separate from EC2)\n→ Any EC2 instance retrieves same photo via URL/SDK\n→ Instances come and go — S3 holds everything safely\n→ 10 million users, 5MB each = 50TB → S3 handles this. Unlimited.\n→ S3 stores 3+ copies across 3 AZs automatically\n→ 11 nines of durability (99.999999999%)\n\nS3 is the RIGHT answer for all object storage needs."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Photo saved to /uploads/ on EC2 disk (EBS)",
+        "→ App scales to 3 EC2 instances → only ONE has the photo!",
+        "→ User hits different instance → photo missing!",
+        "→ Instance terminates → EBS deleted → photos GONE forever",
+        "→ 10 million users, 5MB each = 50TB → one EBS volume fills up",
+        "→ Photo uploaded to S3 bucket (completely separate from EC2)",
+        "→ Any EC2 instance retrieves same photo via URL/SDK",
+        "→ Instances come and go — S3 holds everything safely"
+      ]
+    },
+    {
+      "id": "s3-core-concepts",
+      "title": "🪣 S3 Core Concepts",
+      "type": "concept",
+      "rawMarkdown": "### Buckets\n```\nBUCKET = top-level container (like a root folder)\n\nRules:\n→ Name: globally unique across ALL AWS accounts worldwide\n→ Name: 3–63 characters, lowercase, letters/numbers/hyphens only\n→ Name: cannot be an IP address (192.168.1.1 is invalid)\n→ Region-specific: created in one region, stays there\n→ No hierarchy: S3 has no real folders (just key prefixes that look like folders)\n→ Globally accessible: anyone with URL/permissions can access\n\nGood naming convention:\ncompany-environment-purpose-region\nmycompany-prod-uploads-us-east-1\nmycompany-dev-logs-eu-west-1\nmycompany-prod-assets-global\n```\n\n### Objects\n```\nOBJECT = a file stored in S3\n\nComponents:\n→ Key:      the full \"path\" — \"images/users/profile/user123.jpg\"\n→ Value:    the actual data (bytes of your file)\n→ Metadata: key-value pairs — content-type, last-modified, custom tags\n→ Version ID: if versioning enabled, each version has unique ID\n→ Tags:     up to 10 key-value pairs (for cost allocation, lifecycle)\n\nSize limits:\n→ Minimum: 0 bytes\n→ Maximum: 5 TB per object\n→ Single PUT upload: max 5 GB\n→ Files > 100 MB: use Multipart Upload (recommended)\n→ Files > 5 GB: MUST use Multipart Upload (required)\n\nKEYS look like paths but aren't really:\n\"images/2024/january/photo.jpg\"\n→ There is NO folder called \"images\"\n→ There is NO folder called \"2024\"\n→ The ENTIRE string is the key (flat namespace)\n→ S3 console shows it as folders for convenience (it's a lie)\n→ This matters for: prefix-based access control, lifecycle policies\n```\n\n### S3 URL Formats\n```\nPath-style (being deprecated):\nhttps://s3.amazonaws.com/mybucket/mykey\n\nVirtual-hosted style (current standard):\nhttps://mybucket.s3.amazonaws.com/mykey\nhttps://mybucket.s3.us-east-1.amazonaws.com/mykey\n\nWebsite endpoint:\nhttp://mybucket.s3-website-us-east-1.amazonaws.com\n\nPre-signed URL (temporary access):\nhttps://mybucket.s3.amazonaws.com/mykey?X-Amz-Signature=abc&X-Amz-Expires=3600\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Buckets"
+        },
+        {
+          "type": "diagram",
+          "content": "BUCKET = top-level container (like a root folder)\n\nRules:\n→ Name: globally unique across ALL AWS accounts worldwide\n→ Name: 3–63 characters, lowercase, letters/numbers/hyphens only\n→ Name: cannot be an IP address (192.168.1.1 is invalid)\n→ Region-specific: created in one region, stays there\n→ No hierarchy: S3 has no real folders (just key prefixes that look like folders)\n→ Globally accessible: anyone with URL/permissions can access\n\nGood naming convention:\ncompany-environment-purpose-region\nmycompany-prod-uploads-us-east-1\nmycompany-dev-logs-eu-west-1\nmycompany-prod-assets-global"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Objects"
+        },
+        {
+          "type": "diagram",
+          "content": "OBJECT = a file stored in S3\n\nComponents:\n→ Key:      the full \"path\" — \"images/users/profile/user123.jpg\"\n→ Value:    the actual data (bytes of your file)\n→ Metadata: key-value pairs — content-type, last-modified, custom tags\n→ Version ID: if versioning enabled, each version has unique ID\n→ Tags:     up to 10 key-value pairs (for cost allocation, lifecycle)\n\nSize limits:\n→ Minimum: 0 bytes\n→ Maximum: 5 TB per object\n→ Single PUT upload: max 5 GB\n→ Files > 100 MB: use Multipart Upload (recommended)\n→ Files > 5 GB: MUST use Multipart Upload (required)\n\nKEYS look like paths but aren't really:\n\"images/2024/january/photo.jpg\"\n→ There is NO folder called \"images\"\n→ There is NO folder called \"2024\"\n→ The ENTIRE string is the key (flat namespace)\n→ S3 console shows it as folders for convenience (it's a lie)\n→ This matters for: prefix-based access control, lifecycle policies"
+        },
+        {
+          "type": "paragraph",
+          "content": "### S3 URL Formats"
+        },
+        {
+          "type": "text-panel",
+          "content": "Path-style (being deprecated):\nhttps://s3.amazonaws.com/mybucket/mykey\n\nVirtual-hosted style (current standard):\nhttps://mybucket.s3.amazonaws.com/mykey\nhttps://mybucket.s3.us-east-1.amazonaws.com/mykey\n\nWebsite endpoint:\nhttp://mybucket.s3-website-us-east-1.amazonaws.com\n\nPre-signed URL (temporary access):\nhttps://mybucket.s3.amazonaws.com/mykey?X-Amz-Signature=abc&X-Amz-Expires=3600"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Name: globally unique across ALL AWS accounts worldwide",
+        "→ Name: 3–63 characters, lowercase, letters/numbers/hyphens only",
+        "→ Name: cannot be an IP address (192.168.1.1 is invalid)",
+        "→ Region-specific: created in one region, stays there",
+        "→ No hierarchy: S3 has no real folders (just key prefixes that look like folders)",
+        "→ Globally accessible: anyone with URL/permissions can access",
+        "→ Key:      the full \"path\" — \"images/users/profile/user123.jpg\"",
+        "→ Value:    the actual data (bytes of your file)"
+      ]
+    },
+    {
+      "id": "s3-security-access-control",
+      "title": "🔒 S3 Security — Access Control",
+      "type": "concept",
+      "rawMarkdown": "### The Hierarchy\n```\nS3 access is controlled by MULTIPLE overlapping systems:\n\n1. IAM Policies (identity-based)\n   → Attached to IAM users/roles/groups\n   → \"This IAM user can do s3:GetObject on this bucket\"\n\n2. Bucket Policies (resource-based)\n   → Attached to the BUCKET itself\n   → \"Anyone with this account can read from this bucket\"\n   → \"This specific IP can access this bucket\"\n   → Can grant access to OTHER AWS accounts (cross-account)\n\n3. Block Public Access (account/bucket level override)\n   → 4 settings that OVERRIDE everything else\n   → Even if bucket policy says \"public\" → Block Public Access says NO\n   → ENABLE THIS BY DEFAULT on all buckets and accounts\n\n4. ACLs (Access Control Lists) — LEGACY, mostly disabled now\n   → Object-level permissions\n   → AWS recommends disabling ACLs and using policies instead\n\nEVALUATION ORDER:\nBlock Public Access → if blocks → DENIED (end)\nThen: IAM + Bucket Policy evaluated together\nExplicit DENY → DENIED\nExplicit ALLOW → ALLOWED\nNo match → DENIED\n```\n\n### Bucket Policies\n```json\nExample 1 — Make bucket readable by specific IAM role:\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Effect\": \"Allow\",\n    \"Principal\": {\n      \"AWS\": \"arn:aws:iam::123456789:role/MyAppRole\"\n    },\n    \"Action\": \"s3:GetObject\",\n    \"Resource\": \"arn:aws:s3:::my-bucket/*\"\n  }]\n}\n\nExample 2 — Allow specific IP range only:\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Effect\": \"Deny\",\n    \"Principal\": \"*\",\n    \"Action\": \"s3:*\",\n    \"Resource\": [\"arn:aws:s3:::my-bucket\", \"arn:aws:s3:::my-bucket/*\"],\n    \"Condition\": {\n      \"NotIpAddress\": {\"aws:SourceIp\": \"203.0.113.0/24\"}\n    }\n  }]\n}\n\nExample 3 — Force HTTPS only:\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Effect\": \"Deny\",\n    \"Principal\": \"*\",\n    \"Action\": \"s3:*\",\n    \"Resource\": [\"arn:aws:s3:::my-bucket/*\"],\n    \"Condition\": {\n      \"Bool\": {\"aws:SecureTransport\": \"false\"}\n    }\n  }]\n}\n```\n\n### Block Public Access — Enable This Always\n```\n4 settings (all should be ON for most buckets):\n\nBlockPublicAcls       → Ignore any ACL that grants public access\nIgnorePublicAcls      → Ignore existing public ACLs\nBlockPublicPolicy     → Reject bucket policies that grant public access\nRestrictPublicBuckets → Restrict public bucket policies (cross-account restrictions)\n\nWHERE TO SET:\n1. Account level: applies to ALL buckets (set this first!)\n2. Bucket level: per-bucket override\n\nEXCEPTION: static website hosting bucket (intentionally public)\n→ You MUST disable Block Public Access for static website bucket\n→ But add bucket policy that allows only GetObject, not other actions\n\nREAL WORLD INCIDENT:\nCapital One breach (2019): misconfigured IAM role + S3 bucket with\noverly permissive access → 100 million customer records leaked\n→ Block Public Access would NOT have prevented this (it was IAM misconfiguration)\n→ Shows: multiple layers of security needed\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### The Hierarchy"
+        },
+        {
+          "type": "diagram",
+          "content": "S3 access is controlled by MULTIPLE overlapping systems:\n\n1. IAM Policies (identity-based)\n   → Attached to IAM users/roles/groups\n   → \"This IAM user can do s3:GetObject on this bucket\"\n\n2. Bucket Policies (resource-based)\n   → Attached to the BUCKET itself\n   → \"Anyone with this account can read from this bucket\"\n   → \"This specific IP can access this bucket\"\n   → Can grant access to OTHER AWS accounts (cross-account)\n\n3. Block Public Access (account/bucket level override)\n   → 4 settings that OVERRIDE everything else\n   → Even if bucket policy says \"public\" → Block Public Access says NO\n   → ENABLE THIS BY DEFAULT on all buckets and accounts\n\n4. ACLs (Access Control Lists) — LEGACY, mostly disabled now\n   → Object-level permissions\n   → AWS recommends disabling ACLs and using policies instead\n\nEVALUATION ORDER:\nBlock Public Access → if blocks → DENIED (end)\nThen: IAM + Bucket Policy evaluated together\nExplicit DENY → DENIED\nExplicit ALLOW → ALLOWED\nNo match → DENIED"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Bucket Policies"
+        },
+        {
+          "type": "code",
+          "content": "Example 1 — Make bucket readable by specific IAM role:\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Effect\": \"Allow\",\n    \"Principal\": {\n      \"AWS\": \"arn:aws:iam::123456789:role/MyAppRole\"\n    },\n    \"Action\": \"s3:GetObject\",\n    \"Resource\": \"arn:aws:s3:::my-bucket/*\"\n  }]\n}\n\nExample 2 — Allow specific IP range only:\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Effect\": \"Deny\",\n    \"Principal\": \"*\",\n    \"Action\": \"s3:*\",\n    \"Resource\": [\"arn:aws:s3:::my-bucket\", \"arn:aws:s3:::my-bucket/*\"],\n    \"Condition\": {\n      \"NotIpAddress\": {\"aws:SourceIp\": \"203.0.113.0/24\"}\n    }\n  }]\n}\n\nExample 3 — Force HTTPS only:\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Effect\": \"Deny\",\n    \"Principal\": \"*\",\n    \"Action\": \"s3:*\",\n    \"Resource\": [\"arn:aws:s3:::my-bucket/*\"],\n    \"Condition\": {\n      \"Bool\": {\"aws:SecureTransport\": \"false\"}\n    }\n  }]\n}",
+          "language": "json"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Block Public Access — Enable This Always"
+        },
+        {
+          "type": "diagram",
+          "content": "4 settings (all should be ON for most buckets):\n\nBlockPublicAcls       → Ignore any ACL that grants public access\nIgnorePublicAcls      → Ignore existing public ACLs\nBlockPublicPolicy     → Reject bucket policies that grant public access\nRestrictPublicBuckets → Restrict public bucket policies (cross-account restrictions)\n\nWHERE TO SET:\n1. Account level: applies to ALL buckets (set this first!)\n2. Bucket level: per-bucket override\n\nEXCEPTION: static website hosting bucket (intentionally public)\n→ You MUST disable Block Public Access for static website bucket\n→ But add bucket policy that allows only GetObject, not other actions\n\nREAL WORLD INCIDENT:\nCapital One breach (2019): misconfigured IAM role + S3 bucket with\noverly permissive access → 100 million customer records leaked\n→ Block Public Access would NOT have prevented this (it was IAM misconfiguration)\n→ Shows: multiple layers of security needed"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ You MUST disable Block Public Access for static website bucket",
+        "→ But add bucket policy that allows only GetObject, not other actions",
+        "→ Block Public Access would NOT have prevented this (it was IAM misconfiguration)",
+        "→ Shows: multiple layers of security needed"
+      ]
+    },
+    {
+      "id": "s3-encryption",
+      "title": "🔐 S3 Encryption",
+      "type": "concept",
+      "rawMarkdown": "```\nS3 ENCRYPTION AT REST (4 options):\n\n1. SSE-S3 (Server-Side Encryption with S3-Managed Keys):\n   → AWS generates and manages keys automatically\n   → AES-256 encryption\n   → Free (no extra cost)\n   → Header: x-amz-server-side-encryption: AES256\n   → DEFAULT since January 2023 (all new objects encrypted)\n   → No audit trail for key usage\n\n2. SSE-KMS (Server-Side Encryption with KMS Keys):\n   → You control keys via AWS KMS\n   → CloudTrail logs every key usage (full audit trail)\n   → Cost: KMS API calls ($0.03 per 10,000 calls)\n   → Header: x-amz-server-side-encryption: aws:kms\n   → USE FOR: sensitive/regulated data (financial, healthcare, PII)\n   → KMS THROTTLE GOTCHA: high-traffic buckets → KMS API throttling\n     Fix: use S3 Bucket Keys (reduces KMS calls by 99%)\n\n3. SSE-C (Server-Side Encryption with Customer-Provided Keys):\n   → You provide the encryption key with every request\n   → AWS uses it, discards it (never stores your key)\n   → HTTPS required (key sent in header)\n   → Must store key yourself (if you lose it → data unrecoverable)\n   → Rarely used (most use SSE-KMS instead)\n\n4. Client-Side Encryption:\n   → You encrypt BEFORE uploading\n   → S3 stores ciphertext, never sees plaintext\n   → Full control over encryption process\n   → Use: highly sensitive data, extra compliance requirements\n   → More complex code (use AWS Encryption SDK)\n\nENCRYPTION IN TRANSIT:\n→ Always use HTTPS (TLS) for S3 access\n→ Enforce via bucket policy: Deny if aws:SecureTransport = false\n→ S3 endpoints always support HTTPS\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "S3 ENCRYPTION AT REST (4 options):\n\n1. SSE-S3 (Server-Side Encryption with S3-Managed Keys):\n   → AWS generates and manages keys automatically\n   → AES-256 encryption\n   → Free (no extra cost)\n   → Header: x-amz-server-side-encryption: AES256\n   → DEFAULT since January 2023 (all new objects encrypted)\n   → No audit trail for key usage\n\n2. SSE-KMS (Server-Side Encryption with KMS Keys):\n   → You control keys via AWS KMS\n   → CloudTrail logs every key usage (full audit trail)\n   → Cost: KMS API calls ($0.03 per 10,000 calls)\n   → Header: x-amz-server-side-encryption: aws:kms\n   → USE FOR: sensitive/regulated data (financial, healthcare, PII)\n   → KMS THROTTLE GOTCHA: high-traffic buckets → KMS API throttling\n     Fix: use S3 Bucket Keys (reduces KMS calls by 99%)\n\n3. SSE-C (Server-Side Encryption with Customer-Provided Keys):\n   → You provide the encryption key with every request\n   → AWS uses it, discards it (never stores your key)\n   → HTTPS required (key sent in header)\n   → Must store key yourself (if you lose it → data unrecoverable)\n   → Rarely used (most use SSE-KMS instead)\n\n4. Client-Side Encryption:\n   → You encrypt BEFORE uploading\n   → S3 stores ciphertext, never sees plaintext\n   → Full control over encryption process\n   → Use: highly sensitive data, extra compliance requirements\n   → More complex code (use AWS Encryption SDK)\n\nENCRYPTION IN TRANSIT:\n→ Always use HTTPS (TLS) for S3 access\n→ Enforce via bucket policy: Deny if aws:SecureTransport = false\n→ S3 endpoints always support HTTPS"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Always use HTTPS (TLS) for S3 access",
+        "→ Enforce via bucket policy: Deny if aws:SecureTransport = false",
+        "→ S3 endpoints always support HTTPS"
+      ]
+    },
+    {
+      "id": "s3-storage-classes",
+      "title": "📁 S3 Storage Classes",
+      "type": "concept",
+      "rawMarkdown": "```\nChoose storage class based on access frequency and retrieval needs.\nWrong choice = overpaying for access you don't use.\n\nS3 STANDARD\n  Access:       Frequent (daily/multiple times per day)\n  Availability: 99.99%\n  Min storage:  None\n  Retrieval:    Instant, no fee\n  Cost:         $0.023/GB/month\n  Use:          Active application data, frequently accessed assets\n\nS3 INTELLIGENT-TIERING\n  Access:       Unknown or changing patterns\n  Availability: 99.9%\n  Min storage:  None\n  Retrieval:    Instant (Standard tier), no retrieval fee\n  Cost:         $0.023/GB + $0.0025/1000 objects monitoring fee\n  Use:          When you don't know access patterns\n  How it works: Monitors access → auto-moves between tiers\n                Not accessed 30 days → moves to Infrequent Access (save 40%)\n                Not accessed 90 days → moves to Archive Instant Access (save 68%)\n                Back on access → returns to Frequent Access tier\n\nS3 STANDARD-IA (Infrequent Access)\n  Access:       Infrequent (monthly or less)\n  Min storage:  30 days minimum charge\n  Retrieval:    Instant, $0.01/GB retrieval fee\n  Cost:         $0.0125/GB/month (46% cheaper than Standard)\n  Use:          Backups, older files, DR copies, logs older than 30 days\n  Gotcha:       Retrieval fee — if accessed frequently, can cost MORE than Standard\n\nS3 ONE ZONE-IA\n  Access:       Infrequent, data easily recreatable\n  AZs:          ONE AZ only (less durable — if AZ goes down, data unavailable)\n  Retrieval:    Instant, $0.01/GB retrieval fee\n  Cost:         $0.01/GB/month (56% cheaper than Standard)\n  Use:          Thumbnails (recreatable from originals), secondary backup copies\n  Warning:      If that one AZ has outage → data temporarily unavailable\n\nS3 GLACIER INSTANT RETRIEVAL\n  Access:       Rarely (quarterly)\n  Min storage:  90 days\n  Retrieval:    Instant (milliseconds!), $0.03/GB retrieval fee\n  Cost:         $0.004/GB/month (83% cheaper than Standard)\n  Use:          Medical images, news media archives, user-generated content\n\nS3 GLACIER FLEXIBLE RETRIEVAL\n  Access:       Rarely (< once a year), can wait hours\n  Min storage:  90 days\n  Retrieval:    Expedited: 1–5 min ($10/GB), Standard: 3–5 hr ($0.01/GB)\n  Cost:         $0.0036/GB/month\n  Use:          Disaster recovery (can restore in 5 hours), compliance archives\n\nS3 GLACIER DEEP ARCHIVE\n  Access:       Almost never (7-10 year compliance retention)\n  Min storage:  180 days\n  Retrieval:    Standard: 12 hr, Bulk: 48 hr\n  Cost:         $0.00099/GB/month (~$1/TB/month!)\n  Use:          Long-term compliance retention, regulatory archives\n  Note:         7-10 year archives from $0.00099/GB is incredible value\n\nCOST COMPARISON (1TB stored for 1 year):\nStandard:         $0.023 × 1000 × 12 = $276/year\nStandard-IA:      $0.0125 × 1000 × 12 = $150/year\nGlacier Flexible: $0.0036 × 1000 × 12 = $43.20/year\nGlacier Deep:     $0.00099 × 1000 × 12 = $11.88/year\n```\n\n### S3 Lifecycle Policies\n\n```\nLifecycle policies = rules that automatically transition or delete objects over time.\nSet and forget cost optimization.\n\nEXAMPLE — Log file lifecycle:\nDay 0-30:   S3 Standard ($0.023/GB)     → actively debugged\nDay 30-90:  S3 Standard-IA ($0.0125/GB) → occasionally referenced\nDay 90-365: S3 Glacier Flexible ($0.0036/GB) → compliance only\nDay 365+:   Delete (or Glacier Deep Archive)\n\nEXAMPLE — User uploaded images:\nDay 0-∞:    S3 Standard (always need thumbnails fast)\nAfter 1yr:  Move originals to Glacier (thumbnails stay Standard)\n\nEXAMPLE — Database backups:\nDaily backups → Standard-IA after 7 days\nWeekly backups → Glacier Flexible after 30 days\nMonthly backups → Glacier Deep Archive after 1 year\nDelete all after 7 years (compliance retention met)\n\nLIFECYCLE RULE COMPONENTS:\nScope:  entire bucket, prefix filter (images/*), tag filter\nAction: Transition to storage class, Expiration (delete), Abort multipart uploads\n\nIMPORTANT MINIMUM PERIODS:\nStandard → Standard-IA: must be Standard for at LEAST 30 days\nStandard-IA/One Zone-IA → Glacier: can transition after 30 days minimum\nAll Glacier tiers: minimum storage duration charges apply (90 or 180 days)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Choose storage class based on access frequency and retrieval needs.\nWrong choice = overpaying for access you don't use.\n\nS3 STANDARD\n  Access:       Frequent (daily/multiple times per day)\n  Availability: 99.99%\n  Min storage:  None\n  Retrieval:    Instant, no fee\n  Cost:         $0.023/GB/month\n  Use:          Active application data, frequently accessed assets\n\nS3 INTELLIGENT-TIERING\n  Access:       Unknown or changing patterns\n  Availability: 99.9%\n  Min storage:  None\n  Retrieval:    Instant (Standard tier), no retrieval fee\n  Cost:         $0.023/GB + $0.0025/1000 objects monitoring fee\n  Use:          When you don't know access patterns\n  How it works: Monitors access → auto-moves between tiers\n                Not accessed 30 days → moves to Infrequent Access (save 40%)\n                Not accessed 90 days → moves to Archive Instant Access (save 68%)\n                Back on access → returns to Frequent Access tier\n\nS3 STANDARD-IA (Infrequent Access)\n  Access:       Infrequent (monthly or less)\n  Min storage:  30 days minimum charge\n  Retrieval:    Instant, $0.01/GB retrieval fee\n  Cost:         $0.0125/GB/month (46% cheaper than Standard)\n  Use:          Backups, older files, DR copies, logs older than 30 days\n  Gotcha:       Retrieval fee — if accessed frequently, can cost MORE than Standard\n\nS3 ONE ZONE-IA\n  Access:       Infrequent, data easily recreatable\n  AZs:          ONE AZ only (less durable — if AZ goes down, data unavailable)\n  Retrieval:    Instant, $0.01/GB retrieval fee\n  Cost:         $0.01/GB/month (56% cheaper than Standard)\n  Use:          Thumbnails (recreatable from originals), secondary backup copies\n  Warning:      If that one AZ has outage → data temporarily unavailable\n\nS3 GLACIER INSTANT RETRIEVAL\n  Access:       Rarely (quarterly)\n  Min storage:  90 days\n  Retrieval:    Instant (milliseconds!), $0.03/GB retrieval fee\n  Cost:         $0.004/GB/month (83% cheaper than Standard)\n  Use:          Medical images, news media archives, user-generated content\n\nS3 GLACIER FLEXIBLE RETRIEVAL\n  Access:       Rarely (< once a year), can wait hours\n  Min storage:  90 days\n  Retrieval:    Expedited: 1–5 min ($10/GB), Standard: 3–5 hr ($0.01/GB)\n  Cost:         $0.0036/GB/month\n  Use:          Disaster recovery (can restore in 5 hours), compliance archives\n\nS3 GLACIER DEEP ARCHIVE\n  Access:       Almost never (7-10 year compliance retention)\n  Min storage:  180 days\n  Retrieval:    Standard: 12 hr, Bulk: 48 hr\n  Cost:         $0.00099/GB/month (~$1/TB/month!)\n  Use:          Long-term compliance retention, regulatory archives\n  Note:         7-10 year archives from $0.00099/GB is incredible value\n\nCOST COMPARISON (1TB stored for 1 year):\nStandard:         $0.023 × 1000 × 12 = $276/year\nStandard-IA:      $0.0125 × 1000 × 12 = $150/year\nGlacier Flexible: $0.0036 × 1000 × 12 = $43.20/year\nGlacier Deep:     $0.00099 × 1000 × 12 = $11.88/year"
+        },
+        {
+          "type": "paragraph",
+          "content": "### S3 Lifecycle Policies"
+        },
+        {
+          "type": "diagram",
+          "content": "Lifecycle policies = rules that automatically transition or delete objects over time.\nSet and forget cost optimization.\n\nEXAMPLE — Log file lifecycle:\nDay 0-30:   S3 Standard ($0.023/GB)     → actively debugged\nDay 30-90:  S3 Standard-IA ($0.0125/GB) → occasionally referenced\nDay 90-365: S3 Glacier Flexible ($0.0036/GB) → compliance only\nDay 365+:   Delete (or Glacier Deep Archive)\n\nEXAMPLE — User uploaded images:\nDay 0-∞:    S3 Standard (always need thumbnails fast)\nAfter 1yr:  Move originals to Glacier (thumbnails stay Standard)\n\nEXAMPLE — Database backups:\nDaily backups → Standard-IA after 7 days\nWeekly backups → Glacier Flexible after 30 days\nMonthly backups → Glacier Deep Archive after 1 year\nDelete all after 7 years (compliance retention met)\n\nLIFECYCLE RULE COMPONENTS:\nScope:  entire bucket, prefix filter (images/*), tag filter\nAction: Transition to storage class, Expiration (delete), Abort multipart uploads\n\nIMPORTANT MINIMUM PERIODS:\nStandard → Standard-IA: must be Standard for at LEAST 30 days\nStandard-IA/One Zone-IA → Glacier: can transition after 30 days minimum\nAll Glacier tiers: minimum storage duration charges apply (90 or 180 days)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "Choose storage class based on access frequency and retrieval needs."
+      ]
+    },
+    {
+      "id": "s3-versioning",
+      "title": "🔄 S3 Versioning",
+      "type": "concept",
+      "rawMarkdown": "```\nVersioning = keep all versions of every object in a bucket\nOnce enabled: CANNOT be disabled (only suspended)\n\nHOW IT WORKS:\nWithout versioning:\n  Upload photo.jpg → stores photo.jpg\n  Upload photo.jpg again → OVERWRITES. Old version GONE.\n\nWith versioning:\n  Upload photo.jpg → stores photo.jpg (version ID: null → then aaa111)\n  Upload photo.jpg again → stores photo.jpg (version ID: bbb222)\n  Upload photo.jpg again → stores photo.jpg (version ID: ccc333)\n  All 3 versions preserved. Retrieve any version by ID.\n\nDELETION WITH VERSIONING:\n  DELETE photo.jpg → adds \"delete marker\" (doesn't actually delete!)\n  Object appears deleted to normal requests\n  Retrieve by version ID: still accessible\n  Remove delete marker: object \"comes back\"\n  TRULY delete: delete specific version ID permanently\n\nUSE CASES:\n→ Protection against accidental deletion (add MFA delete for extra safety)\n→ Protection against overwrites (rollback to previous version)\n→ Audit trail (see every version of a file over time)\n\nCOST IMPLICATION:\n→ Storing ALL versions = paying for all of them\n→ Large files with many versions → bill grows fast\n→ Set lifecycle policy to delete old versions:\n   \"Delete versions older than 30 days\" → controlled cost\n\nMFA DELETE:\n→ Extra protection: require MFA to permanently delete a version or disable versioning\n→ Root account + MFA required to enable this feature\n→ Prevents even admins from accidentally purging version history\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Versioning = keep all versions of every object in a bucket\nOnce enabled: CANNOT be disabled (only suspended)\n\nHOW IT WORKS:\nWithout versioning:\n  Upload photo.jpg → stores photo.jpg\n  Upload photo.jpg again → OVERWRITES. Old version GONE.\n\nWith versioning:\n  Upload photo.jpg → stores photo.jpg (version ID: null → then aaa111)\n  Upload photo.jpg again → stores photo.jpg (version ID: bbb222)\n  Upload photo.jpg again → stores photo.jpg (version ID: ccc333)\n  All 3 versions preserved. Retrieve any version by ID.\n\nDELETION WITH VERSIONING:\n  DELETE photo.jpg → adds \"delete marker\" (doesn't actually delete!)\n  Object appears deleted to normal requests\n  Retrieve by version ID: still accessible\n  Remove delete marker: object \"comes back\"\n  TRULY delete: delete specific version ID permanently\n\nUSE CASES:\n→ Protection against accidental deletion (add MFA delete for extra safety)\n→ Protection against overwrites (rollback to previous version)\n→ Audit trail (see every version of a file over time)\n\nCOST IMPLICATION:\n→ Storing ALL versions = paying for all of them\n→ Large files with many versions → bill grows fast\n→ Set lifecycle policy to delete old versions:\n   \"Delete versions older than 30 days\" → controlled cost\n\nMFA DELETE:\n→ Extra protection: require MFA to permanently delete a version or disable versioning\n→ Root account + MFA required to enable this feature\n→ Prevents even admins from accidentally purging version history"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Protection against accidental deletion (add MFA delete for extra safety)",
+        "→ Protection against overwrites (rollback to previous version)",
+        "→ Audit trail (see every version of a file over time)",
+        "→ Storing ALL versions = paying for all of them",
+        "→ Large files with many versions → bill grows fast",
+        "→ Set lifecycle policy to delete old versions:",
+        "→ Extra protection: require MFA to permanently delete a version or disable versioning",
+        "→ Root account + MFA required to enable this feature"
+      ]
+    },
+    {
+      "id": "s3-replication",
+      "title": "🌍 S3 Replication",
+      "type": "concept",
+      "rawMarkdown": "```\nReplication = automatically copy objects to another bucket as they're uploaded\nRequires: versioning MUST be enabled on BOTH source and destination\n\nCRR — CROSS-REGION REPLICATION:\nSource bucket → destination bucket in DIFFERENT region\n\nUse cases:\n→ Disaster recovery (data in multiple regions)\n→ Compliance (data must be in specific regions)\n→ Reduce latency (replicate to region closer to users)\n→ Log aggregation from multiple regions to one\n\nSRR — SAME-REGION REPLICATION:\nSource bucket → destination bucket in SAME region\n\nUse cases:\n→ Aggregate logs from multiple accounts into one\n→ Compliance copies within same region (separate account)\n→ Live data sync between dev and test environments\n\nKEY FACTS:\n→ Replication is NOT retroactive (only NEW objects after enabling)\n→ To replicate existing objects: use S3 Batch Replication\n→ DELETE markers: NOT replicated by default (enable if you want)\n→ Objects encrypted with SSE-C: NOT replicated\n→ Chaining: Bucket A replicates to B, B replicates to C ≠ A to C\n   (replication is NOT transitive — must configure A→C separately)\n→ Cross-account replication: destination bucket policy must allow source\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Replication = automatically copy objects to another bucket as they're uploaded\nRequires: versioning MUST be enabled on BOTH source and destination\n\nCRR — CROSS-REGION REPLICATION:\nSource bucket → destination bucket in DIFFERENT region\n\nUse cases:\n→ Disaster recovery (data in multiple regions)\n→ Compliance (data must be in specific regions)\n→ Reduce latency (replicate to region closer to users)\n→ Log aggregation from multiple regions to one\n\nSRR — SAME-REGION REPLICATION:\nSource bucket → destination bucket in SAME region\n\nUse cases:\n→ Aggregate logs from multiple accounts into one\n→ Compliance copies within same region (separate account)\n→ Live data sync between dev and test environments\n\nKEY FACTS:\n→ Replication is NOT retroactive (only NEW objects after enabling)\n→ To replicate existing objects: use S3 Batch Replication\n→ DELETE markers: NOT replicated by default (enable if you want)\n→ Objects encrypted with SSE-C: NOT replicated\n→ Chaining: Bucket A replicates to B, B replicates to C ≠ A to C\n   (replication is NOT transitive — must configure A→C separately)\n→ Cross-account replication: destination bucket policy must allow source"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Disaster recovery (data in multiple regions)",
+        "→ Compliance (data must be in specific regions)",
+        "→ Reduce latency (replicate to region closer to users)",
+        "→ Log aggregation from multiple regions to one",
+        "→ Aggregate logs from multiple accounts into one",
+        "→ Compliance copies within same region (separate account)",
+        "→ Live data sync between dev and test environments",
+        "→ Replication is NOT retroactive (only NEW objects after enabling)"
+      ]
+    },
+    {
+      "id": "s3-static-website-hosting",
+      "title": "🌐 S3 Static Website Hosting",
+      "type": "concept",
+      "rawMarkdown": "```\nS3 can serve a static website directly — no EC2, no servers needed.\n\nSETUP:\n1. Create bucket (name = domain if using custom domain)\n2. Enable Static Website Hosting in bucket properties\n3. Set: Index document (index.html), Error document (error.html or index.html for SPA)\n4. Disable Block Public Access (required!)\n5. Add bucket policy: allow s3:GetObject for Principal: \"*\"\n\nWEBSITE URL:\nhttp://bucket-name.s3-website-us-east-1.amazonaws.com\n→ For HTTPS + custom domain: use CloudFront in front\n\nWHAT S3 STATIC HOSTING SUPPORTS:\n✅ HTML, CSS, JavaScript files\n✅ Images, fonts, videos\n✅ Client-side routing (React Router, Vue Router)\n✅ Custom error pages\n✅ Redirect rules\n\nDOES NOT SUPPORT:\n❌ Server-side code (PHP, Python, Node.js)\n❌ HTTPS directly (need CloudFront for SSL)\n❌ Dynamic content\n\nTYPICAL ARCHITECTURE:\nRoute 53 → CloudFront → S3 (static website)\n→ CloudFront provides HTTPS + custom domain + CDN caching\n→ S3 serves files (origin)\n→ Cost: nearly zero for static sites (S3 + CloudFront free tier covers most)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "S3 can serve a static website directly — no EC2, no servers needed.\n\nSETUP:\n1. Create bucket (name = domain if using custom domain)\n2. Enable Static Website Hosting in bucket properties\n3. Set: Index document (index.html), Error document (error.html or index.html for SPA)\n4. Disable Block Public Access (required!)\n5. Add bucket policy: allow s3:GetObject for Principal: \"*\"\n\nWEBSITE URL:\nhttp://bucket-name.s3-website-us-east-1.amazonaws.com\n→ For HTTPS + custom domain: use CloudFront in front\n\nWHAT S3 STATIC HOSTING SUPPORTS:\n✅ HTML, CSS, JavaScript files\n✅ Images, fonts, videos\n✅ Client-side routing (React Router, Vue Router)\n✅ Custom error pages\n✅ Redirect rules\n\nDOES NOT SUPPORT:\n❌ Server-side code (PHP, Python, Node.js)\n❌ HTTPS directly (need CloudFront for SSL)\n❌ Dynamic content\n\nTYPICAL ARCHITECTURE:\nRoute 53 → CloudFront → S3 (static website)\n→ CloudFront provides HTTPS + custom domain + CDN caching\n→ S3 serves files (origin)\n→ Cost: nearly zero for static sites (S3 + CloudFront free tier covers most)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ For HTTPS + custom domain: use CloudFront in front",
+        "✅ HTML, CSS, JavaScript files",
+        "✅ Images, fonts, videos",
+        "✅ Client-side routing (React Router, Vue Router)",
+        "✅ Custom error pages",
+        "✅ Redirect rules",
+        "❌ Server-side code (PHP, Python, Node.js)",
+        "❌ HTTPS directly (need CloudFront for SSL)"
+      ]
+    },
+    {
+      "id": "s3-advanced-features",
+      "title": "🔗 S3 Advanced Features",
+      "type": "concept",
+      "rawMarkdown": "### Pre-signed URLs\n```\nTemporary URL that grants access to a PRIVATE object for a limited time.\nNo need to make bucket public. No need to give requester AWS credentials.\n\nHOW IT WORKS:\n→ Your server (with S3 access) generates pre-signed URL\n→ URL contains: object key + your credentials + expiry time + signature\n→ User uses URL to download/upload directly to S3\n→ After expiry: URL no longer works\n\nEXAMPLE USE CASES:\n→ User wants to download their invoice (private file)\n   Your API → generate pre-signed GET URL (15 min expiry) → return to user\n   User clicks URL → downloads directly from S3 → no server involved\n\n→ User uploads profile photo\n   Your API → generate pre-signed PUT URL → return to user\n   User's browser uploads directly to S3 → no upload through your server!\n   Benefits: no bandwidth cost on your server, much faster, scales infinitely\n\nCODE EXAMPLE (Node.js):\nconst { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');\nconst { getSignedUrl } = require('@aws-sdk/s3-request-presigner');\n\nconst url = await getSignedUrl(\n  s3Client,\n  new GetObjectCommand({ Bucket: 'my-bucket', Key: 'user/invoice.pdf' }),\n  { expiresIn: 900 } // 15 minutes\n);\n// Return url to user — they download directly from S3\n\nEXPIRY LIMITS:\n→ Max: 7 days (604,800 seconds)\n→ IAM Role-based pre-signing: limited by role session duration (max 12 hours)\n→ IAM User-based pre-signing: up to 7 days\n```\n\n### S3 Event Notifications\n```\nS3 triggers notifications when objects are created/deleted/restored.\n\nDESTINATIONS:\n→ SNS Topic (fan-out to multiple subscribers)\n→ SQS Queue (buffer + process asynchronously)\n→ Lambda Function (process immediately, serverless)\n→ EventBridge (route to 18+ destinations with filtering)\n\nEVENTS YOU CAN TRIGGER ON:\n→ s3:ObjectCreated:* (any put/post/copy/multipart)\n→ s3:ObjectRemoved:* (delete/deleteMarkerCreated)\n→ s3:ObjectRestore:* (restore from Glacier)\n→ s3:LifecycleExpiration:*\n→ s3:Replication:* (replication failure)\n\nFILTER BY:\n→ Prefix: \"images/\" (only trigger for objects in images/ folder)\n→ Suffix: \".jpg\" (only trigger for JPEG files)\n\nCOMMON PATTERNS:\nUpload image → S3 → Lambda → resize + thumbnail → save back to S3\nUpload CSV   → S3 → Lambda → validate + import → DynamoDB\nUpload video → S3 → SNS → SQS (MediaConvert queue) → transcode\n```\n\n### S3 Select and Glacier Select\n```\nInstead of downloading entire object → query INSIDE S3 with SQL\n\nS3 SELECT:\n→ Run SQL queries on CSV, JSON, Parquet files directly in S3\n→ Only retrieve the data you need (not the entire file)\n→ Reduces data transfer + cost significantly\n\nEXAMPLE:\nFile: orders.csv (10 GB file with 100M orders)\nNeed: orders from 2024 with value > $1000\n\nWITHOUT S3 Select: download 10GB → filter in your code\nWITH S3 Select:\nSELECT * FROM s3object WHERE year = 2024 AND amount > 1000\n→ S3 filters server-side → you receive only matching rows\n→ Transfer cost: tiny fraction of 10GB\n\nUSE WHEN:\n→ Large CSV/JSON/Parquet files\n→ You only need a subset of the data\n→ Common in data analytics pipelines\n```\n\n### S3 Object Lock\n```\nWORM = Write Once Read Many\nOnce locked: object CANNOT be deleted or modified for specified period.\n\nCOMPLIANCE USE CASES:\n→ Financial records (SEC Rule 17a-4: 6-7 years)\n→ Healthcare records (HIPAA: varies)\n→ Legal documents (litigation hold)\n→ Any regulatory requirement for immutable records\n\nMODES:\nCompliance Mode:\n→ NO ONE can delete/overwrite, including root account\n→ Cannot change retention period (only extend)\n→ True immutability\n\nGovernance Mode:\n→ Most users cannot delete/overwrite\n→ Users with special IAM permission CAN override\n→ Good for: protect against accidental deletion but allow override for admins\n\nRETENTION PERIOD:\n→ Set at object or bucket level\n→ Object kept until: retention period expires AND no legal hold\n→ After: normal object (can delete)\n\nLEGAL HOLD:\n→ On/Off toggle\n→ Prevents deletion regardless of retention period\n→ Used for: litigation hold (\"don't delete anything related to this lawsuit\")\n→ No expiry date — must be explicitly removed\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Pre-signed URLs"
+        },
+        {
+          "type": "diagram",
+          "content": "Temporary URL that grants access to a PRIVATE object for a limited time.\nNo need to make bucket public. No need to give requester AWS credentials.\n\nHOW IT WORKS:\n→ Your server (with S3 access) generates pre-signed URL\n→ URL contains: object key + your credentials + expiry time + signature\n→ User uses URL to download/upload directly to S3\n→ After expiry: URL no longer works\n\nEXAMPLE USE CASES:\n→ User wants to download their invoice (private file)\n   Your API → generate pre-signed GET URL (15 min expiry) → return to user\n   User clicks URL → downloads directly from S3 → no server involved\n\n→ User uploads profile photo\n   Your API → generate pre-signed PUT URL → return to user\n   User's browser uploads directly to S3 → no upload through your server!\n   Benefits: no bandwidth cost on your server, much faster, scales infinitely\n\nCODE EXAMPLE (Node.js):\nconst { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');\nconst { getSignedUrl } = require('@aws-sdk/s3-request-presigner');\n\nconst url = await getSignedUrl(\n  s3Client,\n  new GetObjectCommand({ Bucket: 'my-bucket', Key: 'user/invoice.pdf' }),\n  { expiresIn: 900 } // 15 minutes\n);\n// Return url to user — they download directly from S3\n\nEXPIRY LIMITS:\n→ Max: 7 days (604,800 seconds)\n→ IAM Role-based pre-signing: limited by role session duration (max 12 hours)\n→ IAM User-based pre-signing: up to 7 days"
+        },
+        {
+          "type": "paragraph",
+          "content": "### S3 Event Notifications"
+        },
+        {
+          "type": "diagram",
+          "content": "S3 triggers notifications when objects are created/deleted/restored.\n\nDESTINATIONS:\n→ SNS Topic (fan-out to multiple subscribers)\n→ SQS Queue (buffer + process asynchronously)\n→ Lambda Function (process immediately, serverless)\n→ EventBridge (route to 18+ destinations with filtering)\n\nEVENTS YOU CAN TRIGGER ON:\n→ s3:ObjectCreated:* (any put/post/copy/multipart)\n→ s3:ObjectRemoved:* (delete/deleteMarkerCreated)\n→ s3:ObjectRestore:* (restore from Glacier)\n→ s3:LifecycleExpiration:*\n→ s3:Replication:* (replication failure)\n\nFILTER BY:\n→ Prefix: \"images/\" (only trigger for objects in images/ folder)\n→ Suffix: \".jpg\" (only trigger for JPEG files)\n\nCOMMON PATTERNS:\nUpload image → S3 → Lambda → resize + thumbnail → save back to S3\nUpload CSV   → S3 → Lambda → validate + import → DynamoDB\nUpload video → S3 → SNS → SQS (MediaConvert queue) → transcode"
+        },
+        {
+          "type": "paragraph",
+          "content": "### S3 Select and Glacier Select"
+        },
+        {
+          "type": "diagram",
+          "content": "Instead of downloading entire object → query INSIDE S3 with SQL\n\nS3 SELECT:\n→ Run SQL queries on CSV, JSON, Parquet files directly in S3\n→ Only retrieve the data you need (not the entire file)\n→ Reduces data transfer + cost significantly\n\nEXAMPLE:\nFile: orders.csv (10 GB file with 100M orders)\nNeed: orders from 2024 with value > $1000\n\nWITHOUT S3 Select: download 10GB → filter in your code\nWITH S3 Select:\nSELECT * FROM s3object WHERE year = 2024 AND amount > 1000\n→ S3 filters server-side → you receive only matching rows\n→ Transfer cost: tiny fraction of 10GB\n\nUSE WHEN:\n→ Large CSV/JSON/Parquet files\n→ You only need a subset of the data\n→ Common in data analytics pipelines"
+        },
+        {
+          "type": "paragraph",
+          "content": "### S3 Object Lock"
+        },
+        {
+          "type": "diagram",
+          "content": "WORM = Write Once Read Many\nOnce locked: object CANNOT be deleted or modified for specified period.\n\nCOMPLIANCE USE CASES:\n→ Financial records (SEC Rule 17a-4: 6-7 years)\n→ Healthcare records (HIPAA: varies)\n→ Legal documents (litigation hold)\n→ Any regulatory requirement for immutable records\n\nMODES:\nCompliance Mode:\n→ NO ONE can delete/overwrite, including root account\n→ Cannot change retention period (only extend)\n→ True immutability\n\nGovernance Mode:\n→ Most users cannot delete/overwrite\n→ Users with special IAM permission CAN override\n→ Good for: protect against accidental deletion but allow override for admins\n\nRETENTION PERIOD:\n→ Set at object or bucket level\n→ Object kept until: retention period expires AND no legal hold\n→ After: normal object (can delete)\n\nLEGAL HOLD:\n→ On/Off toggle\n→ Prevents deletion regardless of retention period\n→ Used for: litigation hold (\"don't delete anything related to this lawsuit\")\n→ No expiry date — must be explicitly removed"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Your server (with S3 access) generates pre-signed URL",
+        "→ URL contains: object key + your credentials + expiry time + signature",
+        "→ User uses URL to download/upload directly to S3",
+        "→ After expiry: URL no longer works",
+        "→ User wants to download their invoice (private file)",
+        "→ User uploads profile photo",
+        "→ Max: 7 days (604,800 seconds)",
+        "→ IAM Role-based pre-signing: limited by role session duration (max 12 hours)"
+      ]
+    },
+    {
+      "id": "interview-qa-s3",
+      "title": "🎯 Interview Q&A — S3",
+      "type": "qa",
+      "rawMarkdown": "**Q: How would you design an image upload system for 1 million users?**\n```\n\"S3 as the storage backbone with direct uploads from the client.\n\nFlow:\n1. User wants to upload profile photo\n2. Client calls your API: 'I want to upload a photo'\n3. API generates S3 pre-signed PUT URL (5-minute expiry)\n4. API returns pre-signed URL to client\n5. Client uploads directly to S3 (bypasses your servers entirely)\n6. S3 triggers ObjectCreated event → Lambda\n7. Lambda: validate file type (check magic bytes, not just extension),\n   resize to multiple dimensions (thumbnail, medium, large),\n   save resized versions to S3, update user record in DynamoDB\n8. CloudFront serves images from S3 (CDN caching, HTTPS, custom domain)\n\nWhy pre-signed URLs instead of uploading to your API then to S3:\n→ Direct upload: your servers never touch the bytes (infinite scalability)\n→ 1M users uploading 5MB simultaneously = 5TB of bandwidth\n→ Your API would be completely overwhelmed handling that data\n→ Direct to S3: S3 handles it, your API just generates a short URL\n\nSecurity: bucket is PRIVATE. CloudFront has OAC (Origin Access Control)\nso it's the ONLY entity that can read from S3. Users never get direct S3 URLs.\"\n```\n\n**Q: S3 bucket contains sensitive data. How do you secure it?**\n```\n\"Defense in depth across multiple layers:\n\n1. Block Public Access: ALL four settings enabled at account level.\n   Nothing public without explicit conscious decision.\n\n2. Bucket Policy: explicit Deny for s3:* unless from specific IAM roles.\n   Add condition: Deny if aws:SecureTransport = false (force HTTPS).\n\n3. Encryption: SSE-KMS with customer-managed key. Every object encrypted.\n   Enable S3 Bucket Key to reduce KMS API costs 99%.\n   KMS key policy: only specific roles can use the key.\n\n4. Versioning + MFA Delete: accidents are recoverable.\n   Deliberate deletions require MFA.\n\n5. Access Logging: enable S3 server access logs → separate logging bucket.\n   Every request logged with: requester, IP, operation, object, status.\n   Or: use CloudTrail Data Events for S3 → richer logs including user identity.\n\n6. Lifecycle policy: data doesn't live forever. Define retention.\n\n7. S3 Object Lock if compliance requires: true immutability.\n\n8. AWS Macie: automatically scans S3 for PII (SSN, credit cards, names).\n   Alerts if sensitive data is unencrypted or publicly accessible.\n\n9. VPC Endpoint: EC2 in private subnet → S3 via VPC endpoint.\n   Traffic never leaves AWS network. No internet exposure.\n\n10. Regular IAM Access Analyzer: find any unexpected external access.\"\n```\n\n**Q: How does S3 achieve 11 nines of durability?**\n```\n\"11 nines (99.999999999%) means losing one object out of 100 billion per year.\n\nS3 achieves this through:\n\nGeographic redundancy: S3 Standard stores data across minimum 3 Availability\nZones within a region. Each AZ is in a separate physical location with\nindependent power, cooling, and networking.\n\nAutomatic integrity checking: S3 stores checksums (MD5/CRC) for every object.\nEvery time data is read, AWS verifies the checksum. If corruption detected,\nit automatically restores from another copy and fixes the corruption.\n\nErasure coding: similar to RAID. Data is split into chunks, parity chunks\nadded. Losing some chunks doesn't lose the object — reconstruct from remaining.\n\nThis means: fire destroys one data center, flood destroys second,\nhardware failure in third — S3 can still reconstruct your data.\n\nImportant caveat: 11 nines is for S3 Standard (3+ AZs). S3 One Zone-IA\nstores in single AZ — much lower durability (99.999999999% → 99.5% + AZ loss).\"\n```\n\n**Q: Your S3 costs jumped from $500 to $2000 this month. How do you investigate?**\n```\n\"Structured investigation:\n\n1. Cost Explorer: filter by S3 service → break down by usage type.\n   Which cost dimension grew? Storage? Requests? Data Transfer?\n\n2. If STORAGE grew:\n   → S3 Storage Lens: see which buckets and prefixes grew\n   → Common cause: logs accumulating without lifecycle policy\n   → Fix: add lifecycle policy to expire old objects\n\n3. If DATA TRANSFER grew:\n   → Check if CloudFront is in front of S3 (if not — add it)\n   → Direct S3 → internet: $0.09/GB. Via CloudFront: $0.0085/GB\n   → Also check: cross-region replication costs\n   → Check: are applications downloading S3 data then re-uploading (double transfer)?\n\n4. If REQUESTS grew:\n   → S3 charges per 1000 requests ($0.0004 PUT, $0.00004 GET)\n   → S3 access logs → find which prefix is receiving millions of requests\n   → Small objects accessed millions of times → cache with CloudFront\n   → Or: application bug causing S3 polling instead of event-driven\n\n5. Set S3 Storage Lens on all accounts:\n   → Shows bucket-by-bucket cost breakdown\n   → Highlights: unversioned buckets (risk), buckets without lifecycle (cost)\n\n6. Prevention: S3 Storage Class Analysis → shows which objects should move to IA\n   Lifecycle policies → automate cost optimization going forward\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: How would you design an image upload system for 1 million users?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"S3 as the storage backbone with direct uploads from the client.\n\nFlow:\n1. User wants to upload profile photo\n2. Client calls your API: 'I want to upload a photo'\n3. API generates S3 pre-signed PUT URL (5-minute expiry)\n4. API returns pre-signed URL to client\n5. Client uploads directly to S3 (bypasses your servers entirely)\n6. S3 triggers ObjectCreated event → Lambda\n7. Lambda: validate file type (check magic bytes, not just extension),\n   resize to multiple dimensions (thumbnail, medium, large),\n   save resized versions to S3, update user record in DynamoDB\n8. CloudFront serves images from S3 (CDN caching, HTTPS, custom domain)\n\nWhy pre-signed URLs instead of uploading to your API then to S3:\n→ Direct upload: your servers never touch the bytes (infinite scalability)\n→ 1M users uploading 5MB simultaneously = 5TB of bandwidth\n→ Your API would be completely overwhelmed handling that data\n→ Direct to S3: S3 handles it, your API just generates a short URL\n\nSecurity: bucket is PRIVATE. CloudFront has OAC (Origin Access Control)\nso it's the ONLY entity that can read from S3. Users never get direct S3 URLs.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: S3 bucket contains sensitive data. How do you secure it?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Defense in depth across multiple layers:\n\n1. Block Public Access: ALL four settings enabled at account level.\n   Nothing public without explicit conscious decision.\n\n2. Bucket Policy: explicit Deny for s3:* unless from specific IAM roles.\n   Add condition: Deny if aws:SecureTransport = false (force HTTPS).\n\n3. Encryption: SSE-KMS with customer-managed key. Every object encrypted.\n   Enable S3 Bucket Key to reduce KMS API costs 99%.\n   KMS key policy: only specific roles can use the key.\n\n4. Versioning + MFA Delete: accidents are recoverable.\n   Deliberate deletions require MFA.\n\n5. Access Logging: enable S3 server access logs → separate logging bucket.\n   Every request logged with: requester, IP, operation, object, status.\n   Or: use CloudTrail Data Events for S3 → richer logs including user identity.\n\n6. Lifecycle policy: data doesn't live forever. Define retention.\n\n7. S3 Object Lock if compliance requires: true immutability.\n\n8. AWS Macie: automatically scans S3 for PII (SSN, credit cards, names).\n   Alerts if sensitive data is unencrypted or publicly accessible.\n\n9. VPC Endpoint: EC2 in private subnet → S3 via VPC endpoint.\n   Traffic never leaves AWS network. No internet exposure.\n\n10. Regular IAM Access Analyzer: find any unexpected external access.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How does S3 achieve 11 nines of durability?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"11 nines (99.999999999%) means losing one object out of 100 billion per year.\n\nS3 achieves this through:\n\nGeographic redundancy: S3 Standard stores data across minimum 3 Availability\nZones within a region. Each AZ is in a separate physical location with\nindependent power, cooling, and networking.\n\nAutomatic integrity checking: S3 stores checksums (MD5/CRC) for every object.\nEvery time data is read, AWS verifies the checksum. If corruption detected,\nit automatically restores from another copy and fixes the corruption.\n\nErasure coding: similar to RAID. Data is split into chunks, parity chunks\nadded. Losing some chunks doesn't lose the object — reconstruct from remaining.\n\nThis means: fire destroys one data center, flood destroys second,\nhardware failure in third — S3 can still reconstruct your data.\n\nImportant caveat: 11 nines is for S3 Standard (3+ AZs). S3 One Zone-IA\nstores in single AZ — much lower durability (99.999999999% → 99.5% + AZ loss).\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Your S3 costs jumped from $500 to $2000 this month. How do you investigate?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Structured investigation:\n\n1. Cost Explorer: filter by S3 service → break down by usage type.\n   Which cost dimension grew? Storage? Requests? Data Transfer?\n\n2. If STORAGE grew:\n   → S3 Storage Lens: see which buckets and prefixes grew\n   → Common cause: logs accumulating without lifecycle policy\n   → Fix: add lifecycle policy to expire old objects\n\n3. If DATA TRANSFER grew:\n   → Check if CloudFront is in front of S3 (if not — add it)\n   → Direct S3 → internet: $0.09/GB. Via CloudFront: $0.0085/GB\n   → Also check: cross-region replication costs\n   → Check: are applications downloading S3 data then re-uploading (double transfer)?\n\n4. If REQUESTS grew:\n   → S3 charges per 1000 requests ($0.0004 PUT, $0.00004 GET)\n   → S3 access logs → find which prefix is receiving millions of requests\n   → Small objects accessed millions of times → cache with CloudFront\n   → Or: application bug causing S3 polling instead of event-driven\n\n5. Set S3 Storage Lens on all accounts:\n   → Shows bucket-by-bucket cost breakdown\n   → Highlights: unversioned buckets (risk), buckets without lifecycle (cost)\n\n6. Prevention: S3 Storage Class Analysis → shows which objects should move to IA\n   Lifecycle policies → automate cost optimization going forward\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "06-s3-simple-storage-service-q1",
+          "question": "How would you design an image upload system for 1 million users?",
+          "answer": "\"S3 as the storage backbone with direct uploads from the client.\n\nFlow:\n1. User wants to upload profile photo\n2. Client calls your API: 'I want to upload a photo'\n3. API generates S3 pre-signed PUT URL (5-minute expiry)\n4. API returns pre-signed URL to client\n5. Client uploads directly to S3 (bypasses your servers entirely)\n6. S3 triggers ObjectCreated event → Lambda\n7. Lambda: validate file type (check magic bytes, not just extension),\n   resize to multiple dimensions (thumbnail, medium, large),\n   save resized versions to S3, update user record in DynamoDB\n8. CloudFront serves images from S3 (CDN caching, HTTPS, custom domain)\n\nWhy pre-signed URLs instead of uploading to your API then to S3:\n→ Direct upload: your servers never touch the bytes (infinite scalability)\n→ 1M users uploading 5MB simultaneously = 5TB of bandwidth\n→ Your API would be completely overwhelmed handling that data\n→ Direct to S3: S3 handles it, your API just generates a short URL\n\nSecurity: bucket is PRIVATE. CloudFront has OAC (Origin Access Control)\nso it's the ONLY entity that can read from S3. Users never get direct S3 URLs.\"",
+          "topicNumber": 6,
+          "topicSlug": "06-s3-simple-storage-service",
+          "topic": "S3 (Simple Storage Service)"
+        },
+        {
+          "id": "06-s3-simple-storage-service-q2",
+          "question": "S3 bucket contains sensitive data. How do you secure it?",
+          "answer": "\"Defense in depth across multiple layers:\n\n1. Block Public Access: ALL four settings enabled at account level.\n   Nothing public without explicit conscious decision.\n\n2. Bucket Policy: explicit Deny for s3:* unless from specific IAM roles.\n   Add condition: Deny if aws:SecureTransport = false (force HTTPS).\n\n3. Encryption: SSE-KMS with customer-managed key. Every object encrypted.\n   Enable S3 Bucket Key to reduce KMS API costs 99%.\n   KMS key policy: only specific roles can use the key.\n\n4. Versioning + MFA Delete: accidents are recoverable.\n   Deliberate deletions require MFA.\n\n5. Access Logging: enable S3 server access logs → separate logging bucket.\n   Every request logged with: requester, IP, operation, object, status.\n   Or: use CloudTrail Data Events for S3 → richer logs including user identity.\n\n6. Lifecycle policy: data doesn't live forever. Define retention.\n\n7. S3 Object Lock if compliance requires: true immutability.\n\n8. AWS Macie: automatically scans S3 for PII (SSN, credit cards, names).\n   Alerts if sensitive data is unencrypted or publicly accessible.\n\n9. VPC Endpoint: EC2 in private subnet → S3 via VPC endpoint.\n   Traffic never leaves AWS network. No internet exposure.\n\n10. Regular IAM Access Analyzer: find any unexpected external access.\"",
+          "topicNumber": 6,
+          "topicSlug": "06-s3-simple-storage-service",
+          "topic": "S3 (Simple Storage Service)"
+        },
+        {
+          "id": "06-s3-simple-storage-service-q3",
+          "question": "How does S3 achieve 11 nines of durability?",
+          "answer": "\"11 nines (99.999999999%) means losing one object out of 100 billion per year.\n\nS3 achieves this through:\n\nGeographic redundancy: S3 Standard stores data across minimum 3 Availability\nZones within a region. Each AZ is in a separate physical location with\nindependent power, cooling, and networking.\n\nAutomatic integrity checking: S3 stores checksums (MD5/CRC) for every object.\nEvery time data is read, AWS verifies the checksum. If corruption detected,\nit automatically restores from another copy and fixes the corruption.\n\nErasure coding: similar to RAID. Data is split into chunks, parity chunks\nadded. Losing some chunks doesn't lose the object — reconstruct from remaining.\n\nThis means: fire destroys one data center, flood destroys second,\nhardware failure in third — S3 can still reconstruct your data.\n\nImportant caveat: 11 nines is for S3 Standard (3+ AZs). S3 One Zone-IA\nstores in single AZ — much lower durability (99.999999999% → 99.5% + AZ loss).\"",
+          "topicNumber": 6,
+          "topicSlug": "06-s3-simple-storage-service",
+          "topic": "S3 (Simple Storage Service)"
+        },
+        {
+          "id": "06-s3-simple-storage-service-q4",
+          "question": "Your S3 costs jumped from $500 to $2000 this month. How do you investigate?",
+          "answer": "\"Structured investigation:\n\n1. Cost Explorer: filter by S3 service → break down by usage type.\n   Which cost dimension grew? Storage? Requests? Data Transfer?\n\n2. If STORAGE grew:\n   → S3 Storage Lens: see which buckets and prefixes grew\n   → Common cause: logs accumulating without lifecycle policy\n   → Fix: add lifecycle policy to expire old objects\n\n3. If DATA TRANSFER grew:\n   → Check if CloudFront is in front of S3 (if not — add it)\n   → Direct S3 → internet: $0.09/GB. Via CloudFront: $0.0085/GB\n   → Also check: cross-region replication costs\n   → Check: are applications downloading S3 data then re-uploading (double transfer)?\n\n4. If REQUESTS grew:\n   → S3 charges per 1000 requests ($0.0004 PUT, $0.00004 GET)\n   → S3 access logs → find which prefix is receiving millions of requests\n   → Small objects accessed millions of times → cache with CloudFront\n   → Or: application bug causing S3 polling instead of event-driven\n\n5. Set S3 Storage Lens on all accounts:\n   → Shows bucket-by-bucket cost breakdown\n   → Highlights: unversioned buckets (risk), buckets without lifecycle (cost)\n\n6. Prevention: S3 Storage Class Analysis → shows which objects should move to IA\n   Lifecycle policies → automate cost optimization going forward\"",
+          "topicNumber": 6,
+          "topicSlug": "06-s3-simple-storage-service",
+          "topic": "S3 (Simple Storage Service)"
+        }
+      ],
+      "revisionPoints": [
+        "→ Direct upload: your servers never touch the bytes (infinite scalability)",
+        "→ 1M users uploading 5MB simultaneously = 5TB of bandwidth",
+        "→ Your API would be completely overwhelmed handling that data",
+        "→ Direct to S3: S3 handles it, your API just generates a short URL"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nS3 ← EC2: application stores files to S3 via SDK + IAM Role\nS3 ← Lambda: common trigger (ObjectCreated) + destination for output\nS3 ← CloudFront: S3 as origin, CloudFront as CDN layer\nS3 ← Athena: query data directly in S3 with SQL (no database needed)\nS3 ← Glue: ETL jobs read from S3, write to S3\nS3 ← SageMaker: ML training data stored in S3\nS3 ← CodePipeline: deployment artifacts stored in S3\nS3 ← CloudTrail: logs stored in S3\nS3 ← ELB Access Logs: load balancer logs to S3\nS3 → Glacier: lifecycle transitions for archiving\nS3 ← Macie: scans S3 for PII\nS3 ← Backup: AWS Backup can back up S3 objects\n\nNEXT: Databases — RDS, Aurora, DynamoDB, ElastiCache\nThe four database services you'll use in every production system.\n```\n\n---\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "S3 ← EC2: application stores files to S3 via SDK + IAM Role\nS3 ← Lambda: common trigger (ObjectCreated) + destination for output\nS3 ← CloudFront: S3 as origin, CloudFront as CDN layer\nS3 ← Athena: query data directly in S3 with SQL (no database needed)\nS3 ← Glue: ETL jobs read from S3, write to S3\nS3 ← SageMaker: ML training data stored in S3\nS3 ← CodePipeline: deployment artifacts stored in S3\nS3 ← CloudTrail: logs stored in S3\nS3 ← ELB Access Logs: load balancer logs to S3\nS3 → Glacier: lifecycle transitions for archiving\nS3 ← Macie: scans S3 for PII\nS3 ← Backup: AWS Backup can back up S3 objects\n\nNEXT: Databases — RDS, Aurora, DynamoDB, ElastiCache\nThe four database services you'll use in every production system."
+        },
+        {
+          "type": "paragraph",
+          "content": "---\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "S3 ← EC2: application stores files to S3 via SDK + IAM Role"
+      ]
+    }
+  ]
+}

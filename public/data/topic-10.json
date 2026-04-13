@@ -1,0 +1,228 @@
+{
+  "number": 10,
+  "slug": "10-cloudfront-cdn",
+  "title": "CloudFront (CDN)",
+  "sections": [
+    {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nYour app is in us-east-1 (Virginia, USA).\nA user in Mumbai loads your homepage with a 2MB hero image.\n\nWITHOUT CLOUDFRONT:\nUser in Mumbai → internet → your EC2 in Virginia (15,000 km away)\nRound-trip time: ~180ms per request\nLoading the image: 180ms × many round trips = slow!\nPlus: data transfer OUT from EC2 = $0.09/GB\n\nWITH CLOUDFRONT:\nFirst request: Mumbai user → CloudFront Mumbai edge → cache miss\n→ CloudFront fetches from Virginia (once) → caches at Mumbai edge\nSubsequent requests: Mumbai user → CloudFront Mumbai edge → cache hit\n→ Served from Mumbai (< 5ms, 10km away instead of 15,000km)\n→ Data transfer: $0.0085/GB (90% cheaper than direct EC2!)\n→ Your EC2 barely gets any traffic (cached at edge)\n\nCloudFront = global network of caching servers sitting between your users\n             and your origin (S3, ALB, EC2, API Gateway, custom origin)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Your app is in us-east-1 (Virginia, USA).\nA user in Mumbai loads your homepage with a 2MB hero image.\n\nWITHOUT CLOUDFRONT:\nUser in Mumbai → internet → your EC2 in Virginia (15,000 km away)\nRound-trip time: ~180ms per request\nLoading the image: 180ms × many round trips = slow!\nPlus: data transfer OUT from EC2 = $0.09/GB\n\nWITH CLOUDFRONT:\nFirst request: Mumbai user → CloudFront Mumbai edge → cache miss\n→ CloudFront fetches from Virginia (once) → caches at Mumbai edge\nSubsequent requests: Mumbai user → CloudFront Mumbai edge → cache hit\n→ Served from Mumbai (< 5ms, 10km away instead of 15,000km)\n→ Data transfer: $0.0085/GB (90% cheaper than direct EC2!)\n→ Your EC2 barely gets any traffic (cached at edge)\n\nCloudFront = global network of caching servers sitting between your users\n             and your origin (S3, ALB, EC2, API Gateway, custom origin)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ CloudFront fetches from Virginia (once) → caches at Mumbai edge",
+        "→ Served from Mumbai (< 5ms, 10km away instead of 15,000km)",
+        "→ Data transfer: $0.0085/GB (90% cheaper than direct EC2!)",
+        "→ Your EC2 barely gets any traffic (cached at edge)"
+      ]
+    },
+    {
+      "id": "cloudfront-components",
+      "title": "⚙️ CloudFront Components",
+      "type": "concept",
+      "rawMarkdown": "```\nDISTRIBUTION:\n→ Your CloudFront configuration\n→ Has a domain: d1234567890abc.cloudfront.net\n→ Use Route 53 Alias to point your domain to this\n→ Types: Web (HTTP/S) — use this for everything\n\nORIGIN:\n→ Where CloudFront fetches content FROM when cache miss\n→ S3 bucket (static files, website)\n→ ALB (dynamic app behind load balancer)\n→ EC2 instance (direct)\n→ API Gateway endpoint\n→ Any HTTP server (on-premise, other cloud)\n\nEDGE LOCATIONS:\n→ 400+ locations in 90+ cities worldwide\n→ Where content is cached\n→ Much more locations than AWS regions (30 regions vs 400+ edges)\n\nREGIONAL EDGE CACHES:\n→ Larger caches between edge locations and origin\n→ If edge location cache expires → checks regional cache first\n→ Less-popular content cached longer here\n→ Reduces origin load further\n\nCACHE BEHAVIOR:\n→ Rules for how to cache specific URL patterns\n→ /static/* → cache for 1 year (images, CSS, JS)\n→ /api/*    → don't cache (or short TTL)\n→ /         → cache for 1 minute\n→ Each behavior can have different: TTL, allowed methods, forwarding rules\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "DISTRIBUTION:\n→ Your CloudFront configuration\n→ Has a domain: d1234567890abc.cloudfront.net\n→ Use Route 53 Alias to point your domain to this\n→ Types: Web (HTTP/S) — use this for everything\n\nORIGIN:\n→ Where CloudFront fetches content FROM when cache miss\n→ S3 bucket (static files, website)\n→ ALB (dynamic app behind load balancer)\n→ EC2 instance (direct)\n→ API Gateway endpoint\n→ Any HTTP server (on-premise, other cloud)\n\nEDGE LOCATIONS:\n→ 400+ locations in 90+ cities worldwide\n→ Where content is cached\n→ Much more locations than AWS regions (30 regions vs 400+ edges)\n\nREGIONAL EDGE CACHES:\n→ Larger caches between edge locations and origin\n→ If edge location cache expires → checks regional cache first\n→ Less-popular content cached longer here\n→ Reduces origin load further\n\nCACHE BEHAVIOR:\n→ Rules for how to cache specific URL patterns\n→ /static/* → cache for 1 year (images, CSS, JS)\n→ /api/*    → don't cache (or short TTL)\n→ /         → cache for 1 minute\n→ Each behavior can have different: TTL, allowed methods, forwarding rules"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Your CloudFront configuration",
+        "→ Has a domain: d1234567890abc.cloudfront.net",
+        "→ Use Route 53 Alias to point your domain to this",
+        "→ Types: Web (HTTP/S) — use this for everything",
+        "→ Where CloudFront fetches content FROM when cache miss",
+        "→ S3 bucket (static files, website)",
+        "→ ALB (dynamic app behind load balancer)",
+        "→ EC2 instance (direct)"
+      ]
+    },
+    {
+      "id": "cloudfront-security",
+      "title": "🔒 CloudFront Security",
+      "type": "concept",
+      "rawMarkdown": "### OAC — Origin Access Control (for S3)\n```\nPROBLEM:\nS3 bucket with private files.\nYou want ONLY CloudFront to access S3, not users going directly to S3 URL.\n\nSOLUTION: Origin Access Control\n→ CloudFront signs requests to S3 with a special signature\n→ S3 bucket policy: only allow requests signed by CloudFront OAC\n→ Direct S3 access → denied (no valid OAC signature)\n→ Via CloudFront → allowed (has valid signature)\n\nBUCKET POLICY FOR OAC:\n{\n  \"Effect\": \"Allow\",\n  \"Principal\": {\n    \"Service\": \"cloudfront.amazonaws.com\"\n  },\n  \"Action\": \"s3:GetObject\",\n  \"Resource\": \"arn:aws:s3:::my-bucket/*\",\n  \"Condition\": {\n    \"StringEquals\": {\n      \"AWS:SourceArn\": \"arn:aws:cloudfront::123456:distribution/EDFDVBD6EXAMPLE\"\n    }\n  }\n}\n\n→ Block Public Access ON for S3 bucket (good!)\n→ CloudFront OAC authenticates → gets objects\n→ Users see content via CloudFront, never touch S3 directly\n```\n\n### WAF + CloudFront\n```\nAttach WAF (Web Application Firewall) to CloudFront:\n→ WAF rules run at the EDGE (400+ locations)\n→ Malicious traffic blocked before reaching your origin\n→ SQL injection, XSS, rate limiting, IP blocking — all at edge\n→ CHEAPER: blocked requests don't consume your origin capacity\n\nCOMMON WAF RULES ON CLOUDFRONT:\n→ AWS Managed Rules (OWASP Top 10 protection)\n→ Rate limiting: >1000 requests/5min from same IP → block\n→ Geo-blocking: block specific countries\n→ IP reputation lists (known bad IPs from threat intelligence)\n```\n\n### HTTPS + Custom Certificates\n```\nCloudFront forces HTTPS with custom domain:\n1. Request SSL certificate in ACM (us-east-1 region ONLY for CloudFront!)\n2. Attach certificate to CloudFront distribution\n3. Configure: redirect HTTP → HTTPS\n4. Route 53 Alias: your domain → CloudFront distribution\n\nSECURITY POLICIES:\nTLSv1.2_2021 (recommended): TLS 1.2+ only, modern cipher suites\nTLSv1 (legacy): if you must support very old clients\n\nSNI (Server Name Indication): FREE (CloudFront uses SNI for certificate selection)\nDedicated IP: $600/month (for very old clients that don't support SNI)\n→ Use SNI unless you have specific reason not to\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### OAC — Origin Access Control (for S3)"
+        },
+        {
+          "type": "diagram",
+          "content": "PROBLEM:\nS3 bucket with private files.\nYou want ONLY CloudFront to access S3, not users going directly to S3 URL.\n\nSOLUTION: Origin Access Control\n→ CloudFront signs requests to S3 with a special signature\n→ S3 bucket policy: only allow requests signed by CloudFront OAC\n→ Direct S3 access → denied (no valid OAC signature)\n→ Via CloudFront → allowed (has valid signature)\n\nBUCKET POLICY FOR OAC:\n{\n  \"Effect\": \"Allow\",\n  \"Principal\": {\n    \"Service\": \"cloudfront.amazonaws.com\"\n  },\n  \"Action\": \"s3:GetObject\",\n  \"Resource\": \"arn:aws:s3:::my-bucket/*\",\n  \"Condition\": {\n    \"StringEquals\": {\n      \"AWS:SourceArn\": \"arn:aws:cloudfront::123456:distribution/EDFDVBD6EXAMPLE\"\n    }\n  }\n}\n\n→ Block Public Access ON for S3 bucket (good!)\n→ CloudFront OAC authenticates → gets objects\n→ Users see content via CloudFront, never touch S3 directly"
+        },
+        {
+          "type": "paragraph",
+          "content": "### WAF + CloudFront"
+        },
+        {
+          "type": "diagram",
+          "content": "Attach WAF (Web Application Firewall) to CloudFront:\n→ WAF rules run at the EDGE (400+ locations)\n→ Malicious traffic blocked before reaching your origin\n→ SQL injection, XSS, rate limiting, IP blocking — all at edge\n→ CHEAPER: blocked requests don't consume your origin capacity\n\nCOMMON WAF RULES ON CLOUDFRONT:\n→ AWS Managed Rules (OWASP Top 10 protection)\n→ Rate limiting: >1000 requests/5min from same IP → block\n→ Geo-blocking: block specific countries\n→ IP reputation lists (known bad IPs from threat intelligence)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### HTTPS + Custom Certificates"
+        },
+        {
+          "type": "diagram",
+          "content": "CloudFront forces HTTPS with custom domain:\n1. Request SSL certificate in ACM (us-east-1 region ONLY for CloudFront!)\n2. Attach certificate to CloudFront distribution\n3. Configure: redirect HTTP → HTTPS\n4. Route 53 Alias: your domain → CloudFront distribution\n\nSECURITY POLICIES:\nTLSv1.2_2021 (recommended): TLS 1.2+ only, modern cipher suites\nTLSv1 (legacy): if you must support very old clients\n\nSNI (Server Name Indication): FREE (CloudFront uses SNI for certificate selection)\nDedicated IP: $600/month (for very old clients that don't support SNI)\n→ Use SNI unless you have specific reason not to"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ CloudFront signs requests to S3 with a special signature",
+        "→ S3 bucket policy: only allow requests signed by CloudFront OAC",
+        "→ Direct S3 access → denied (no valid OAC signature)",
+        "→ Via CloudFront → allowed (has valid signature)",
+        "→ Block Public Access ON for S3 bucket (good!)",
+        "→ CloudFront OAC authenticates → gets objects",
+        "→ Users see content via CloudFront, never touch S3 directly",
+        "→ WAF rules run at the EDGE (400+ locations)"
+      ]
+    },
+    {
+      "id": "caching-and-ttl",
+      "title": "⏱️ Caching and TTL",
+      "type": "concept",
+      "rawMarkdown": "```\nHOW CACHING WORKS:\n1. User requests file → nearest edge location\n2. Edge checks cache → MISS (not cached or expired)\n3. Edge fetches from origin → stores in cache with TTL\n4. Next user for same file → edge cache HIT → serves immediately\n5. TTL expires → next request → re-fetches from origin\n\nTTL CONTROL (in order of priority):\n1. Cache-Control: max-age=86400 (from your origin response)\n2. Expires: [date] (from your origin response)\n3. Default TTL in CloudFront behavior (if origin sends no cache headers)\n\nDEFAULT TTL: 24 hours (86400 seconds)\nMINIMUM TTL: 0 seconds\nMAXIMUM TTL: 31,536,000 seconds (1 year)\n\nBEST PRACTICES BY CONTENT TYPE:\n/static/images/*    → max-age=31536000 (1 year) — use cache-busting filenames\n/static/js/*.js     → max-age=31536000 — versioned: app.a1b2c3.js\n/static/css/*.css   → max-age=31536000 — versioned\n/api/user/profile   → max-age=0, no-cache (personalized, never cache)\n/api/products       → max-age=300 (5 min — changes occasionally)\n/                   → max-age=60 (index.html — update propagates in 1 min)\n\nCACHE KEY (what makes a unique cache entry):\nDefault: URL path only\nCan add: query strings, headers, cookies (increases cache misses but enables personalization)\n→ Add query string to cache key: /products?category=shoes → different cache entry per category\n→ Don't add unnecessary dimensions → lowers cache hit rate\n```\n\n### Cache Invalidation\n```\nPROBLEM: You deployed new code. CloudFront still serves old cached JS/CSS.\n\nINVALIDATION:\n→ Tell CloudFront to delete specific cached files\n→ Cost: first 1000 invalidation paths/month FREE, then $0.005 per path\n→ /* → invalidate everything (counts as 1 path)\n→ /static/js/* → invalidate all JS files\n→ Takes ~60 seconds to propagate to all edge locations\n\nBETTER APPROACH — CACHE BUSTING:\n→ Include file hash in filename: app.a1b2c3d4.js\n→ Deploy new code → filename changes → app.e5f6g7h8.js\n→ Old cache entry (a1b2c3d4) becomes irrelevant (nobody requests it)\n→ New file → cache miss → fetched from origin → cached\n→ HTML references new filename → users get new JS immediately\n→ Zero invalidation cost. Works automatically with Webpack/Vite.\n\n→ For index.html: short TTL (60s) or always invalidate on deploy\n   (index.html can't have hash in its own name)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "HOW CACHING WORKS:\n1. User requests file → nearest edge location\n2. Edge checks cache → MISS (not cached or expired)\n3. Edge fetches from origin → stores in cache with TTL\n4. Next user for same file → edge cache HIT → serves immediately\n5. TTL expires → next request → re-fetches from origin\n\nTTL CONTROL (in order of priority):\n1. Cache-Control: max-age=86400 (from your origin response)\n2. Expires: [date] (from your origin response)\n3. Default TTL in CloudFront behavior (if origin sends no cache headers)\n\nDEFAULT TTL: 24 hours (86400 seconds)\nMINIMUM TTL: 0 seconds\nMAXIMUM TTL: 31,536,000 seconds (1 year)\n\nBEST PRACTICES BY CONTENT TYPE:\n/static/images/*    → max-age=31536000 (1 year) — use cache-busting filenames\n/static/js/*.js     → max-age=31536000 — versioned: app.a1b2c3.js\n/static/css/*.css   → max-age=31536000 — versioned\n/api/user/profile   → max-age=0, no-cache (personalized, never cache)\n/api/products       → max-age=300 (5 min — changes occasionally)\n/                   → max-age=60 (index.html — update propagates in 1 min)\n\nCACHE KEY (what makes a unique cache entry):\nDefault: URL path only\nCan add: query strings, headers, cookies (increases cache misses but enables personalization)\n→ Add query string to cache key: /products?category=shoes → different cache entry per category\n→ Don't add unnecessary dimensions → lowers cache hit rate"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Cache Invalidation"
+        },
+        {
+          "type": "diagram",
+          "content": "PROBLEM: You deployed new code. CloudFront still serves old cached JS/CSS.\n\nINVALIDATION:\n→ Tell CloudFront to delete specific cached files\n→ Cost: first 1000 invalidation paths/month FREE, then $0.005 per path\n→ /* → invalidate everything (counts as 1 path)\n→ /static/js/* → invalidate all JS files\n→ Takes ~60 seconds to propagate to all edge locations\n\nBETTER APPROACH — CACHE BUSTING:\n→ Include file hash in filename: app.a1b2c3d4.js\n→ Deploy new code → filename changes → app.e5f6g7h8.js\n→ Old cache entry (a1b2c3d4) becomes irrelevant (nobody requests it)\n→ New file → cache miss → fetched from origin → cached\n→ HTML references new filename → users get new JS immediately\n→ Zero invalidation cost. Works automatically with Webpack/Vite.\n\n→ For index.html: short TTL (60s) or always invalidate on deploy\n   (index.html can't have hash in its own name)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Add query string to cache key: /products?category=shoes → different cache entry per category",
+        "→ Don't add unnecessary dimensions → lowers cache hit rate",
+        "→ Tell CloudFront to delete specific cached files",
+        "→ Cost: first 1000 invalidation paths/month FREE, then $0.005 per path",
+        "→ /* → invalidate everything (counts as 1 path)",
+        "→ /static/js/* → invalidate all JS files",
+        "→ Takes ~60 seconds to propagate to all edge locations",
+        "→ Include file hash in filename: app.a1b2c3d4.js"
+      ]
+    },
+    {
+      "id": "cloudfront-use-cases",
+      "title": "🌐 CloudFront Use Cases",
+      "type": "concept",
+      "rawMarkdown": "```\n1. STATIC WEBSITE (S3 + CloudFront):\n   S3 bucket (static files) → CloudFront → Route 53 → users\n   Cost: nearly zero for small sites\n   Performance: files served from nearest edge location worldwide\n   Security: OAC → S3 not public, HTTPS enforced\n\n2. API ACCELERATION:\n   API Gateway / ALB → CloudFront (for cacheable API responses)\n   Even for dynamic APIs: CloudFront reduces TCP handshake time\n   Uses AWS's optimized global network (faster than public internet routing)\n\n3. VIDEO STREAMING:\n   S3 or MediaStore → CloudFront → users\n   HLS, DASH streaming at global scale\n   Signed URLs/Cookies for access control (paid content)\n\n4. LAMBDA@EDGE / CLOUDFRONT FUNCTIONS:\n   Run code at edge locations (near users)\n   Lambda@Edge: full Node.js, Python (max 5 seconds execution)\n   CloudFront Functions: lightweight JS, < 1ms execution, much cheaper\n   \n   Use cases:\n   → A/B testing at edge (no origin request needed)\n   → Authentication: verify JWT at edge before forwarding to ALB\n   → URL rewrites: /old-path → /new-path at edge\n   → Add security headers (HSTS, X-Frame-Options) to every response\n   → Personalization: insert user's country into request header for origin\n\n5. DDoS PROTECTION (built-in):\n   CloudFront + AWS Shield Standard → automatic DDoS mitigation at edge\n   Absorbs attack traffic before it reaches your origin\n   Scale: CloudFront can absorb much larger attacks than your origin could\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "1. STATIC WEBSITE (S3 + CloudFront):\n   S3 bucket (static files) → CloudFront → Route 53 → users\n   Cost: nearly zero for small sites\n   Performance: files served from nearest edge location worldwide\n   Security: OAC → S3 not public, HTTPS enforced\n\n2. API ACCELERATION:\n   API Gateway / ALB → CloudFront (for cacheable API responses)\n   Even for dynamic APIs: CloudFront reduces TCP handshake time\n   Uses AWS's optimized global network (faster than public internet routing)\n\n3. VIDEO STREAMING:\n   S3 or MediaStore → CloudFront → users\n   HLS, DASH streaming at global scale\n   Signed URLs/Cookies for access control (paid content)\n\n4. LAMBDA@EDGE / CLOUDFRONT FUNCTIONS:\n   Run code at edge locations (near users)\n   Lambda@Edge: full Node.js, Python (max 5 seconds execution)\n   CloudFront Functions: lightweight JS, < 1ms execution, much cheaper\n   \n   Use cases:\n   → A/B testing at edge (no origin request needed)\n   → Authentication: verify JWT at edge before forwarding to ALB\n   → URL rewrites: /old-path → /new-path at edge\n   → Add security headers (HSTS, X-Frame-Options) to every response\n   → Personalization: insert user's country into request header for origin\n\n5. DDoS PROTECTION (built-in):\n   CloudFront + AWS Shield Standard → automatic DDoS mitigation at edge\n   Absorbs attack traffic before it reaches your origin\n   Scale: CloudFront can absorb much larger attacks than your origin could"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "S3 bucket (static files) → CloudFront → Route 53 → users"
+      ]
+    },
+    {
+      "id": "interview-qa-cloudfront",
+      "title": "🎯 Interview Q&A — CloudFront",
+      "type": "qa",
+      "rawMarkdown": "**Q: Why use CloudFront in front of S3 instead of serving directly from S3?**\n```\n\"Four reasons:\n\nPerformance: S3 is regional (one location). CloudFront has 400+ edge\nlocations. User in Tokyo gets files from Tokyo edge, not your us-east-1\nbucket. Latency drops from 180ms to 5ms for cached content.\n\nCost: S3 to internet data transfer is $0.09/GB. CloudFront to internet\nis $0.0085/GB (90% cheaper) because CloudFront has preferential rates with\nISPs and optimized transfer from S3 to CloudFront is also cheaper.\n\nSecurity: with OAC, S3 bucket is completely private. Block Public Access\nis ON. Only CloudFront can read objects. Direct S3 URLs fail. Users always\ngo through CloudFront (WAF, rate limiting, geo-blocking all apply).\n\nHTTPS: S3 static website hosting doesn't support HTTPS with custom domain.\nCloudFront + ACM certificate = HTTPS with your domain. Required for SEO\nand browser trust.\n\nThe combination is: Route 53 → CloudFront (HTTPS, WAF, CDN) → S3 (OAC,\nprivate, origin). This is the standard pattern for all static sites.\"\n```\n\n**Q: How do you ensure users always get the latest version of your SPA after deployment?**\n```\n\"Two-part strategy:\n\nPart 1: Cache-bust JS/CSS with content hashes.\nModern build tools (Vite, webpack) append file content hash to filename:\nmain.a1b2c3d4.js, styles.e5f6g7h8.css\nCloudFront caches these with max-age=31536000 (1 year).\nWhen code changes → new hash → new filename → new cache entry.\nOld cached files are never requested again (dead cache entries harmless).\n\nPart 2: Short TTL on index.html.\nindex.html references the hashed filenames.\nSet: Cache-Control: max-age=60, must-revalidate on index.html responses.\nOr: invalidate /index.html from CloudFront on every deployment.\n\nResult: users cache JS/CSS for 1 year (fast!), always get fresh index.html\nwithin 60 seconds of deployment. index.html references new hashed files.\nNew hashes → cache miss → fetched from origin → cached at edge.\nTotal update propagation: < 2 minutes after deployment. No manual invalidation.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: Why use CloudFront in front of S3 instead of serving directly from S3?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Four reasons:\n\nPerformance: S3 is regional (one location). CloudFront has 400+ edge\nlocations. User in Tokyo gets files from Tokyo edge, not your us-east-1\nbucket. Latency drops from 180ms to 5ms for cached content.\n\nCost: S3 to internet data transfer is $0.09/GB. CloudFront to internet\nis $0.0085/GB (90% cheaper) because CloudFront has preferential rates with\nISPs and optimized transfer from S3 to CloudFront is also cheaper.\n\nSecurity: with OAC, S3 bucket is completely private. Block Public Access\nis ON. Only CloudFront can read objects. Direct S3 URLs fail. Users always\ngo through CloudFront (WAF, rate limiting, geo-blocking all apply).\n\nHTTPS: S3 static website hosting doesn't support HTTPS with custom domain.\nCloudFront + ACM certificate = HTTPS with your domain. Required for SEO\nand browser trust.\n\nThe combination is: Route 53 → CloudFront (HTTPS, WAF, CDN) → S3 (OAC,\nprivate, origin). This is the standard pattern for all static sites.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How do you ensure users always get the latest version of your SPA after deployment?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Two-part strategy:\n\nPart 1: Cache-bust JS/CSS with content hashes.\nModern build tools (Vite, webpack) append file content hash to filename:\nmain.a1b2c3d4.js, styles.e5f6g7h8.css\nCloudFront caches these with max-age=31536000 (1 year).\nWhen code changes → new hash → new filename → new cache entry.\nOld cached files are never requested again (dead cache entries harmless).\n\nPart 2: Short TTL on index.html.\nindex.html references the hashed filenames.\nSet: Cache-Control: max-age=60, must-revalidate on index.html responses.\nOr: invalidate /index.html from CloudFront on every deployment.\n\nResult: users cache JS/CSS for 1 year (fast!), always get fresh index.html\nwithin 60 seconds of deployment. index.html references new hashed files.\nNew hashes → cache miss → fetched from origin → cached at edge.\nTotal update propagation: < 2 minutes after deployment. No manual invalidation.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "10-cloudfront-cdn-q1",
+          "question": "Why use CloudFront in front of S3 instead of serving directly from S3?",
+          "answer": "\"Four reasons:\n\nPerformance: S3 is regional (one location). CloudFront has 400+ edge\nlocations. User in Tokyo gets files from Tokyo edge, not your us-east-1\nbucket. Latency drops from 180ms to 5ms for cached content.\n\nCost: S3 to internet data transfer is $0.09/GB. CloudFront to internet\nis $0.0085/GB (90% cheaper) because CloudFront has preferential rates with\nISPs and optimized transfer from S3 to CloudFront is also cheaper.\n\nSecurity: with OAC, S3 bucket is completely private. Block Public Access\nis ON. Only CloudFront can read objects. Direct S3 URLs fail. Users always\ngo through CloudFront (WAF, rate limiting, geo-blocking all apply).\n\nHTTPS: S3 static website hosting doesn't support HTTPS with custom domain.\nCloudFront + ACM certificate = HTTPS with your domain. Required for SEO\nand browser trust.\n\nThe combination is: Route 53 → CloudFront (HTTPS, WAF, CDN) → S3 (OAC,\nprivate, origin). This is the standard pattern for all static sites.\"",
+          "topicNumber": 10,
+          "topicSlug": "10-cloudfront-cdn",
+          "topic": "CloudFront (CDN)"
+        },
+        {
+          "id": "10-cloudfront-cdn-q2",
+          "question": "How do you ensure users always get the latest version of your SPA after deployment?",
+          "answer": "\"Two-part strategy:\n\nPart 1: Cache-bust JS/CSS with content hashes.\nModern build tools (Vite, webpack) append file content hash to filename:\nmain.a1b2c3d4.js, styles.e5f6g7h8.css\nCloudFront caches these with max-age=31536000 (1 year).\nWhen code changes → new hash → new filename → new cache entry.\nOld cached files are never requested again (dead cache entries harmless).\n\nPart 2: Short TTL on index.html.\nindex.html references the hashed filenames.\nSet: Cache-Control: max-age=60, must-revalidate on index.html responses.\nOr: invalidate /index.html from CloudFront on every deployment.\n\nResult: users cache JS/CSS for 1 year (fast!), always get fresh index.html\nwithin 60 seconds of deployment. index.html references new hashed files.\nNew hashes → cache miss → fetched from origin → cached at edge.\nTotal update propagation: < 2 minutes after deployment. No manual invalidation.\"",
+          "topicNumber": 10,
+          "topicSlug": "10-cloudfront-cdn",
+          "topic": "CloudFront (CDN)"
+        }
+      ],
+      "revisionPoints": [
+        "**Q: Why use CloudFront in front of S3 instead of serving directly from S3?**"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nCloudFront ← S3: static files origin (with OAC)\nCloudFront ← ALB: dynamic app origin\nCloudFront ← API Gateway: API endpoint origin\nCloudFront ← Custom origin: any HTTP server\nCloudFront → WAF: attach for request filtering\nCloudFront → ACM: SSL certificates (must be in us-east-1)\nCloudFront → Route 53: Alias record pointing to distribution\nCloudFront → Lambda@Edge: run code at edge\nCloudFront → CloudFront Functions: lightweight edge logic\nCloudFront → S3 Access Logs: request logging\n\nNEXT: SQS, SNS, EventBridge — Messaging & Integration\nHow your services communicate asynchronously and decouple from each other.\n```\n\n---\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "CloudFront ← S3: static files origin (with OAC)\nCloudFront ← ALB: dynamic app origin\nCloudFront ← API Gateway: API endpoint origin\nCloudFront ← Custom origin: any HTTP server\nCloudFront → WAF: attach for request filtering\nCloudFront → ACM: SSL certificates (must be in us-east-1)\nCloudFront → Route 53: Alias record pointing to distribution\nCloudFront → Lambda@Edge: run code at edge\nCloudFront → CloudFront Functions: lightweight edge logic\nCloudFront → S3 Access Logs: request logging\n\nNEXT: SQS, SNS, EventBridge — Messaging & Integration\nHow your services communicate asynchronously and decouple from each other."
+        },
+        {
+          "type": "paragraph",
+          "content": "---\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "CloudFront ← S3: static files origin (with OAC)"
+      ]
+    }
+  ]
+}

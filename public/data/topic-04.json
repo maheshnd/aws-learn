@@ -1,0 +1,268 @@
+{
+  "number": 4,
+  "slug": "04-ec2-storage-ebs-efs-instance-store",
+  "title": "EC2 Storage (EBS, EFS, Instance Store)",
+  "sections": [
+    {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nYour EC2 instance is like a laptop.\n\nA laptop has:\n→ RAM (fast, temporary — loses data when you turn off)\n→ Hard drive (slower, permanent — survives restart)\n→ USB drive (portable, attach/detach to different laptops)\n→ Network drive (shared, multiple laptops access same files)\n\nEC2 has the exact same concepts:\n→ Instance Store = RAM equivalent (fast, GONE when instance stops)\n→ EBS Volume    = hard drive (survives stop/start, one instance)\n→ EBS Snapshot  = backup of that hard drive (stored in S3)\n→ EFS           = network drive (multiple EC2s share same files)\n→ S3            = external warehouse (not a drive, but unlimited storage)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Your EC2 instance is like a laptop.\n\nA laptop has:\n→ RAM (fast, temporary — loses data when you turn off)\n→ Hard drive (slower, permanent — survives restart)\n→ USB drive (portable, attach/detach to different laptops)\n→ Network drive (shared, multiple laptops access same files)\n\nEC2 has the exact same concepts:\n→ Instance Store = RAM equivalent (fast, GONE when instance stops)\n→ EBS Volume    = hard drive (survives stop/start, one instance)\n→ EBS Snapshot  = backup of that hard drive (stored in S3)\n→ EFS           = network drive (multiple EC2s share same files)\n→ S3            = external warehouse (not a drive, but unlimited storage)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ RAM (fast, temporary — loses data when you turn off)",
+        "→ Hard drive (slower, permanent — survives restart)",
+        "→ USB drive (portable, attach/detach to different laptops)",
+        "→ Network drive (shared, multiple laptops access same files)",
+        "→ Instance Store = RAM equivalent (fast, GONE when instance stops)",
+        "→ EBS Volume    = hard drive (survives stop/start, one instance)",
+        "→ EBS Snapshot  = backup of that hard drive (stored in S3)",
+        "→ EFS           = network drive (multiple EC2s share same files)"
+      ]
+    },
+    {
+      "id": "ebs-elastic-block-store",
+      "title": "💾 EBS — Elastic Block Store",
+      "type": "concept",
+      "rawMarkdown": "### What is EBS?\n```\nEBS = a network-attached hard drive for your EC2 instance\n\nKey facts:\n→ Persists independently of EC2 instance lifecycle\n→ Attached to ONE instance at a time (usually)\n→ Locked to ONE Availability Zone\n→ Can detach from one EC2 and attach to another (same AZ)\n→ Think: USB drive that plugs into only one laptop at a time\n→ Billed per GB provisioned per month (even if empty!)\n\nANALOGY:\nEC2 instance = your laptop\nEBS volume   = external hard drive plugged into laptop via USB\nStop laptop  = hard drive still has all data\nUnplug drive = plug into different laptop → same data accessible\n```\n\n### EBS Volume Types\n\n```\nTYPE        DESCRIPTION              IOPS          THROUGHPUT    USE CASE\n───────────────────────────────────────────────────────────────────────────\ngp3 (SSD)   General purpose SSD     3,000–16,000  125–1,000 MB/s  Most workloads\n            (RECOMMENDED default)    provisioned   provisioned      OS volumes\n            $0.08/GB/month          independently independently    Dev/test DBs\n\ngp2 (SSD)   Old general purpose     3 IOPS/GB     128–250 MB/s   Legacy (use gp3)\n            (AVOID for new)         max 16,000    automatically    OLD default\n            $0.10/GB/month          (bursts)\n\nio2 (SSD)   Provisioned IOPS SSD    up to 64,000  1,000 MB/s     Critical DBs\n            High durability (99.999%)  IOPS        provisioned     Oracle, SAP\n            $0.125/GB + $0.065/IOPS\n\nio1 (SSD)   Provisioned IOPS SSD    up to 64,000  1,000 MB/s     Older io2\n            $0.125/GB + $0.065/IOPS  (less durable than io2)      alternative\n\nst1 (HDD)   Throughput optimized    500 IOPS      500 MB/s       Big data\n            Low cost HDD            (baseline)    (throughput)    Kafka logs\n            $0.045/GB/month                                        Data warehouses\n            CANNOT be boot volume\n\nsc1 (HDD)   Cold HDD                250 IOPS      250 MB/s       Infrequently\n            Cheapest block storage  (baseline)                     accessed data\n            $0.015/GB/month                                        Archives\n            CANNOT be boot volume\n```\n\n### gp2 vs gp3 — Always Use gp3\n\n```\ngp2 (OLD):\n→ IOPS tied to volume size: 3 IOPS per GB\n→ 100 GB volume = 300 IOPS (can't change without resizing!)\n→ Bursts to 3,000 IOPS (uses burst bucket — can throttle)\n→ $0.10/GB/month\n\ngp3 (NEW — use this):\n→ IOPS independent of size: always starts at 3,000 IOPS\n→ Provision up to 16,000 IOPS separately (no need to add storage)\n→ Provision up to 1,000 MB/s throughput independently\n→ $0.08/GB/month (20% CHEAPER than gp2!)\n→ No burst bucket — consistent performance\n\nMIGRATION: resize gp2 → gp3 with zero downtime\n           Immediate 20% cost savings, better performance\n           Do this on all your existing gp2 volumes!\n```\n\n### EBS — Important Behaviours\n\n```\nDELETE ON TERMINATION:\n→ Root EBS volume: DeleteOnTermination = TRUE by default\n→ Additional EBS volumes: DeleteOnTermination = FALSE by default\n→ When EC2 is TERMINATED:\n   - Root volume → deleted (your OS + root data gone!)\n   - Additional volumes → kept (your data volumes survive)\n→ CHANGE THIS: if you want root data to survive termination,\n  set DeleteOnTermination = false on root volume at launch\n\nMULTI-ATTACH (io1/io2 only):\n→ Normally: one EBS volume attached to ONE EC2 instance\n→ Multi-Attach: attach same volume to up to 16 EC2 instances simultaneously\n→ All instances must be in same AZ\n→ Use case: clustered applications (Oracle RAC)\n→ Application must handle concurrent writes (EBS doesn't manage this)\n→ NOT for general use — EFS is better for shared storage\n\nENCRYPTION:\n→ EBS encryption uses KMS keys (AES-256)\n→ Encrypts: data at rest + data in transit between EC2 and EBS\n→ Minimal performance impact (handled by hardware)\n→ Snapshots of encrypted volumes are encrypted\n→ Volumes created from encrypted snapshots are encrypted\n→ Enable by default in account settings (recommended)\n→ Cannot encrypt an existing unencrypted volume directly\n   Workaround: snapshot → copy snapshot with encryption → create volume\n\nRESIZING:\n→ Can increase size anytime (no downtime!)\n→ Can change volume type anytime (no downtime!)\n→ CANNOT decrease size (only increase)\n→ After resize: must extend the filesystem inside the OS\n   (AWS resizes the volume but OS still sees old partition size)\n   # For Amazon Linux:\n   sudo growpart /dev/xvda 1\n   sudo xfs_growfs /\n```\n\n### EBS Snapshots\n\n```\nWHAT IS A SNAPSHOT?\n→ Point-in-time backup of an EBS volume\n→ Stored in S3 (you don't see the bucket — AWS manages it)\n→ Incremental: first snapshot = full copy, subsequent = only changes\n→ Can create volume from snapshot in ANY AZ (even different AZ!)\n→ Can copy snapshot to different region (for DR)\n→ Can share snapshots with other AWS accounts\n\nSNAPSHOT PRICING:\n→ $0.05/GB/month for stored snapshot data\n→ Incremental — if volume is 100GB but only 5GB changed → ~5GB stored\n→ Much cheaper than keeping volumes running\n\nIMPORTANT USES:\n1. Backup: daily snapshots → restore if data corrupted\n2. Migration: snapshot in us-east-1 → copy to eu-west-1 → create volume\n3. AMI creation: snapshot of root volume → create custom AMI\n4. Environment clone: snapshot prod → create dev volume from it\n\nEBS SNAPSHOT ARCHIVE:\n→ Move snapshots to archive tier: 75% cheaper storage\n→ Restore time: 24–72 hours (not instant)\n→ Good for: compliance snapshots you rarely need but must keep\n\nRECYCLE BIN:\n→ Enable Recycle Bin for snapshots\n→ Accidentally deleted snapshot → recoverable within retention period\n→ Retention: 1 day to 1 year\n→ Small storage cost while in bin\n\nBEST PRACTICE SNAPSHOT SCHEDULE:\nProduction DB EBS → daily snapshot, 7-day retention\nApp server EBS   → weekly snapshot, 4-week retention\nDev environment  → snapshot before major changes only\nAll snapshots    → copy to second region monthly (DR)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### What is EBS?"
+        },
+        {
+          "type": "diagram",
+          "content": "EBS = a network-attached hard drive for your EC2 instance\n\nKey facts:\n→ Persists independently of EC2 instance lifecycle\n→ Attached to ONE instance at a time (usually)\n→ Locked to ONE Availability Zone\n→ Can detach from one EC2 and attach to another (same AZ)\n→ Think: USB drive that plugs into only one laptop at a time\n→ Billed per GB provisioned per month (even if empty!)\n\nANALOGY:\nEC2 instance = your laptop\nEBS volume   = external hard drive plugged into laptop via USB\nStop laptop  = hard drive still has all data\nUnplug drive = plug into different laptop → same data accessible"
+        },
+        {
+          "type": "paragraph",
+          "content": "### EBS Volume Types"
+        },
+        {
+          "type": "diagram",
+          "content": "TYPE        DESCRIPTION              IOPS          THROUGHPUT    USE CASE\n───────────────────────────────────────────────────────────────────────────\ngp3 (SSD)   General purpose SSD     3,000–16,000  125–1,000 MB/s  Most workloads\n            (RECOMMENDED default)    provisioned   provisioned      OS volumes\n            $0.08/GB/month          independently independently    Dev/test DBs\n\ngp2 (SSD)   Old general purpose     3 IOPS/GB     128–250 MB/s   Legacy (use gp3)\n            (AVOID for new)         max 16,000    automatically    OLD default\n            $0.10/GB/month          (bursts)\n\nio2 (SSD)   Provisioned IOPS SSD    up to 64,000  1,000 MB/s     Critical DBs\n            High durability (99.999%)  IOPS        provisioned     Oracle, SAP\n            $0.125/GB + $0.065/IOPS\n\nio1 (SSD)   Provisioned IOPS SSD    up to 64,000  1,000 MB/s     Older io2\n            $0.125/GB + $0.065/IOPS  (less durable than io2)      alternative\n\nst1 (HDD)   Throughput optimized    500 IOPS      500 MB/s       Big data\n            Low cost HDD            (baseline)    (throughput)    Kafka logs\n            $0.045/GB/month                                        Data warehouses\n            CANNOT be boot volume\n\nsc1 (HDD)   Cold HDD                250 IOPS      250 MB/s       Infrequently\n            Cheapest block storage  (baseline)                     accessed data\n            $0.015/GB/month                                        Archives\n            CANNOT be boot volume"
+        },
+        {
+          "type": "paragraph",
+          "content": "### gp2 vs gp3 — Always Use gp3"
+        },
+        {
+          "type": "diagram",
+          "content": "gp2 (OLD):\n→ IOPS tied to volume size: 3 IOPS per GB\n→ 100 GB volume = 300 IOPS (can't change without resizing!)\n→ Bursts to 3,000 IOPS (uses burst bucket — can throttle)\n→ $0.10/GB/month\n\ngp3 (NEW — use this):\n→ IOPS independent of size: always starts at 3,000 IOPS\n→ Provision up to 16,000 IOPS separately (no need to add storage)\n→ Provision up to 1,000 MB/s throughput independently\n→ $0.08/GB/month (20% CHEAPER than gp2!)\n→ No burst bucket — consistent performance\n\nMIGRATION: resize gp2 → gp3 with zero downtime\n           Immediate 20% cost savings, better performance\n           Do this on all your existing gp2 volumes!"
+        },
+        {
+          "type": "paragraph",
+          "content": "### EBS — Important Behaviours"
+        },
+        {
+          "type": "diagram",
+          "content": "DELETE ON TERMINATION:\n→ Root EBS volume: DeleteOnTermination = TRUE by default\n→ Additional EBS volumes: DeleteOnTermination = FALSE by default\n→ When EC2 is TERMINATED:\n   - Root volume → deleted (your OS + root data gone!)\n   - Additional volumes → kept (your data volumes survive)\n→ CHANGE THIS: if you want root data to survive termination,\n  set DeleteOnTermination = false on root volume at launch\n\nMULTI-ATTACH (io1/io2 only):\n→ Normally: one EBS volume attached to ONE EC2 instance\n→ Multi-Attach: attach same volume to up to 16 EC2 instances simultaneously\n→ All instances must be in same AZ\n→ Use case: clustered applications (Oracle RAC)\n→ Application must handle concurrent writes (EBS doesn't manage this)\n→ NOT for general use — EFS is better for shared storage\n\nENCRYPTION:\n→ EBS encryption uses KMS keys (AES-256)\n→ Encrypts: data at rest + data in transit between EC2 and EBS\n→ Minimal performance impact (handled by hardware)\n→ Snapshots of encrypted volumes are encrypted\n→ Volumes created from encrypted snapshots are encrypted\n→ Enable by default in account settings (recommended)\n→ Cannot encrypt an existing unencrypted volume directly\n   Workaround: snapshot → copy snapshot with encryption → create volume\n\nRESIZING:\n→ Can increase size anytime (no downtime!)\n→ Can change volume type anytime (no downtime!)\n→ CANNOT decrease size (only increase)\n→ After resize: must extend the filesystem inside the OS\n   (AWS resizes the volume but OS still sees old partition size)\n   # For Amazon Linux:\n   sudo growpart /dev/xvda 1\n   sudo xfs_growfs /"
+        },
+        {
+          "type": "paragraph",
+          "content": "### EBS Snapshots"
+        },
+        {
+          "type": "diagram",
+          "content": "WHAT IS A SNAPSHOT?\n→ Point-in-time backup of an EBS volume\n→ Stored in S3 (you don't see the bucket — AWS manages it)\n→ Incremental: first snapshot = full copy, subsequent = only changes\n→ Can create volume from snapshot in ANY AZ (even different AZ!)\n→ Can copy snapshot to different region (for DR)\n→ Can share snapshots with other AWS accounts\n\nSNAPSHOT PRICING:\n→ $0.05/GB/month for stored snapshot data\n→ Incremental — if volume is 100GB but only 5GB changed → ~5GB stored\n→ Much cheaper than keeping volumes running\n\nIMPORTANT USES:\n1. Backup: daily snapshots → restore if data corrupted\n2. Migration: snapshot in us-east-1 → copy to eu-west-1 → create volume\n3. AMI creation: snapshot of root volume → create custom AMI\n4. Environment clone: snapshot prod → create dev volume from it\n\nEBS SNAPSHOT ARCHIVE:\n→ Move snapshots to archive tier: 75% cheaper storage\n→ Restore time: 24–72 hours (not instant)\n→ Good for: compliance snapshots you rarely need but must keep\n\nRECYCLE BIN:\n→ Enable Recycle Bin for snapshots\n→ Accidentally deleted snapshot → recoverable within retention period\n→ Retention: 1 day to 1 year\n→ Small storage cost while in bin\n\nBEST PRACTICE SNAPSHOT SCHEDULE:\nProduction DB EBS → daily snapshot, 7-day retention\nApp server EBS   → weekly snapshot, 4-week retention\nDev environment  → snapshot before major changes only\nAll snapshots    → copy to second region monthly (DR)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Persists independently of EC2 instance lifecycle",
+        "→ Attached to ONE instance at a time (usually)",
+        "→ Locked to ONE Availability Zone",
+        "→ Can detach from one EC2 and attach to another (same AZ)",
+        "→ Think: USB drive that plugs into only one laptop at a time",
+        "→ Billed per GB provisioned per month (even if empty!)",
+        "→ IOPS tied to volume size: 3 IOPS per GB",
+        "→ 100 GB volume = 300 IOPS (can't change without resizing!)"
+      ]
+    },
+    {
+      "id": "instance-store-ephemeral-storage",
+      "title": "⚡ Instance Store — Ephemeral Storage",
+      "type": "concept",
+      "rawMarkdown": "```\nInstance Store = physical disk BUILT INTO the AWS server your EC2 runs on\n\nNOT a network drive. Physically attached to the host machine.\nEXTREMELY fast (NVMe, millions of IOPS)\nBUT: TEMPORARY. Data is LOST when:\n→ Instance is stopped\n→ Instance is terminated  \n→ Instance crashes / hardware fails\n→ Instance is hibernated\n\nDATA SURVIVES:\n→ Instance REBOOT (not stop — reboot only!)\n\nANALOGY:\nInstance Store = RAM-like scratch space\nEBS = your actual hard drive\n→ Fast scratch pad, gone when you're done\n\nINSTANCE TYPES WITH INSTANCE STORE:\ni3, i3en, i4i → NVMe SSDs, huge IOPS (for databases needing extreme I/O)\nd3, d3en      → Dense storage HDDs (big data, Hadoop)\nh1            → High disk throughput (MapReduce, HDFS)\n\nIOPS COMPARISON:\nEBS io2:         64,000 IOPS max\nInstance Store:  3.3 MILLION IOPS (i3.16xlarge) — 50x faster!\n\nUSE CASES FOR INSTANCE STORE:\n✅ Temporary processing data (sort files, then write results to S3)\n✅ Buffer/cache (write fast, flush to S3/EBS periodically)  \n✅ Distributed systems with data replication (Kafka, Cassandra)\n   → Each node has instance store, data replicated across nodes\n   → If one node dies, another has the data\n✅ High-performance computing scratch space\n\nNEVER USE INSTANCE STORE FOR:\n❌ Primary database storage\n❌ Anything you cannot afford to lose\n❌ Single-instance workloads with no replication\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Instance Store = physical disk BUILT INTO the AWS server your EC2 runs on\n\nNOT a network drive. Physically attached to the host machine.\nEXTREMELY fast (NVMe, millions of IOPS)\nBUT: TEMPORARY. Data is LOST when:\n→ Instance is stopped\n→ Instance is terminated  \n→ Instance crashes / hardware fails\n→ Instance is hibernated\n\nDATA SURVIVES:\n→ Instance REBOOT (not stop — reboot only!)\n\nANALOGY:\nInstance Store = RAM-like scratch space\nEBS = your actual hard drive\n→ Fast scratch pad, gone when you're done\n\nINSTANCE TYPES WITH INSTANCE STORE:\ni3, i3en, i4i → NVMe SSDs, huge IOPS (for databases needing extreme I/O)\nd3, d3en      → Dense storage HDDs (big data, Hadoop)\nh1            → High disk throughput (MapReduce, HDFS)\n\nIOPS COMPARISON:\nEBS io2:         64,000 IOPS max\nInstance Store:  3.3 MILLION IOPS (i3.16xlarge) — 50x faster!\n\nUSE CASES FOR INSTANCE STORE:\n✅ Temporary processing data (sort files, then write results to S3)\n✅ Buffer/cache (write fast, flush to S3/EBS periodically)  \n✅ Distributed systems with data replication (Kafka, Cassandra)\n   → Each node has instance store, data replicated across nodes\n   → If one node dies, another has the data\n✅ High-performance computing scratch space\n\nNEVER USE INSTANCE STORE FOR:\n❌ Primary database storage\n❌ Anything you cannot afford to lose\n❌ Single-instance workloads with no replication"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Instance is stopped",
+        "→ Instance is terminated",
+        "→ Instance crashes / hardware fails",
+        "→ Instance is hibernated",
+        "→ Instance REBOOT (not stop — reboot only!)",
+        "→ Fast scratch pad, gone when you're done",
+        "✅ Temporary processing data (sort files, then write results to S3)",
+        "✅ Buffer/cache (write fast, flush to S3/EBS periodically)"
+      ]
+    },
+    {
+      "id": "efs-elastic-file-system",
+      "title": "🗄️ EFS — Elastic File System",
+      "type": "concept",
+      "rawMarkdown": "```\nEFS = managed NFS (Network File System) for EC2 instances\n\nKEY DIFFERENCE FROM EBS:\nEBS → attached to ONE instance, ONE AZ\nEFS → mounted by THOUSANDS of instances across MULTIPLE AZs simultaneously\n\nANALOGY:\nEBS = USB drive (one laptop at a time)\nEFS = shared network drive in an office (everyone connects to same drive)\n\nHOW IT WORKS:\n→ EFS creates NFS endpoints in each AZ (mount targets)\n→ EC2 instances mount via: mount -t nfs4 fs-xxxxx.efs.us-east-1.amazonaws.com:/ /mnt/efs\n→ All instances see the same files simultaneously\n→ Scales automatically (no capacity provisioning needed)\n→ Pay only for what you store ($0.30/GB/month standard)\n\nUSE CASES:\n✅ Content management systems (WordPress, Drupal — shared media files)\n✅ Web server fleet — all servers serve same static content\n✅ Home directories for Linux users across fleet\n✅ Data science — multiple EC2s read same training dataset\n✅ Container storage — ECS tasks sharing configuration files\n✅ Application configuration shared across instances\n```\n\n### EFS Storage Classes\n\n```\nEFS STANDARD:         $0.30/GB/month  → frequently accessed files\nEFS STANDARD-IA:      $0.025/GB/month → infrequently accessed (retrieval fee)\nEFS ONE ZONE:         $0.043/GB/month → one AZ only (less durable, cheaper)\nEFS ONE ZONE-IA:      $0.01/GB/month  → cheapest option\n\nEFS INTELLIGENT TIERING:\n→ Automatically moves files between Standard and IA based on access\n→ Files not accessed for 30 days → moved to IA automatically\n→ Access file → moved back to Standard\n→ Enable for unknown or changing access patterns\n→ Saves 60-80% on storage cost for mixed workloads\n\nEFS PERFORMANCE MODES:\nGeneral Purpose (default): low latency, for most workloads\nMax I/O: higher throughput, slightly higher latency, for big data\n\nEFS THROUGHPUT MODES:\nElastic (recommended): scales automatically, pay for what you use\nProvisioned: set specific throughput, good for spiky workloads\n```\n\n### EFS vs EBS vs S3 — Decision Matrix\n\n```\n┌─────────────────┬──────────────────┬──────────────────┬──────────────────┐\n│                 │       EBS        │       EFS        │        S3        │\n├─────────────────┼──────────────────┼──────────────────┼──────────────────┤\n│ Type            │ Block storage    │ File storage     │ Object storage   │\n│ Access          │ 1 EC2 (usually)  │ 1000s of EC2s    │ Any service/URL  │\n│ AZ restriction  │ Single AZ        │ Multi-AZ         │ Multi-AZ (auto)  │\n│ Protocol        │ Block device     │ NFS              │ HTTP/SDK         │\n│ Latency         │ Sub-ms           │ Low ms           │ ~ms              │\n│ Max size        │ 64 TB/volume     │ Unlimited        │ Unlimited        │\n│ Cost            │ $0.08/GB (gp3)   │ $0.30/GB (std)   │ $0.023/GB        │\n│ OS required     │ Yes (mount)      │ Yes (mount)      │ No               │\n├─────────────────┼──────────────────┼──────────────────┼──────────────────┤\n│ Best for        │ OS volumes       │ Shared files     │ Files, backups   │\n│                 │ Databases        │ CMS media        │ Data lakes       │\n│                 │ Apps needing     │ Config sharing   │ Static websites  │\n│                 │ block I/O        │ Data science     │ Archives         │\n└─────────────────┴──────────────────┴──────────────────┴──────────────────┘\n\nQUICK DECISION RULE:\n\"Do I need to mount it as a drive?\"\n  → Yes, one instance → EBS\n  → Yes, multiple instances → EFS\n  → No (just store/retrieve files via code) → S3\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "EFS = managed NFS (Network File System) for EC2 instances\n\nKEY DIFFERENCE FROM EBS:\nEBS → attached to ONE instance, ONE AZ\nEFS → mounted by THOUSANDS of instances across MULTIPLE AZs simultaneously\n\nANALOGY:\nEBS = USB drive (one laptop at a time)\nEFS = shared network drive in an office (everyone connects to same drive)\n\nHOW IT WORKS:\n→ EFS creates NFS endpoints in each AZ (mount targets)\n→ EC2 instances mount via: mount -t nfs4 fs-xxxxx.efs.us-east-1.amazonaws.com:/ /mnt/efs\n→ All instances see the same files simultaneously\n→ Scales automatically (no capacity provisioning needed)\n→ Pay only for what you store ($0.30/GB/month standard)\n\nUSE CASES:\n✅ Content management systems (WordPress, Drupal — shared media files)\n✅ Web server fleet — all servers serve same static content\n✅ Home directories for Linux users across fleet\n✅ Data science — multiple EC2s read same training dataset\n✅ Container storage — ECS tasks sharing configuration files\n✅ Application configuration shared across instances"
+        },
+        {
+          "type": "paragraph",
+          "content": "### EFS Storage Classes"
+        },
+        {
+          "type": "diagram",
+          "content": "EFS STANDARD:         $0.30/GB/month  → frequently accessed files\nEFS STANDARD-IA:      $0.025/GB/month → infrequently accessed (retrieval fee)\nEFS ONE ZONE:         $0.043/GB/month → one AZ only (less durable, cheaper)\nEFS ONE ZONE-IA:      $0.01/GB/month  → cheapest option\n\nEFS INTELLIGENT TIERING:\n→ Automatically moves files between Standard and IA based on access\n→ Files not accessed for 30 days → moved to IA automatically\n→ Access file → moved back to Standard\n→ Enable for unknown or changing access patterns\n→ Saves 60-80% on storage cost for mixed workloads\n\nEFS PERFORMANCE MODES:\nGeneral Purpose (default): low latency, for most workloads\nMax I/O: higher throughput, slightly higher latency, for big data\n\nEFS THROUGHPUT MODES:\nElastic (recommended): scales automatically, pay for what you use\nProvisioned: set specific throughput, good for spiky workloads"
+        },
+        {
+          "type": "paragraph",
+          "content": "### EFS vs EBS vs S3 — Decision Matrix"
+        },
+        {
+          "type": "diagram",
+          "content": "┌─────────────────┬──────────────────┬──────────────────┬──────────────────┐\n│                 │       EBS        │       EFS        │        S3        │\n├─────────────────┼──────────────────┼──────────────────┼──────────────────┤\n│ Type            │ Block storage    │ File storage     │ Object storage   │\n│ Access          │ 1 EC2 (usually)  │ 1000s of EC2s    │ Any service/URL  │\n│ AZ restriction  │ Single AZ        │ Multi-AZ         │ Multi-AZ (auto)  │\n│ Protocol        │ Block device     │ NFS              │ HTTP/SDK         │\n│ Latency         │ Sub-ms           │ Low ms           │ ~ms              │\n│ Max size        │ 64 TB/volume     │ Unlimited        │ Unlimited        │\n│ Cost            │ $0.08/GB (gp3)   │ $0.30/GB (std)   │ $0.023/GB        │\n│ OS required     │ Yes (mount)      │ Yes (mount)      │ No               │\n├─────────────────┼──────────────────┼──────────────────┼──────────────────┤\n│ Best for        │ OS volumes       │ Shared files     │ Files, backups   │\n│                 │ Databases        │ CMS media        │ Data lakes       │\n│                 │ Apps needing     │ Config sharing   │ Static websites  │\n│                 │ block I/O        │ Data science     │ Archives         │\n└─────────────────┴──────────────────┴──────────────────┴──────────────────┘\n\nQUICK DECISION RULE:\n\"Do I need to mount it as a drive?\"\n  → Yes, one instance → EBS\n  → Yes, multiple instances → EFS\n  → No (just store/retrieve files via code) → S3"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ EFS creates NFS endpoints in each AZ (mount targets)",
+        "→ EC2 instances mount via: mount -t nfs4 fs-xxxxx.efs.us-east-1.amazonaws.com:/ /mnt/efs",
+        "→ All instances see the same files simultaneously",
+        "→ Scales automatically (no capacity provisioning needed)",
+        "→ Pay only for what you store ($0.30/GB/month standard)",
+        "✅ Content management systems (WordPress, Drupal — shared media files)",
+        "✅ Web server fleet — all servers serve same static content",
+        "✅ Home directories for Linux users across fleet"
+      ]
+    },
+    {
+      "id": "interview-qa-ec2-storage",
+      "title": "🎯 Interview Q&A — EC2 Storage",
+      "type": "qa",
+      "rawMarkdown": "**Q: What happens to EBS data when an EC2 instance is terminated?**\n```\n\"The root EBS volume is deleted by default because DeleteOnTermination\nis set to true for root volumes at launch. Data on it is gone permanently.\n\nAdditional EBS volumes survive termination by default (DeleteOnTermination\nis false). They remain as detached volumes and continue incurring charges\nuntil you manually delete them.\n\nTo protect root volume data: set DeleteOnTermination=false on the root\nvolume at launch. Or better: design your architecture so important data\nlives on a separate EBS volume or in S3, not on the root volume. The root\nvolume should just be OS + application code. Real data goes elsewhere.\"\n```\n\n**Q: Our database EC2 instance is hitting IOPS limits. What do you do?**\n```\n\"Systematic diagnosis first:\n\n1. CloudWatch → EBS metrics: VolumeReadOps, VolumeWriteOps, VolumeQueueLength\n   High queue length (> 1) = IOPS bottleneck confirmed\n\n2. Check current volume type:\n   gp2? → migrate to gp3 immediately (free IOPS boost + 20% cheaper)\n   gp3 with 3,000 IOPS? → provision more IOPS (up to 16,000 for gp3)\n   Already at 16,000? → migrate to io2 (up to 64,000 IOPS)\n\n3. Check if the workload actually needs this many IOPS:\n   → Enable RDS Performance Insights or check slow query log\n   → Missing database indexes cause full table scans = massive IOPS\n   → Fix the query before throwing more IOPS hardware at it\n\n4. Application-level caching:\n   → Add ElastiCache Redis in front of database\n   → Reads hit cache, not disk → IOPS drops dramatically\n\n5. If consistently near limits: consider RDS with io2 (managed + Multi-AZ)\n   instead of self-managed EC2 + EBS database\"\n```\n\n**Q: When would you use Instance Store over EBS?**\n```\n\"Instance Store makes sense when you need maximum disk I/O performance\nand can tolerate data loss on instance termination.\n\nSpecific use cases:\nFirst, distributed databases like Cassandra or Kafka that replicate data\nacross multiple nodes. If one node's instance store is lost, the cluster\nself-heals from replicas. The extreme IOPS (millions vs 64,000 for EBS)\njustifies the risk because you have replication as your safety net.\n\nSecond, high-performance temporary scratch storage — ML training that\nreads a dataset many times during training, sorts large files, or does\ncomplex joins. Write final results to S3. Intermediate data on instance store.\n\nThird, real-time gaming servers where each server is stateless — player\nstate is in DynamoDB, instance store is just for game engine temp files.\n\nI would never use instance store for a single-node database, any data\nwithout replication elsewhere, or anything I cannot afford to recreate.\"\n```\n\n**Q: EBS vs EFS — when do you choose each?**\n```\n\"EBS when one instance needs block-level storage — databases, OS volumes,\napplications that use filesystems with byte-range locking. It's like a\ndedicated hard drive: fast, reliable, but only one computer uses it.\n\nEFS when multiple instances need to access the same files simultaneously —\nweb server fleets serving same media files, shared configuration, home\ndirectories for a fleet of Linux machines, or data science workloads where\nmultiple EC2s process the same dataset. It's NFS — standard protocol,\nautomatic scaling, no capacity management.\n\nCost consideration: EFS at $0.30/GB is 3.75x more expensive than EBS gp3\nat $0.08/GB. Don't use EFS just because it's flexible — if only one\ninstance needs the data, EBS is the right call. Only pay for EFS when you\ngenuinely need multi-instance simultaneous access.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: What happens to EBS data when an EC2 instance is terminated?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"The root EBS volume is deleted by default because DeleteOnTermination\nis set to true for root volumes at launch. Data on it is gone permanently.\n\nAdditional EBS volumes survive termination by default (DeleteOnTermination\nis false). They remain as detached volumes and continue incurring charges\nuntil you manually delete them.\n\nTo protect root volume data: set DeleteOnTermination=false on the root\nvolume at launch. Or better: design your architecture so important data\nlives on a separate EBS volume or in S3, not on the root volume. The root\nvolume should just be OS + application code. Real data goes elsewhere.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Our database EC2 instance is hitting IOPS limits. What do you do?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Systematic diagnosis first:\n\n1. CloudWatch → EBS metrics: VolumeReadOps, VolumeWriteOps, VolumeQueueLength\n   High queue length (> 1) = IOPS bottleneck confirmed\n\n2. Check current volume type:\n   gp2? → migrate to gp3 immediately (free IOPS boost + 20% cheaper)\n   gp3 with 3,000 IOPS? → provision more IOPS (up to 16,000 for gp3)\n   Already at 16,000? → migrate to io2 (up to 64,000 IOPS)\n\n3. Check if the workload actually needs this many IOPS:\n   → Enable RDS Performance Insights or check slow query log\n   → Missing database indexes cause full table scans = massive IOPS\n   → Fix the query before throwing more IOPS hardware at it\n\n4. Application-level caching:\n   → Add ElastiCache Redis in front of database\n   → Reads hit cache, not disk → IOPS drops dramatically\n\n5. If consistently near limits: consider RDS with io2 (managed + Multi-AZ)\n   instead of self-managed EC2 + EBS database\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: When would you use Instance Store over EBS?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Instance Store makes sense when you need maximum disk I/O performance\nand can tolerate data loss on instance termination.\n\nSpecific use cases:\nFirst, distributed databases like Cassandra or Kafka that replicate data\nacross multiple nodes. If one node's instance store is lost, the cluster\nself-heals from replicas. The extreme IOPS (millions vs 64,000 for EBS)\njustifies the risk because you have replication as your safety net.\n\nSecond, high-performance temporary scratch storage — ML training that\nreads a dataset many times during training, sorts large files, or does\ncomplex joins. Write final results to S3. Intermediate data on instance store.\n\nThird, real-time gaming servers where each server is stateless — player\nstate is in DynamoDB, instance store is just for game engine temp files.\n\nI would never use instance store for a single-node database, any data\nwithout replication elsewhere, or anything I cannot afford to recreate.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: EBS vs EFS — when do you choose each?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"EBS when one instance needs block-level storage — databases, OS volumes,\napplications that use filesystems with byte-range locking. It's like a\ndedicated hard drive: fast, reliable, but only one computer uses it.\n\nEFS when multiple instances need to access the same files simultaneously —\nweb server fleets serving same media files, shared configuration, home\ndirectories for a fleet of Linux machines, or data science workloads where\nmultiple EC2s process the same dataset. It's NFS — standard protocol,\nautomatic scaling, no capacity management.\n\nCost consideration: EFS at $0.30/GB is 3.75x more expensive than EBS gp3\nat $0.08/GB. Don't use EFS just because it's flexible — if only one\ninstance needs the data, EBS is the right call. Only pay for EFS when you\ngenuinely need multi-instance simultaneous access.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "04-ec2-storage-ebs-efs-instance-store-q1",
+          "question": "What happens to EBS data when an EC2 instance is terminated?",
+          "answer": "\"The root EBS volume is deleted by default because DeleteOnTermination\nis set to true for root volumes at launch. Data on it is gone permanently.\n\nAdditional EBS volumes survive termination by default (DeleteOnTermination\nis false). They remain as detached volumes and continue incurring charges\nuntil you manually delete them.\n\nTo protect root volume data: set DeleteOnTermination=false on the root\nvolume at launch. Or better: design your architecture so important data\nlives on a separate EBS volume or in S3, not on the root volume. The root\nvolume should just be OS + application code. Real data goes elsewhere.\"",
+          "topicNumber": 4,
+          "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+          "topic": "EC2 Storage (EBS, EFS, Instance Store)"
+        },
+        {
+          "id": "04-ec2-storage-ebs-efs-instance-store-q2",
+          "question": "Our database EC2 instance is hitting IOPS limits. What do you do?",
+          "answer": "\"Systematic diagnosis first:\n\n1. CloudWatch → EBS metrics: VolumeReadOps, VolumeWriteOps, VolumeQueueLength\n   High queue length (> 1) = IOPS bottleneck confirmed\n\n2. Check current volume type:\n   gp2? → migrate to gp3 immediately (free IOPS boost + 20% cheaper)\n   gp3 with 3,000 IOPS? → provision more IOPS (up to 16,000 for gp3)\n   Already at 16,000? → migrate to io2 (up to 64,000 IOPS)\n\n3. Check if the workload actually needs this many IOPS:\n   → Enable RDS Performance Insights or check slow query log\n   → Missing database indexes cause full table scans = massive IOPS\n   → Fix the query before throwing more IOPS hardware at it\n\n4. Application-level caching:\n   → Add ElastiCache Redis in front of database\n   → Reads hit cache, not disk → IOPS drops dramatically\n\n5. If consistently near limits: consider RDS with io2 (managed + Multi-AZ)\n   instead of self-managed EC2 + EBS database\"",
+          "topicNumber": 4,
+          "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+          "topic": "EC2 Storage (EBS, EFS, Instance Store)"
+        },
+        {
+          "id": "04-ec2-storage-ebs-efs-instance-store-q3",
+          "question": "When would you use Instance Store over EBS?",
+          "answer": "\"Instance Store makes sense when you need maximum disk I/O performance\nand can tolerate data loss on instance termination.\n\nSpecific use cases:\nFirst, distributed databases like Cassandra or Kafka that replicate data\nacross multiple nodes. If one node's instance store is lost, the cluster\nself-heals from replicas. The extreme IOPS (millions vs 64,000 for EBS)\njustifies the risk because you have replication as your safety net.\n\nSecond, high-performance temporary scratch storage — ML training that\nreads a dataset many times during training, sorts large files, or does\ncomplex joins. Write final results to S3. Intermediate data on instance store.\n\nThird, real-time gaming servers where each server is stateless — player\nstate is in DynamoDB, instance store is just for game engine temp files.\n\nI would never use instance store for a single-node database, any data\nwithout replication elsewhere, or anything I cannot afford to recreate.\"",
+          "topicNumber": 4,
+          "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+          "topic": "EC2 Storage (EBS, EFS, Instance Store)"
+        },
+        {
+          "id": "04-ec2-storage-ebs-efs-instance-store-q4",
+          "question": "EBS vs EFS — when do you choose each?",
+          "answer": "\"EBS when one instance needs block-level storage — databases, OS volumes,\napplications that use filesystems with byte-range locking. It's like a\ndedicated hard drive: fast, reliable, but only one computer uses it.\n\nEFS when multiple instances need to access the same files simultaneously —\nweb server fleets serving same media files, shared configuration, home\ndirectories for a fleet of Linux machines, or data science workloads where\nmultiple EC2s process the same dataset. It's NFS — standard protocol,\nautomatic scaling, no capacity management.\n\nCost consideration: EFS at $0.30/GB is 3.75x more expensive than EBS gp3\nat $0.08/GB. Don't use EFS just because it's flexible — if only one\ninstance needs the data, EBS is the right call. Only pay for EFS when you\ngenuinely need multi-instance simultaneous access.\"",
+          "topicNumber": 4,
+          "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+          "topic": "EC2 Storage (EBS, EFS, Instance Store)"
+        }
+      ],
+      "revisionPoints": [
+        "**Q: What happens to EBS data when an EC2 instance is terminated?**"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nEBS → EC2: primary persistent storage for instances\nEBS → RDS: RDS uses EBS underneath (gp2, gp3, io1, io2)\nEBS Snapshot → S3: snapshots stored in S3 (managed by AWS)\nEBS Snapshot → AMI: create machine images from snapshots\nEFS → EC2: shared storage across instance fleet\nEFS → ECS: container shared storage (via EFS access points)\nEFS → Lambda: Lambda can mount EFS (for large ML models, shared state)\nInstance Store → nothing permanent (ephemeral by design)\n\nNEXT: AMI + Auto Scaling Group + Load Balancing\nHow to make your EC2 fleet scalable and highly available automatically.\n```\n\n---\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "EBS → EC2: primary persistent storage for instances\nEBS → RDS: RDS uses EBS underneath (gp2, gp3, io1, io2)\nEBS Snapshot → S3: snapshots stored in S3 (managed by AWS)\nEBS Snapshot → AMI: create machine images from snapshots\nEFS → EC2: shared storage across instance fleet\nEFS → ECS: container shared storage (via EFS access points)\nEFS → Lambda: Lambda can mount EFS (for large ML models, shared state)\nInstance Store → nothing permanent (ephemeral by design)\n\nNEXT: AMI + Auto Scaling Group + Load Balancing\nHow to make your EC2 fleet scalable and highly available automatically."
+        },
+        {
+          "type": "paragraph",
+          "content": "---\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "EBS → EC2: primary persistent storage for instances"
+      ]
+    }
+  ]
+}

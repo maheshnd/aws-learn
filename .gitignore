@@ -23,9 +23,9 @@
 next-env.d.ts
 .ts-scripts/
 
-# generated data (rebuilt by CI)
-/public/data/
+# Generated data is committed because CI builds from it.
 
-# Do not push to GitHub — keep local only
+# Keep private source notes local-only
 BUILD_PROMPT.md
-aws_master_notes.md
+/content/aws_master_notes.md
+/aws_master_notes.md

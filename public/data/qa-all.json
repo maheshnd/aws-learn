@@ -1,0 +1,341 @@
+{
+  "questions": [
+    {
+      "id": "01-cloud-computing-q1",
+      "question": "Explain cloud computing to a non-technical executive.",
+      "answer": "\"Cloud computing means renting computing power instead of buying it.\nInstead of spending $500,000 upfront on servers, we pay AWS a monthly bill\nand scale up or down based on actual demand. Three business benefits:\nFirst, we only pay for what we use — no wasted idle capacity.\nSecond, we can launch in a new country in 30 minutes instead of 6 months.\nThird, our engineers focus on building our product, not managing hardware.\nNetflix, Airbnb, and Slack built billion-dollar companies on AWS without\nowning a single server.\"",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "topic": "Cloud Computing"
+    },
+    {
+      "id": "01-cloud-computing-q2",
+      "question": "What is the Shared Responsibility Model? Where do most breaches happen?",
+      "answer": "\"AWS secures the infrastructure — physical data centers, hardware, hypervisor,\nand managed services. Customers secure their configuration — IAM policies,\nsecurity groups, encryption choices, OS patches on EC2, application code.\n\nWhere breaches actually happen: 99% on the customer side.\nMost common: leaked IAM access keys, public S3 buckets with sensitive data,\nsecurity groups with open ports to the internet, unpatched EC2 instances,\ndatabase passwords hardcoded in GitHub.\nAWS's physical infrastructure has essentially never been breached at the\ncustomer-visible level. The cloud is secure. Misconfigured clouds are not.\"",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "topic": "Cloud Computing"
+    },
+    {
+      "id": "01-cloud-computing-q3",
+      "question": "Why would a company NOT move to cloud?",
+      "answer": "\"There are legitimate reasons to stay on-premise or go hybrid:\n1. Strict data sovereignty laws — some countries require data stays physically\n   within borders. Even though AWS has local regions, some regulations need\n   on-premise physical control.\n2. Cost at extreme scale — running 10,000 servers at 95% utilization 24/7\n   for 5+ years: owned bare-metal hardware CAN be cheaper. This is why\n   Facebook and Google built their own data centers.\n3. Sub-millisecond latency — high-frequency trading needs < 1ms that cloud\n   virtualization overhead can't guarantee. On-premise or colocation wins.\n4. Existing hardware investment — spent $50M on hardware last year.\n   Hard to justify abandoning immediately.\n\nFor most companies building new applications today: cloud is the right choice.\nFor large enterprises with stable, fully-utilized workloads: hybrid makes sense.\"",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "topic": "Cloud Computing"
+    },
+    {
+      "id": "01-cloud-computing-q4",
+      "question": "Is multi-tenancy safe? My code runs on the same hardware as other companies?",
+      "answer": "\"Yes, demonstrably safe for the vast majority of workloads. AWS uses hardware-\nlevel isolation via the Nitro hypervisor — each VM gets dedicated virtual CPU,\nRAM, and storage. Memory isolation is hardware-enforced, not just software.\nEven if a neighboring VM crashes or is compromised, yours is unaffected.\n\nFor specific regulated workloads with strict compliance needs — classified\ngovernment, some financial systems — EC2 Dedicated Hosts provide physical\nhardware dedicated solely to your account, eliminating the multi-tenancy\nconcern while keeping all other cloud benefits.\"",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "topic": "Cloud Computing"
+    },
+    {
+      "id": "01-cloud-computing-q5",
+      "question": "What are the 5 characteristics of cloud and can you give an example that violates each?",
+      "answer": "\"1. On-demand self-service — violated by: managed hosting where you email\n   support to add capacity. On-demand yes, self-service no.\n\n2. Broad network access — violated by: a mainframe accessible only via\n   proprietary terminal software on a company VPN. Not broad.\n\n3. Resource pooling — violated by: a Dedicated Host. Still cloud but\n   breaks multi-tenancy. Technically a gray area.\n\n4. Rapid elasticity — violated by: shared hosting where you fill a form\n   and wait 24 hours to upgrade. Not rapid.\n\n5. Measured service — violated by: flat-rate unlimited hosting.\n   Not measured, can't optimize cost per actual usage.\"",
+      "topicNumber": 1,
+      "topicSlug": "01-cloud-computing",
+      "topic": "Cloud Computing"
+    },
+    {
+      "id": "02-iam-identity-access-management-q1",
+      "question": "What is the difference between an IAM User, Group, and Role?",
+      "answer": "\"IAM User is a permanent identity for a specific person or application.\nHas their own credentials — password for console, access keys for CLI.\nBy default has zero permissions.\n\nIAM Group is a collection of users. You attach policies to groups, not\nindividual users. Users inherit the group's permissions. Makes management\nmuch easier — add a developer to the Developers group and they instantly\nget all developer permissions.\n\nIAM Role is a temporary identity that can be assumed by AWS services,\napplications, or users from other accounts. Has no permanent credentials —\nwhen assumed, AWS generates temporary credentials that auto-expire.\nUse roles for: EC2 instances accessing S3, Lambda functions, cross-account,\nanything AWS-to-AWS. Always prefer roles over access keys for services.\"",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "topic": "IAM (Identity & Access Management)"
+    },
+    {
+      "id": "02-iam-identity-access-management-q2",
+      "question": "Why should you use IAM Roles for EC2 instead of storing access keys?",
+      "answer": "\"Two reasons: security and operational simplicity.\n\nSecurity: if an access key is stored on EC2 and the instance is compromised,\nthe attacker has permanent credentials that work until you manually rotate them.\nWith IAM Roles, the credentials are temporary — they auto-expire every few hours\nand auto-refresh. Even if the instance is fully compromised, the window of\nexposure is limited.\n\nOperational: with IAM Roles, there are no keys to manage, rotate, audit, or\naccidentally commit to GitHub. The AWS SDK automatically finds the role\ncredentials from the instance metadata service. Zero code changes needed.\nYou can update the role's permissions without touching the EC2 instance at all.\"",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "topic": "IAM (Identity & Access Management)"
+    },
+    {
+      "id": "02-iam-identity-access-management-q3",
+      "question": "A Deny policy and an Allow policy exist for the same action. What happens?",
+      "answer": "\"Deny wins. Always. Without exception.\n\nIAM evaluation order:\n1. Explicit DENY → denied immediately, evaluation stops\n2. Explicit ALLOW → allowed (if no deny exists)\n3. Nothing matches → implicitly denied (default is deny everything)\n\nThe only way to allow an action is: explicit Allow AND no Deny.\nThis is why Deny statements are powerful — they're the final word.\nUse this for guardrails: 'No one can delete CloudTrail, period.'\nEven if someone has AdministratorAccess, a Deny for CloudTrail deletion wins.\"",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "topic": "IAM (Identity & Access Management)"
+    },
+    {
+      "id": "02-iam-identity-access-management-q4",
+      "question": "How would you design IAM for a startup with 20 developers, 5 DevOps, 2 admins?",
+      "answer": "\"Four groups:\n  Admins group: AdministratorAccess (2 people, both with MFA enforced)\n  DevOps group: EC2, ECS, CodePipeline, CloudFormation, CloudWatch\n  Developers group: specific services only — Lambda, S3 (dev buckets only),\n                   RDS (dev databases), CloudWatch logs\n  ReadOnly group: for auditors, contractors, view-only access\n\nCreate individual IAM users for each person, MFA enforced for all.\nAll production service accounts use IAM Roles (not IAM users with keys).\nEnable IAM Access Analyzer. CloudTrail in all regions.\nSet up alerting for: console login without MFA, root account usage,\nnew admin-level policy attachment, any access to prod from non-prod accounts.\n\nIf company grows > 50 people: move to AWS SSO (Identity Center) —\nsingle login for all AWS accounts, integrated with corporate directory.\"",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "topic": "IAM (Identity & Access Management)"
+    },
+    {
+      "id": "02-iam-identity-access-management-q5",
+      "question": "You discover an IAM access key was committed to a public GitHub repo. What do you do?",
+      "answer": "\"Treat this as an active security incident. Immediate response:\n\nT+0 minutes:\n→ DEACTIVATE the access key in IAM console immediately (takes 5 seconds)\n→ This stops any ongoing unauthorized use instantly\n\nT+5 minutes:\n→ Open CloudTrail → filter by the compromised access key ID\n→ Look at ALL API calls made with that key in the past 90 days\n→ Specifically: look for CreateUser, AttachPolicy, PutBucketPolicy (signs of escalation)\n→ Check which regions, which services, unusual times\n\nT+15 minutes:\n→ Create new access key for the affected user (if legitimate use was needed)\n→ Update any applications that were using the old key\n→ Revoke any resources created by the attacker (EC2 instances, etc.)\n\nT+30 minutes:\n→ Remove the key from GitHub history (git filter-branch or BFG Repo Cleaner)\n→ Force-push to GitHub\n→ GitHub has their own token scanning — notify them too\n\nPrevention going forward:\n→ Add pre-commit hooks (git-secrets, truffleHog) that block key commits\n→ Enable AWS Config rule for 'iam-no-inline-policy' and similar\n→ Enable GuardDuty — it would have alerted 'Credentials used from unusual location'\n→ Consider: do CI/CD pipelines even need user access keys? Switch to OIDC roles.\"",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "topic": "IAM (Identity & Access Management)"
+    },
+    {
+      "id": "02-iam-identity-access-management-q6",
+      "question": "What is the principle of least privilege and how do you implement it at scale?",
+      "answer": "\"Least privilege: every identity gets the minimum permissions needed to do\ntheir job — nothing more, nothing less.\n\nAt scale, implementing it is a process:\n\n1. Policy generation: use IAM Access Analyzer to watch real usage for 90 days,\n   then generate a policy based on what was actually called. Much tighter than guessing.\n\n2. Permission boundaries: for developer self-service, let them create roles but\n   with a boundary that caps what those roles can do.\n\n3. Tag-based access control: 'developers can only access resources tagged with\n   Environment=dev' — one policy, scales to hundreds of resources.\n\n4. Regular reviews: IAM Access Advisor shows last time each permission was used.\n   Remove permissions unused for 90+ days.\n\n5. Service Control Policies at org level: hard limits that can't be bypassed.\n   'No one in any account can disable CloudTrail' — even admins.\n\nThe goal isn't perfection on day one. It's a culture of progressively tightening\naccess over time, combined with tooling that makes overly-broad permissions visible.\"",
+      "topicNumber": 2,
+      "topicSlug": "02-iam-identity-access-management",
+      "topic": "IAM (Identity & Access Management)"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-q1",
+      "question": "When would you choose EC2 vs Lambda vs ECS?",
+      "answer": "\"Three different compute models for different needs.\n\nEC2: choose when you need persistent, long-running processes with specific OS\nrequirements, or when workloads run > 15 minutes, or when you need fine-grained\ncontrol (kernel parameters, GPU access, specific network interfaces). Also for\nstateful applications like databases. Cost-efficient when running 24/7.\n\nLambda: choose for event-driven, short-duration functions (< 15 min).\nZero server management, scales to zero (pay nothing when idle), perfect for\nwebhooks, file processing on upload, scheduled tasks, API backends with\nvariable traffic. Gets expensive for always-on high-traffic APIs.\n\nECS Fargate: choose for containerized applications that need to run continuously\nbut you don't want to manage EC2 servers. Long-running services, microservices,\nAPIs. More predictable cost than Lambda for steady-state traffic. Better than\nEC2 because AWS manages the underlying servers.\"",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "topic": "EC2 (Elastic Compute Cloud)"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-q2",
+      "question": "Your EC2 instance is running slow. Walk me through diagnosing it.",
+      "answer": "\"Systematic approach, start with observability:\n\n1. CloudWatch Metrics → EC2:\n   → CPUUtilization: is it near 100%? (CPU bottleneck)\n   → NetworkIn/Out: unexpected spike? (network saturation)\n   → EBSReadOps/WriteOps: near IOPS limit? (disk bottleneck)\n   → If t2/t3: CPUCreditBalance → if near 0, CPU is throttled\n\n2. If CPU high → SSH/SSM in → run 'top' or 'htop'\n   → Which process consuming CPU?\n   → Is it our app or something else (crypto miner, log processor)?\n\n3. If memory issue → CloudWatch doesn't show memory by default\n   → Need CloudWatch Agent installed for memory metrics\n   → 'free -m' on the instance to see current memory usage\n   → Low memory → high swap usage → application performance degrades\n\n4. If disk I/O high → check EBS volume type and IOPS limit\n   → gp2: 3 IOPS/GB, max 16,000 IOPS\n   → gp3: 3,000 base IOPS, can provision up to 16,000\n   → Consider: switch from gp2 to gp3, or add more IOPS\n\n5. If it's a T-type instance → check CPUCreditBalance in CloudWatch\n   → If trending toward 0 → that's the throttle causing slowness\n   → Fix: switch to m or c family (no credit system)\n\n6. Network: check if instance type's network bandwidth is saturated\n   → Each instance type has max network bandwidth (in Gbps)\n   → t3.micro: up to 5 Gbps. If you're hitting that → upgrade.\n\nThen: look at application logs. Is the app itself erroring? \nSlow DB queries? External API timeouts? Memory leaks?\"",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "topic": "EC2 (Elastic Compute Cloud)"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-q3",
+      "question": "How do you deploy to EC2 with zero downtime?",
+      "answer": "\"Several approaches depending on the scale and risk tolerance:\n\nROLLING DEPLOYMENT with Auto Scaling Group:\n→ ASG has 3 instances behind ALB\n→ CodeDeploy updates one instance at a time\n→ ALB keeps routing traffic to healthy instances\n→ After update + health check passes → update next instance\n→ Zero downtime, but slow (one at a time) and rollback takes time\n\nBLUE-GREEN DEPLOYMENT (my recommendation for production):\n→ Blue = current production (3 EC2s behind ALB Target Group A)\n→ Green = new version (3 EC2s behind ALB Target Group B)\n→ Deploy + test on Green completely (no production traffic)\n→ Flip ALB: switch from Target Group A to Target Group B (5 seconds)\n→ Zero downtime. Instant rollback if needed (flip back in 5 seconds)\n→ Keep Blue running for 30 minutes → all good → terminate Blue\n\nCANARY DEPLOYMENT:\n→ Route 5% of traffic to new version\n→ Monitor error rates, latency for 30 minutes\n→ If healthy → route 50% → monitor\n→ If healthy → route 100%\n→ Route 53 weighted routing or ALB weighted target groups\"",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "topic": "EC2 (Elastic Compute Cloud)"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-q4",
+      "question": "What is the difference between stopping and terminating an EC2 instance?",
+      "answer": "\"Stopping is like turning off a computer — it can be restarted.\nThe EBS volume data is preserved. RAM is cleared. Public IP may change.\nYou stop paying for compute, but still pay for the EBS volume.\n\nTerminating is permanent deletion. By default, the root EBS volume is\ndeleted (DeleteOnTermination=true). The instance cannot be recovered.\nYou stop paying for everything.\n\nImportant: Elastic IPs, additional EBS volumes, and other resources\nattached to the instance are NOT automatically deleted on termination —\nthese must be cleaned up manually or they'll continue to incur charges.\n\nIn production: always enable Termination Protection on critical instances.\nThis prevents accidental termination with a single click.\"",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "topic": "EC2 (Elastic Compute Cloud)"
+    },
+    {
+      "id": "03-ec2-elastic-compute-cloud-q5",
+      "question": "Spot vs Reserved vs On-Demand — which would you use for a production API?",
+      "answer": "\"For a production REST API:\n\nBaseline capacity → Savings Plans or Reserved Instances (1-year).\nThe API always needs minimum X instances running. Commit to that baseline\nfor 40–72% discount vs on-demand. Use Savings Plans for flexibility.\n\nVariable capacity → On-Demand or mixed with Spot.\nFor the additional instances that Auto Scaling adds during traffic spikes,\nOn-Demand is safest for an API (can't afford interruptions).\n\nAdvanced pattern: ASG with mixed instance policy:\n→ 60% On-Demand (or Reserved) for stable baseline\n→ 40% Spot for burst capacity (with interruption handling)\n→ Multiple Spot instance types/sizes configured\n→ If Spot interrupted → ASG launches On-Demand replacement\n→ Result: 20-30% cost reduction with minor complexity increase\n\nSpot alone for a production API = bad idea. A 2-minute interruption\nwarning on all instances simultaneously could take down the service.\nWith mixed, there's always On-Demand backup.\"",
+      "topicNumber": 3,
+      "topicSlug": "03-ec2-elastic-compute-cloud",
+      "topic": "EC2 (Elastic Compute Cloud)"
+    },
+    {
+      "id": "04-ec2-storage-ebs-efs-instance-store-q1",
+      "question": "What happens to EBS data when an EC2 instance is terminated?",
+      "answer": "\"The root EBS volume is deleted by default because DeleteOnTermination\nis set to true for root volumes at launch. Data on it is gone permanently.\n\nAdditional EBS volumes survive termination by default (DeleteOnTermination\nis false). They remain as detached volumes and continue incurring charges\nuntil you manually delete them.\n\nTo protect root volume data: set DeleteOnTermination=false on the root\nvolume at launch. Or better: design your architecture so important data\nlives on a separate EBS volume or in S3, not on the root volume. The root\nvolume should just be OS + application code. Real data goes elsewhere.\"",
+      "topicNumber": 4,
+      "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+      "topic": "EC2 Storage (EBS, EFS, Instance Store)"
+    },
+    {
+      "id": "04-ec2-storage-ebs-efs-instance-store-q2",
+      "question": "Our database EC2 instance is hitting IOPS limits. What do you do?",
+      "answer": "\"Systematic diagnosis first:\n\n1. CloudWatch → EBS metrics: VolumeReadOps, VolumeWriteOps, VolumeQueueLength\n   High queue length (> 1) = IOPS bottleneck confirmed\n\n2. Check current volume type:\n   gp2? → migrate to gp3 immediately (free IOPS boost + 20% cheaper)\n   gp3 with 3,000 IOPS? → provision more IOPS (up to 16,000 for gp3)\n   Already at 16,000? → migrate to io2 (up to 64,000 IOPS)\n\n3. Check if the workload actually needs this many IOPS:\n   → Enable RDS Performance Insights or check slow query log\n   → Missing database indexes cause full table scans = massive IOPS\n   → Fix the query before throwing more IOPS hardware at it\n\n4. Application-level caching:\n   → Add ElastiCache Redis in front of database\n   → Reads hit cache, not disk → IOPS drops dramatically\n\n5. If consistently near limits: consider RDS with io2 (managed + Multi-AZ)\n   instead of self-managed EC2 + EBS database\"",
+      "topicNumber": 4,
+      "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+      "topic": "EC2 Storage (EBS, EFS, Instance Store)"
+    },
+    {
+      "id": "04-ec2-storage-ebs-efs-instance-store-q3",
+      "question": "When would you use Instance Store over EBS?",
+      "answer": "\"Instance Store makes sense when you need maximum disk I/O performance\nand can tolerate data loss on instance termination.\n\nSpecific use cases:\nFirst, distributed databases like Cassandra or Kafka that replicate data\nacross multiple nodes. If one node's instance store is lost, the cluster\nself-heals from replicas. The extreme IOPS (millions vs 64,000 for EBS)\njustifies the risk because you have replication as your safety net.\n\nSecond, high-performance temporary scratch storage — ML training that\nreads a dataset many times during training, sorts large files, or does\ncomplex joins. Write final results to S3. Intermediate data on instance store.\n\nThird, real-time gaming servers where each server is stateless — player\nstate is in DynamoDB, instance store is just for game engine temp files.\n\nI would never use instance store for a single-node database, any data\nwithout replication elsewhere, or anything I cannot afford to recreate.\"",
+      "topicNumber": 4,
+      "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+      "topic": "EC2 Storage (EBS, EFS, Instance Store)"
+    },
+    {
+      "id": "04-ec2-storage-ebs-efs-instance-store-q4",
+      "question": "EBS vs EFS — when do you choose each?",
+      "answer": "\"EBS when one instance needs block-level storage — databases, OS volumes,\napplications that use filesystems with byte-range locking. It's like a\ndedicated hard drive: fast, reliable, but only one computer uses it.\n\nEFS when multiple instances need to access the same files simultaneously —\nweb server fleets serving same media files, shared configuration, home\ndirectories for a fleet of Linux machines, or data science workloads where\nmultiple EC2s process the same dataset. It's NFS — standard protocol,\nautomatic scaling, no capacity management.\n\nCost consideration: EFS at $0.30/GB is 3.75x more expensive than EBS gp3\nat $0.08/GB. Don't use EFS just because it's flexible — if only one\ninstance needs the data, EBS is the right call. Only pay for EFS when you\ngenuinely need multi-instance simultaneous access.\"",
+      "topicNumber": 4,
+      "topicSlug": "04-ec2-storage-ebs-efs-instance-store",
+      "topic": "EC2 Storage (EBS, EFS, Instance Store)"
+    },
+    {
+      "id": "05-ami-auto-scaling-group-load-balancing-q1",
+      "question": "How does Auto Scaling work with a Load Balancer?",
+      "answer": "\"The ASG and ALB work together through Target Groups.\n\nWhen ASG launches a new instance, it automatically registers that instance\nwith the ALB's target group. The ALB then runs health checks — typically\nan HTTP GET to a /health endpoint. Once the instance passes the health check,\nthe ALB starts sending it traffic.\n\nWhen ASG decides to terminate an instance (scale-in), it first tells the ALB\nto deregister the instance. The ALB drains existing connections (default 300\nseconds) without sending new requests. After draining, ASG terminates the\ninstance. Zero requests are dropped.\n\nFor the ASG to know when to scale, you set scaling policies based on metrics\n— most commonly CPU utilization or ALB request count per target. Target\nTracking is the simplest: 'keep average CPU at 50%' and the ASG handles\nthe math of how many instances to add or remove.\"",
+      "topicNumber": 5,
+      "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+      "topic": "AMI + Auto Scaling Group + Load Balancing"
+    },
+    {
+      "id": "05-ami-auto-scaling-group-load-balancing-q2",
+      "question": "Our app is having a Black Friday traffic spike. How do you prepare?",
+      "answer": "\"Multi-layered approach:\n\n1. Before Black Friday (1 week ahead):\n   → Load test with expected peak traffic (Artillery, Locust, k6)\n   → Find the bottleneck: database? application? external API?\n   → Fix the bottleneck, not just scale around it\n\n2. Scheduled Scaling:\n   → 'November 29 6am UTC → set desired to 50 instances'\n   → Proactively have capacity ready BEFORE the spike hits\n   → Don't wait for Auto Scaling to react — be ahead of it\n\n3. Predictive Scaling (if already have historical data):\n   → Enable predictive scaling on the ASG\n   → Uses ML to proactively scale based on patterns\n\n4. Database preparation:\n   → Aurora Auto Scaling for read replicas (auto-adds replicas under load)\n   → Or pre-add read replicas manually\n   → Enable ElastiCache for frequently-read data\n   → Test database connection pooling limits\n\n5. CDN:\n   → Ensure CloudFront caching is properly configured\n   → Product images, JS/CSS — should be served from CloudFront, not EC2\n   → Reduces load on origin by 70-90%\n\n6. Pre-warming ALB:\n   → If expecting massive spike: request pre-warming from AWS support\n   → ALB scales automatically but has a warm-up period\n\n7. Set max capacity with cost protection:\n   → Max instances * instance_cost = maximum possible spend\n   → Set hard max to prevent runaway scaling (and runaway bill)\n\n8. War room: have team ready. Monitor CloudWatch dashboard in real-time.\"",
+      "topicNumber": 5,
+      "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+      "topic": "AMI + Auto Scaling Group + Load Balancing"
+    },
+    {
+      "id": "05-ami-auto-scaling-group-load-balancing-q3",
+      "question": "What is the difference between ALB and NLB?",
+      "answer": "\"Layer 7 vs Layer 4 — that's the core difference.\n\nALB understands HTTP: it can route based on URL path (/api vs /admin),\nhostname (api.myapp.com vs www.myapp.com), HTTP headers, query strings.\nIt can do redirects, return fixed responses, authenticate users via Cognito.\nLatency is in the low milliseconds. This is the right choice for 95% of\nweb applications.\n\nNLB operates at the TCP/UDP level — it doesn't look inside the packets,\njust routes them based on IP and port. The payoffs: millions of requests\nper second, microsecond latency, static IP addresses per AZ. Use NLB for\ngaming (UDP), real-time financial applications, IoT with millions of\ndevices, or any case where you need the absolute minimum latency or a\nstatic IP to whitelist on client firewalls.\n\nFor most web apps, APIs, and microservices: ALB. For extreme performance\nrequirements or non-HTTP protocols: NLB.\"",
+      "topicNumber": 5,
+      "topicSlug": "05-ami-auto-scaling-group-load-balancing",
+      "topic": "AMI + Auto Scaling Group + Load Balancing"
+    },
+    {
+      "id": "06-s3-simple-storage-service-q1",
+      "question": "How would you design an image upload system for 1 million users?",
+      "answer": "\"S3 as the storage backbone with direct uploads from the client.\n\nFlow:\n1. User wants to upload profile photo\n2. Client calls your API: 'I want to upload a photo'\n3. API generates S3 pre-signed PUT URL (5-minute expiry)\n4. API returns pre-signed URL to client\n5. Client uploads directly to S3 (bypasses your servers entirely)\n6. S3 triggers ObjectCreated event → Lambda\n7. Lambda: validate file type (check magic bytes, not just extension),\n   resize to multiple dimensions (thumbnail, medium, large),\n   save resized versions to S3, update user record in DynamoDB\n8. CloudFront serves images from S3 (CDN caching, HTTPS, custom domain)\n\nWhy pre-signed URLs instead of uploading to your API then to S3:\n→ Direct upload: your servers never touch the bytes (infinite scalability)\n→ 1M users uploading 5MB simultaneously = 5TB of bandwidth\n→ Your API would be completely overwhelmed handling that data\n→ Direct to S3: S3 handles it, your API just generates a short URL\n\nSecurity: bucket is PRIVATE. CloudFront has OAC (Origin Access Control)\nso it's the ONLY entity that can read from S3. Users never get direct S3 URLs.\"",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "topic": "S3 (Simple Storage Service)"
+    },
+    {
+      "id": "06-s3-simple-storage-service-q2",
+      "question": "S3 bucket contains sensitive data. How do you secure it?",
+      "answer": "\"Defense in depth across multiple layers:\n\n1. Block Public Access: ALL four settings enabled at account level.\n   Nothing public without explicit conscious decision.\n\n2. Bucket Policy: explicit Deny for s3:* unless from specific IAM roles.\n   Add condition: Deny if aws:SecureTransport = false (force HTTPS).\n\n3. Encryption: SSE-KMS with customer-managed key. Every object encrypted.\n   Enable S3 Bucket Key to reduce KMS API costs 99%.\n   KMS key policy: only specific roles can use the key.\n\n4. Versioning + MFA Delete: accidents are recoverable.\n   Deliberate deletions require MFA.\n\n5. Access Logging: enable S3 server access logs → separate logging bucket.\n   Every request logged with: requester, IP, operation, object, status.\n   Or: use CloudTrail Data Events for S3 → richer logs including user identity.\n\n6. Lifecycle policy: data doesn't live forever. Define retention.\n\n7. S3 Object Lock if compliance requires: true immutability.\n\n8. AWS Macie: automatically scans S3 for PII (SSN, credit cards, names).\n   Alerts if sensitive data is unencrypted or publicly accessible.\n\n9. VPC Endpoint: EC2 in private subnet → S3 via VPC endpoint.\n   Traffic never leaves AWS network. No internet exposure.\n\n10. Regular IAM Access Analyzer: find any unexpected external access.\"",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "topic": "S3 (Simple Storage Service)"
+    },
+    {
+      "id": "06-s3-simple-storage-service-q3",
+      "question": "How does S3 achieve 11 nines of durability?",
+      "answer": "\"11 nines (99.999999999%) means losing one object out of 100 billion per year.\n\nS3 achieves this through:\n\nGeographic redundancy: S3 Standard stores data across minimum 3 Availability\nZones within a region. Each AZ is in a separate physical location with\nindependent power, cooling, and networking.\n\nAutomatic integrity checking: S3 stores checksums (MD5/CRC) for every object.\nEvery time data is read, AWS verifies the checksum. If corruption detected,\nit automatically restores from another copy and fixes the corruption.\n\nErasure coding: similar to RAID. Data is split into chunks, parity chunks\nadded. Losing some chunks doesn't lose the object — reconstruct from remaining.\n\nThis means: fire destroys one data center, flood destroys second,\nhardware failure in third — S3 can still reconstruct your data.\n\nImportant caveat: 11 nines is for S3 Standard (3+ AZs). S3 One Zone-IA\nstores in single AZ — much lower durability (99.999999999% → 99.5% + AZ loss).\"",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "topic": "S3 (Simple Storage Service)"
+    },
+    {
+      "id": "06-s3-simple-storage-service-q4",
+      "question": "Your S3 costs jumped from $500 to $2000 this month. How do you investigate?",
+      "answer": "\"Structured investigation:\n\n1. Cost Explorer: filter by S3 service → break down by usage type.\n   Which cost dimension grew? Storage? Requests? Data Transfer?\n\n2. If STORAGE grew:\n   → S3 Storage Lens: see which buckets and prefixes grew\n   → Common cause: logs accumulating without lifecycle policy\n   → Fix: add lifecycle policy to expire old objects\n\n3. If DATA TRANSFER grew:\n   → Check if CloudFront is in front of S3 (if not — add it)\n   → Direct S3 → internet: $0.09/GB. Via CloudFront: $0.0085/GB\n   → Also check: cross-region replication costs\n   → Check: are applications downloading S3 data then re-uploading (double transfer)?\n\n4. If REQUESTS grew:\n   → S3 charges per 1000 requests ($0.0004 PUT, $0.00004 GET)\n   → S3 access logs → find which prefix is receiving millions of requests\n   → Small objects accessed millions of times → cache with CloudFront\n   → Or: application bug causing S3 polling instead of event-driven\n\n5. Set S3 Storage Lens on all accounts:\n   → Shows bucket-by-bucket cost breakdown\n   → Highlights: unversioned buckets (risk), buckets without lifecycle (cost)\n\n6. Prevention: S3 Storage Class Analysis → shows which objects should move to IA\n   Lifecycle policies → automate cost optimization going forward\"",
+      "topicNumber": 6,
+      "topicSlug": "06-s3-simple-storage-service",
+      "topic": "S3 (Simple Storage Service)"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-q1",
+      "question": "Aurora vs RDS MySQL — which would you choose and why?",
+      "answer": "\"For most production workloads I'd default to Aurora MySQL.\n\nAurora's advantages that matter operationally:\nStorage auto-scales to 128 TB without any maintenance. RDS requires manual\nresize operations. In production, 'database disk full' is a nightmare you\ndon't want. Aurora eliminates it.\n\nRead replicas have < 10ms replication lag (vs up to 1 second for RDS) and\nyou can have 15 of them (vs 5). The shared storage architecture means\nreplicas don't need to replicate data — they just read from the same storage\ncluster. Failover is < 30 seconds (vs 1-2 minutes for RDS Multi-AZ).\n\nAurora costs roughly 20% more per instance hour, but when you factor in\noperational savings (no storage management, faster failover, better replicas),\nit usually wins total cost of ownership.\n\nI'd use RDS MySQL over Aurora when: budget is very tight (small startup, < $100/month DB),\nthe workload is read-only or very small, or when testing something quick.\nFor serious production: Aurora.\"",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "topic": "Databases (RDS, Aurora, DynamoDB, ElastiCache)"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-q2",
+      "question": "DynamoDB is showing throttling errors. What's happening and how do you fix it?",
+      "answer": "\"Throttling means we're exceeding our provisioned capacity — either RCU or WCU.\nIt can also mean we have hot partitions.\n\nDiagnosis:\n1. CloudWatch: SuccessfulRequestLatency, ConsumedReadCapacityUnits,\n   ConsumedWriteCapacityUnits, ThrottledRequests per table and index\n\n2. Is it the whole table or specific operations?\n   If specific: likely hot partitions\n\n3. Hot partition diagnosis: \n   CloudWatch contributor insights → shows which PKs are consuming most capacity\n   If one PK is using 90% of capacity → hot partition\n\nFixes for hot partitions:\n→ Change partition key design (better cardinality)\n→ Add random suffix to PK (user_123_1, user_123_2, ...) then scatter/gather reads\n→ Use DAX cache to absorb read traffic\n\nFixes for overall throttling:\n→ Provisioned: increase RCU/WCU (manual or enable auto-scaling)\n→ Switch to on-demand capacity mode (never throttles, costs more)\n→ Add DAX in front for read traffic\n→ Exponential backoff with jitter in retry logic (already in AWS SDK)\n→ Batch reads/writes (BatchGetItem, BatchWriteItem) — more efficient\n\nLong-term: review access patterns and partition key design.\nThrottling is often a data model problem, not a capacity problem.\"",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "topic": "Databases (RDS, Aurora, DynamoDB, ElastiCache)"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-q3",
+      "question": "When would you use ElastiCache vs DynamoDB for caching?",
+      "answer": "\"They serve different caching needs.\n\nElastiCache Redis is a true caching layer — microsecond reads, complex data\nstructures, pub/sub, persistence. Use it when caching in front of another\ndatabase: cache database query results in Redis, invalidate on write.\nBest for: application-level caching (user sessions, hot query results,\nrate limiting, real-time leaderboards).\n\nDynamoDB with DAX is DynamoDB's own caching accelerator — microsecond\nreads for DynamoDB items specifically. It's built for the DynamoDB access\npattern (key-value lookups by PK). Use DAX when your DynamoDB table is\nthe primary data store and you need faster reads without adding Redis.\n\nDynamoDB itself (without DAX) at single-digit millisecond is often 'fast\nenough' and can reduce the need for a separate cache. If your access patterns\nare pure key-value lookups and milliseconds are acceptable — no cache needed.\n\nIn practice: most complex applications use both. Aurora as relational DB +\nElastiCache Redis to cache hot Aurora queries + DynamoDB for specific\nhigh-scale NoSQL data + DAX if DynamoDB reads need to be faster.\"",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "topic": "Databases (RDS, Aurora, DynamoDB, ElastiCache)"
+    },
+    {
+      "id": "07-databases-rds-aurora-dynamodb-elasticache-q4",
+      "question": "Design a database architecture for a multi-tenant SaaS application with 10,000 tenants.",
+      "answer": "\"Multi-tenant database design has three models — choose based on isolation needs:\n\nModel 1: Shared database, shared schema (row-level isolation):\n→ One Aurora cluster, one schema, tenantId column on every table\n→ Application filters by tenantId in every query\n→ Cheapest ($500/month serves all tenants)\n→ Risk: missing tenantId filter → data leak between tenants\n→ Risk: one tenant's heavy queries affect all tenants ('noisy neighbor')\n→ Use for: small tenants, cost-sensitive, can enforce row-level security\n\nModel 2: Shared database, separate schemas:\n→ One Aurora cluster, separate schema per tenant (tenant_001, tenant_002)\n→ Strong query isolation (can't accidentally cross schema boundaries)\n→ More expensive (more connections, schema management)\n→ Use for: medium isolation needs, regulated industries\n\nModel 3: Separate databases per tenant:\n→ Aurora Serverless per tenant (scales to zero = cheap for inactive tenants)\n→ Complete isolation — one tenant's data never touches another's\n→ Can use different database sizes per tenant (premium tenants get more)\n→ Complex management: 10,000 Aurora instances to monitor\n→ Use for: enterprise tenants, maximum isolation, compliance requirements\n\nMy recommendation for 10,000 tenants:\nHybrid approach — free/small tenants on shared database (model 1 with RLS),\nenterprise tenants get dedicated Aurora Serverless (model 3).\nTenant routing: API reads tenant tier from DynamoDB → routes to correct DB.\nAs tenants grow, migrate from shared to dedicated automatically.\"",
+      "topicNumber": 7,
+      "topicSlug": "07-databases-rds-aurora-dynamodb-elasticache",
+      "topic": "Databases (RDS, Aurora, DynamoDB, ElastiCache)"
+    },
+    {
+      "id": "08-vpc-virtual-private-cloud-q1",
+      "question": "Walk me through what happens when a user requests your web app.",
+      "answer": "\"Starting from the internet:\n\n1. User's browser resolves domain via Route 53 → gets ALB's IP\n2. HTTPS request reaches ALB in public subnet (port 443)\n3. ALB has SSL certificate (ACM) → terminates TLS, inspects HTTP headers\n4. ALB checks routing rules → matches /* → forwards to Target Group\n5. ALB health-checks confirm target is healthy → picks one ECS task\n6. ALB forwards request to ECS task on port 3000 (private subnet)\n   Security Group on ECS task: allows port 3000 from ALB Security Group only\n7. App processes request → needs user data from Aurora\n8. App connects to Aurora cluster endpoint (private subnet, port 5432)\n   Security Group on Aurora: allows port 5432 from App Security Group only\n9. Aurora returns data → app formats response → sends back to ALB\n10. ALB returns response to user\n\nTraffic never touches public internet after entering the ALB.\nApp servers and databases have NO public IPs.\nDatabases accept connections only from app servers (via SG reference).\nEverything encrypted in transit (HTTPS + TLS to Aurora).\"",
+      "topicNumber": 8,
+      "topicSlug": "08-vpc-virtual-private-cloud",
+      "topic": "VPC (Virtual Private Cloud)"
+    },
+    {
+      "id": "08-vpc-virtual-private-cloud-q2",
+      "question": "Our Lambda can't connect to our RDS database. How do you debug?",
+      "answer": "\"Step by step diagnosis:\n\n1. Is Lambda in a VPC?\n   Lambda without VPC config cannot reach VPC resources.\n   Check Lambda configuration: must have VPC, subnets, SG configured.\n\n2. Are Lambda and RDS in the SAME VPC?\n   Different VPCs → can't connect unless peered + routes configured.\n\n3. Are they in the right subnets?\n   Lambda should be in PRIVATE subnet (so it can use NAT for internet too).\n   RDS should be in DATABASE subnet.\n   Both in same VPC → they can communicate if SG rules allow.\n\n4. Security Group on RDS:\n   Does it allow port 5432 (PostgreSQL) or 3306 (MySQL) \n   from Lambda's Security Group?\n   Check: RDS SG inbound rules → source should be Lambda SG ID.\n\n5. Security Group on Lambda:\n   Does it allow outbound to port 5432/3306?\n   Default: all outbound allowed → probably fine.\n   If outbound restricted: add rule for DB port.\n\n6. Route Tables:\n   Lambda subnet route table: does it have route to RDS subnet?\n   Both in same VPC → 'local' route covers all VPC traffic → should work.\n\n7. If Lambda also needs internet (for external APIs):\n   Lambda in private subnet → route table needs NAT Gateway route.\n   Lambda in public subnet → needs public IP (not ideal for security).\n\n8. Timeout:\n   If connecting but slow/failing: check DB connection limit.\n   Lambda can create many parallel connections → use RDS Proxy!\n   RDS Proxy pools connections → solves Lambda connection storm problem.\n\nMost common cause: Lambda not in VPC, or SG on RDS not allowing Lambda SG.\"",
+      "topicNumber": 8,
+      "topicSlug": "08-vpc-virtual-private-cloud",
+      "topic": "VPC (Virtual Private Cloud)"
+    },
+    {
+      "id": "08-vpc-virtual-private-cloud-q3",
+      "question": "How do you reduce NAT Gateway costs?",
+      "answer": "\"NAT Gateway costs come from two sources: hourly ($0.045/hr) and data ($0.045/GB).\nAttack the data charge first — that's usually the bigger number.\n\nStep 1: VPC Flow Logs → analyze what traffic goes through NAT Gateway.\nEnable: VPC → Flow Logs → CloudWatch or S3.\nQuery with Athena or CloudWatch Insights: which destinations, how much data.\n\nStep 2: Add S3 Gateway Endpoint (FREE).\nIf Lambda/EC2 calls S3 → currently goes through NAT → $0.045/GB.\nAdd S3 Gateway Endpoint → traffic goes directly → $0 for transfer.\nOne-time setup, zero ongoing cost. Often saves $50-500/month.\n\nStep 3: Add DynamoDB Gateway Endpoint (FREE).\nSame story — DynamoDB traffic through NAT is wasteful.\n\nStep 4: Interface Endpoints for high-volume services.\nSQS, SNS, CloudWatch, Systems Manager → if high volume, evaluate cost.\nAt low volume: interface endpoint costs MORE than NAT (fixed hourly).\nAt high volume (hundreds of GB): interface endpoint saves money.\n\nStep 5: Check for unnecessary internet calls.\nApplication calling external API for every request? Cache the response.\nSending logs to internet destination? Switch to CloudWatch (internal).\n\nStep 6: Dev/test environments — one NAT Gateway only.\nProduction: one per AZ (HA). Dev: one total is fine (save ~$65/month).\n\nTypical result: 40-70% reduction in NAT Gateway costs with these steps.\"",
+      "topicNumber": 8,
+      "topicSlug": "08-vpc-virtual-private-cloud",
+      "topic": "VPC (Virtual Private Cloud)"
+    },
+    {
+      "id": "09-route-53-dns-q1",
+      "question": "What's the difference between CNAME and Alias records?",
+      "answer": "\"CNAME maps a name to another name, which then gets resolved again.\nLimitation: cannot be used at the zone apex (root domain).\nexample.com CANNOT have a CNAME record (DNS spec prohibits it).\nwww.example.com can have CNAME → example.com. Fine.\n\nAlias is AWS-specific. It maps a name directly to an AWS resource\n(ALB, CloudFront distribution, S3 website endpoint, another Route 53 record).\nWorks at the zone apex! example.com → your ALB. This is what you need\nfor pointing your root domain at an AWS load balancer.\n\nAlso: Alias queries to AWS resources are free. Route 53 doesn't charge\nfor DNS queries that resolve to AWS resources via Alias. CNAME queries\nare charged normally.\n\nIn practice: always use Alias for AWS resources, CNAME for non-AWS.\"",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "topic": "Route 53 (DNS)"
+    },
+    {
+      "id": "09-route-53-dns-q2",
+      "question": "How do you implement blue-green deployment with Route 53?",
+      "answer": "\"Two approaches depending on speed requirement:\n\nWeighted routing approach (gradual):\nBlue environment: example.com → blue-ALB, Weight: 100\nGreen environment: example.com → green-ALB, Weight: 0\n\nDeploy to green. Test it.\nShift: blue=90, green=10 (canary — 10% gets new version)\nMonitor error rates, latency for 30 minutes.\nShift: blue=0, green=100 (complete cutover)\nIf problems: blue=100, green=0 (instant rollback)\nTTL: set to 60 seconds so changes propagate in 1 minute.\n\nFailover routing approach (instant):\nPrimary: example.com → green-ALB (active, health check enabled)\nSecondary: example.com → blue-ALB (standby)\n\nDeploy to secondary. Test it. Promote secondary to primary.\nFor true instant switchover: \nJust update the primary record to point to green. Takes < 60 seconds\nwith low TTL. But requires DNS to propagate (clients may cache old TTL).\n\nFor zero-propagation-delay switching: do it at the ALB level\n(weighted target groups) not DNS level.\"",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "topic": "Route 53 (DNS)"
+    },
+    {
+      "id": "10-cloudfront-cdn-q1",
+      "question": "Why use CloudFront in front of S3 instead of serving directly from S3?",
+      "answer": "\"Four reasons:\n\nPerformance: S3 is regional (one location). CloudFront has 400+ edge\nlocations. User in Tokyo gets files from Tokyo edge, not your us-east-1\nbucket. Latency drops from 180ms to 5ms for cached content.\n\nCost: S3 to internet data transfer is $0.09/GB. CloudFront to internet\nis $0.0085/GB (90% cheaper) because CloudFront has preferential rates with\nISPs and optimized transfer from S3 to CloudFront is also cheaper.\n\nSecurity: with OAC, S3 bucket is completely private. Block Public Access\nis ON. Only CloudFront can read objects. Direct S3 URLs fail. Users always\ngo through CloudFront (WAF, rate limiting, geo-blocking all apply).\n\nHTTPS: S3 static website hosting doesn't support HTTPS with custom domain.\nCloudFront + ACM certificate = HTTPS with your domain. Required for SEO\nand browser trust.\n\nThe combination is: Route 53 → CloudFront (HTTPS, WAF, CDN) → S3 (OAC,\nprivate, origin). This is the standard pattern for all static sites.\"",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "topic": "CloudFront (CDN)"
+    },
+    {
+      "id": "10-cloudfront-cdn-q2",
+      "question": "How do you ensure users always get the latest version of your SPA after deployment?",
+      "answer": "\"Two-part strategy:\n\nPart 1: Cache-bust JS/CSS with content hashes.\nModern build tools (Vite, webpack) append file content hash to filename:\nmain.a1b2c3d4.js, styles.e5f6g7h8.css\nCloudFront caches these with max-age=31536000 (1 year).\nWhen code changes → new hash → new filename → new cache entry.\nOld cached files are never requested again (dead cache entries harmless).\n\nPart 2: Short TTL on index.html.\nindex.html references the hashed filenames.\nSet: Cache-Control: max-age=60, must-revalidate on index.html responses.\nOr: invalidate /index.html from CloudFront on every deployment.\n\nResult: users cache JS/CSS for 1 year (fast!), always get fresh index.html\nwithin 60 seconds of deployment. index.html references new hashed files.\nNew hashes → cache miss → fetched from origin → cached at edge.\nTotal update propagation: < 2 minutes after deployment. No manual invalidation.\"",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "topic": "CloudFront (CDN)"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-q1",
+      "question": "SQS vs SNS vs EventBridge — explain the difference and when to use each.",
+      "answer": "\"Three different messaging patterns for different needs.\n\nSQS is a point-to-point queue. One producer sends messages, one type of\nconsumer processes them. The queue buffers messages so consumers can work\nat their own pace. Use it when you need to decouple and buffer work between\ntwo services, and when retries and DLQ matter (payment processing, file processing).\n\nSNS is pub/sub fan-out. One message goes to ALL subscribers simultaneously.\nUse it when one event needs to trigger multiple services at the same time —\norder placed needs to trigger payment, inventory, email, analytics all at once.\nFan-out pattern: SNS + multiple SQS queues is the most reliable version.\n\nEventBridge is an intelligent event bus with content-based routing.\nEvents flow in from 100+ sources, rules match patterns, and route to targets.\nUse when you need complex routing logic, events from AWS services (EC2 state\nchanges, S3 events), SaaS integrations, or event replay capabilities.\n\nIn practice: SQS for buffering between two services, SNS for fan-out,\nEventBridge for complex event-driven architectures and AWS service events.\nOften used together: EventBridge routes events to SNS which fans out to SQS.\"",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-q2",
+      "question": "How would you handle a situation where SQS messages are failing repeatedly?",
+      "answer": "\"That's exactly what Dead Letter Queues are for — and they're mandatory in production.\n\nConfigure DLQ on the main queue with maxReceiveCount = 3.\nAfter 3 failed processing attempts, SQS moves the message to the DLQ.\nSet a CloudWatch alarm: ApproximateNumberOfMessagesVisible on DLQ > 0.\nThe moment a message lands in DLQ → alarm fires → team is notified.\n\nInvestigation: read the DLQ message → look at the payload → find the problem.\nCommon causes: malformed JSON, unexpected data format, dependency service down,\ncode exception that wasn't caught.\n\nFix the consumer code. Then use SQS redrive: move messages from DLQ back to\nmain queue. Consumer processes them successfully this time.\n\nWithout DLQ: bad messages would retry infinitely, block the queue, and a single\nmalformed message could bring down your entire processing pipeline.\"",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
+    },
+    {
+      "id": "13-containers-ecs-ecr-eks-q1",
+      "question": "Lambda vs ECS Fargate — how do you decide?",
+      "answer": "\"Primary question: is the workload event-driven or always-on?\n\nLambda wins for event-driven, short-duration work:\nTriggered by S3 upload, SQS message, HTTP request, schedule.\nRuns for milliseconds to minutes. Scales to zero (pay nothing when idle).\nNo infrastructure to manage. Perfect for: file processing, webhooks,\nscheduled jobs, API backends with variable traffic.\nLimitation: max 15 minutes, cold starts can add latency.\n\nECS Fargate wins for always-on services:\nLong-running processes, WebSocket connections, background workers consuming\nqueues continuously, services that benefit from persistent connections,\ntasks > 15 minutes (video transcoding, ML inference serving).\nCost: you pay for the full container runtime whether request is happening or not.\nNo cold starts. Predictable latency.\n\nThe practical rule: if it's triggered by events and runs for seconds/minutes\n→ Lambda. If it needs to run continuously or > 15 minutes → ECS Fargate.\n\nMany architectures use both: ECS for the main API (always-on, low latency),\nLambda for async processing (image resize on upload, email sending, etc.).\"",
+      "topicNumber": 13,
+      "topicSlug": "13-containers-ecs-ecr-eks",
+      "topic": "Containers (ECS, ECR, EKS)"
+    },
+    {
+      "id": "13-containers-ecs-ecr-eks-q2",
+      "question": "How do you manage secrets in ECS containers?",
+      "answer": "\"Never put secrets in environment variables if they contain sensitive values,\nbecause they're visible in the ECS console, CloudWatch logs, and metadata service.\n\nCorrect approach: Secrets Manager or SSM Parameter Store.\n\nIn Task Definition, use the secrets field (not environment):\n{\n  'name': 'DB_PASSWORD',\n  'valueFrom': 'arn:aws:secretsmanager:us-east-1:123456:secret:prod/db-password'\n}\n\nECS agent fetches the secret at task startup and injects it as an environment\nvariable inside the container. The secret value never appears in the task\ndefinition. The ECS task execution role needs permission to read from Secrets Manager.\n\nFor rotation: Secrets Manager can auto-rotate (Lambda-based rotation).\nWhen rotated, ECS tasks read the new value on next restart. For immediate\nrotation: force new deployment of the ECS service (new tasks read new secret).\n\nFor configuration (non-sensitive): SSM Parameter Store Standard tier is free.\nFor sensitive secrets needing rotation: Secrets Manager ($0.40/secret/month).\"",
+      "topicNumber": 13,
+      "topicSlug": "13-containers-ecs-ecr-eks",
+      "topic": "Containers (ECS, ECR, EKS)"
+    }
+  ],
+  "totalCount": 42
+}

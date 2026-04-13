@@ -1,0 +1,100 @@
+{
+  "number": 14,
+  "slug": "14-api-gateway",
+  "title": "API Gateway",
+  "sections": [
+    {
+      "id": "what-is-api-gateway",
+      "title": "🚪 What is API Gateway?",
+      "type": "concept",
+      "rawMarkdown": "```\nAPI Gateway = fully managed service to create, publish, maintain, monitor, and secure APIs\n\nWITHOUT API GATEWAY:\nYour backend (Lambda/ECS) must handle:\n→ SSL termination\n→ Authentication (validate JWT on every request)\n→ Rate limiting (count requests per user per second)\n→ Request/response transformation\n→ Caching (avoid hitting backend for same data)\n→ API versioning (/v1, /v2)\n→ Usage plans and API keys for partners\n→ Logging every request\n\nWITH API GATEWAY:\nAll of the above handled at the gateway layer.\nYour backend just handles business logic.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "API Gateway = fully managed service to create, publish, maintain, monitor, and secure APIs\n\nWITHOUT API GATEWAY:\nYour backend (Lambda/ECS) must handle:\n→ SSL termination\n→ Authentication (validate JWT on every request)\n→ Rate limiting (count requests per user per second)\n→ Request/response transformation\n→ Caching (avoid hitting backend for same data)\n→ API versioning (/v1, /v2)\n→ Usage plans and API keys for partners\n→ Logging every request\n\nWITH API GATEWAY:\nAll of the above handled at the gateway layer.\nYour backend just handles business logic."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ SSL termination",
+        "→ Authentication (validate JWT on every request)",
+        "→ Rate limiting (count requests per user per second)",
+        "→ Request/response transformation",
+        "→ Caching (avoid hitting backend for same data)",
+        "→ API versioning (/v1, /v2)",
+        "→ Usage plans and API keys for partners",
+        "→ Logging every request"
+      ]
+    },
+    {
+      "id": "api-gateway-types",
+      "title": "🔧 API Gateway Types",
+      "type": "concept",
+      "rawMarkdown": "```\nREST API:\n→ Full-featured: auth, throttling, caching, transforms, usage plans\n→ More expensive: $3.50/million requests\n→ Regional or edge-optimized (CloudFront in front)\n→ Use for: most REST APIs, when you need advanced features\n\nHTTP API:\n→ Simpler and cheaper: $1.00/million requests\n→ Lower latency than REST API\n→ Limited features: no API keys, no caching, fewer auth options\n→ Supports: JWT auth, Lambda, HTTP backends, CORS\n→ Use for: simple Lambda or HTTP backend integrations, cost-sensitive\n\nWebSocket API:\n→ Persistent bidirectional connections\n→ Real-time applications: chat, live updates, gaming\n→ AWS manages connection state (connection IDs in DynamoDB)\n→ Use for: real-time features\n\nCHOOSE:\nNeed full features → REST API\nSimple Lambda/HTTP backend, want cheapest → HTTP API\nReal-time bidirectional → WebSocket API\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "REST API:\n→ Full-featured: auth, throttling, caching, transforms, usage plans\n→ More expensive: $3.50/million requests\n→ Regional or edge-optimized (CloudFront in front)\n→ Use for: most REST APIs, when you need advanced features\n\nHTTP API:\n→ Simpler and cheaper: $1.00/million requests\n→ Lower latency than REST API\n→ Limited features: no API keys, no caching, fewer auth options\n→ Supports: JWT auth, Lambda, HTTP backends, CORS\n→ Use for: simple Lambda or HTTP backend integrations, cost-sensitive\n\nWebSocket API:\n→ Persistent bidirectional connections\n→ Real-time applications: chat, live updates, gaming\n→ AWS manages connection state (connection IDs in DynamoDB)\n→ Use for: real-time features\n\nCHOOSE:\nNeed full features → REST API\nSimple Lambda/HTTP backend, want cheapest → HTTP API\nReal-time bidirectional → WebSocket API"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Full-featured: auth, throttling, caching, transforms, usage plans",
+        "→ More expensive: $3.50/million requests",
+        "→ Regional or edge-optimized (CloudFront in front)",
+        "→ Use for: most REST APIs, when you need advanced features",
+        "→ Simpler and cheaper: $1.00/million requests",
+        "→ Lower latency than REST API",
+        "→ Limited features: no API keys, no caching, fewer auth options",
+        "→ Supports: JWT auth, Lambda, HTTP backends, CORS"
+      ]
+    },
+    {
+      "id": "key-features",
+      "title": "🔑 Key Features",
+      "type": "concept",
+      "rawMarkdown": "### Authentication Options\n```\nLAMBDA AUTHORIZER (custom auth):\n→ Your Lambda validates the token (JWT, OAuth, API key, custom)\n→ Returns: IAM policy (allow/deny) + principal + context\n→ Result cached (TTL configurable) → don't call Lambda every request\n→ Use for: custom auth logic, third-party auth providers\n\nCOGNITO USER POOLS:\n→ Users authenticate with Cognito → get JWT token\n→ API Gateway validates JWT automatically (no custom code)\n→ No Lambda needed for validation\n→ Use for: end-user authentication\n\nIAM AUTHORIZATION:\n→ Caller signs request with AWS Signature V4\n→ API Gateway validates signature + checks IAM permissions\n→ Use for: service-to-service calls, AWS SDK clients\n\nAPI KEYS + USAGE PLANS:\n→ Issue API keys to partners/customers\n→ Usage plans: throttle and quota per API key\n→ \"Partner A: 1000 requests/day, 10 req/second\"\n→ Use for: monetized APIs, partner integrations\n```\n\n### Throttling and Caching\n```\nTHROTTLING:\nAccount level: 10,000 requests/second (soft limit, can increase)\nStage level: set per-stage limit\nMethod level: set per-method limit (override stage)\n→ Exceeds limit → 429 Too Many Requests\n\nCACHING:\n→ Cache responses at API Gateway level (0.5 GB to 237 GB)\n→ TTL: 0-3600 seconds (default: 300)\n→ Cache key: URL + optionally headers/query strings\n→ Invalidate: client can force cache refresh with Cache-Control: max-age=0\n→ Cost: $0.02/hour for 0.5 GB cache (~$14.40/month)\n→ Use for: read-heavy APIs with frequently repeated requests\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Authentication Options"
+        },
+        {
+          "type": "diagram",
+          "content": "LAMBDA AUTHORIZER (custom auth):\n→ Your Lambda validates the token (JWT, OAuth, API key, custom)\n→ Returns: IAM policy (allow/deny) + principal + context\n→ Result cached (TTL configurable) → don't call Lambda every request\n→ Use for: custom auth logic, third-party auth providers\n\nCOGNITO USER POOLS:\n→ Users authenticate with Cognito → get JWT token\n→ API Gateway validates JWT automatically (no custom code)\n→ No Lambda needed for validation\n→ Use for: end-user authentication\n\nIAM AUTHORIZATION:\n→ Caller signs request with AWS Signature V4\n→ API Gateway validates signature + checks IAM permissions\n→ Use for: service-to-service calls, AWS SDK clients\n\nAPI KEYS + USAGE PLANS:\n→ Issue API keys to partners/customers\n→ Usage plans: throttle and quota per API key\n→ \"Partner A: 1000 requests/day, 10 req/second\"\n→ Use for: monetized APIs, partner integrations"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Throttling and Caching"
+        },
+        {
+          "type": "diagram",
+          "content": "THROTTLING:\nAccount level: 10,000 requests/second (soft limit, can increase)\nStage level: set per-stage limit\nMethod level: set per-method limit (override stage)\n→ Exceeds limit → 429 Too Many Requests\n\nCACHING:\n→ Cache responses at API Gateway level (0.5 GB to 237 GB)\n→ TTL: 0-3600 seconds (default: 300)\n→ Cache key: URL + optionally headers/query strings\n→ Invalidate: client can force cache refresh with Cache-Control: max-age=0\n→ Cost: $0.02/hour for 0.5 GB cache (~$14.40/month)\n→ Use for: read-heavy APIs with frequently repeated requests"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Your Lambda validates the token (JWT, OAuth, API key, custom)",
+        "→ Returns: IAM policy (allow/deny) + principal + context",
+        "→ Result cached (TTL configurable) → don't call Lambda every request",
+        "→ Use for: custom auth logic, third-party auth providers",
+        "→ Users authenticate with Cognito → get JWT token",
+        "→ API Gateway validates JWT automatically (no custom code)",
+        "→ No Lambda needed for validation",
+        "→ Use for: end-user authentication"
+      ]
+    }
+  ]
+}

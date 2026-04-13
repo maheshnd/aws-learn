@@ -1,0 +1,530 @@
+{
+  "number": 2,
+  "slug": "02-iam-identity-access-management",
+  "title": "IAM (Identity & Access Management)",
+  "sections": [
+    {
+      "id": "the-story-why-iam-exists",
+      "title": "🧒 The Story — Why IAM Exists",
+      "type": "story",
+      "rawMarkdown": "```\nImagine you own a large company with an office building.\nThe building has many rooms: server room, finance office, HR records, code lab.\n\nWITHOUT IAM (no access control):\n→ Every employee has a master key to every room\n→ Junior developer accidentally deletes production database\n→ Accountant can read confidential source code\n→ Contractor who left still has full access\n→ You have NO idea who went into which room when\n→ DISASTER waiting to happen\n\nWITH IAM (proper access control):\n→ Each employee gets a BADGE (IAM User)\n→ Badges are grouped by department (IAM Groups)\n→ Each department's badge opens specific doors (IAM Policies)\n→ Some tasks use temporary badges (IAM Roles)\n→ Every door entry is logged (CloudTrail)\n\nIAM = the badge + access control system for your entire AWS account\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Imagine you own a large company with an office building.\nThe building has many rooms: server room, finance office, HR records, code lab.\n\nWITHOUT IAM (no access control):\n→ Every employee has a master key to every room\n→ Junior developer accidentally deletes production database\n→ Accountant can read confidential source code\n→ Contractor who left still has full access\n→ You have NO idea who went into which room when\n→ DISASTER waiting to happen\n\nWITH IAM (proper access control):\n→ Each employee gets a BADGE (IAM User)\n→ Badges are grouped by department (IAM Groups)\n→ Each department's badge opens specific doors (IAM Policies)\n→ Some tasks use temporary badges (IAM Roles)\n→ Every door entry is logged (CloudTrail)\n\nIAM = the badge + access control system for your entire AWS account"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Every employee has a master key to every room",
+        "→ Junior developer accidentally deletes production database",
+        "→ Accountant can read confidential source code",
+        "→ Contractor who left still has full access",
+        "→ You have NO idea who went into which room when",
+        "→ DISASTER waiting to happen",
+        "→ Each employee gets a BADGE (IAM User)",
+        "→ Badges are grouped by department (IAM Groups)"
+      ]
+    },
+    {
+      "id": "iam-is-global",
+      "title": "🌐 IAM is Global",
+      "type": "concept",
+      "rawMarkdown": "```\nIMPORTANT: IAM is a GLOBAL service.\n→ IAM users, groups, roles, policies exist in ALL regions simultaneously\n→ You do NOT choose a region when creating IAM resources\n→ One IAM user can access resources in any region (if policy allows)\n→ This is different from EC2, S3, RDS — those are regional\n\nContrast:\nIAM User \"alice\"  → exists globally, no region\nEC2 instance      → exists in us-east-1 specifically\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "IMPORTANT: IAM is a GLOBAL service.\n→ IAM users, groups, roles, policies exist in ALL regions simultaneously\n→ You do NOT choose a region when creating IAM resources\n→ One IAM user can access resources in any region (if policy allows)\n→ This is different from EC2, S3, RDS — those are regional\n\nContrast:\nIAM User \"alice\"  → exists globally, no region\nEC2 instance      → exists in us-east-1 specifically"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ IAM users, groups, roles, policies exist in ALL regions simultaneously",
+        "→ You do NOT choose a region when creating IAM resources",
+        "→ One IAM user can access resources in any region (if policy allows)",
+        "→ This is different from EC2, S3, RDS — those are regional"
+      ]
+    },
+    {
+      "id": "root-account-vs-iam-users",
+      "title": "🔑 Root Account vs IAM Users",
+      "type": "concept",
+      "rawMarkdown": "### Root Account\n```\nCreated when: you first sign up for AWS (email + password)\nHas:          UNLIMITED access to everything in the account\nCan:          never be restricted by any IAM policy\nRisk:         if leaked → attacker has complete control forever\n\nGOLDEN RULE: NEVER use root for daily work. EVER.\n\nRoot account should ONLY be used for:\n→ Initial account setup (first 15 minutes)\n→ Creating the first IAM admin user\n→ Changing billing settings\n→ Closing the AWS account\n→ Restoring access if all admin IAM users are locked out\n\nPROTECT ROOT:\n✅ Enable MFA immediately\n✅ Never create access keys for root\n✅ Don't share root credentials with ANYONE\n✅ Lock it away — pretend it doesn't exist\n```\n\n### IAM Users\n```\nCreated by:  root or IAM admin\nHas:         ZERO permissions by default (must explicitly grant)\nCan do:      only what their policies allow\nRisk:        limited — if compromised, can be disabled/deleted instantly\n\nONE USER PER PERSON — never share IAM users\nEach person on your team = their own IAM user\n\nTypes of access an IAM user can have:\n┌─────────────────────────────────────────────────────────────┐\n│ CONSOLE ACCESS (for humans):                               │\n│   Username + Password + (MFA if enabled)                   │\n│   Login at: https://ACCOUNT_ID.signin.aws.amazon.com       │\n│                                                             │\n│ PROGRAMMATIC ACCESS (for code/scripts):                    │\n│   Access Key ID     → like a username (AKIAIOSFODNN7...)   │\n│   Secret Access Key → like a password (wJalrX...)          │\n│   Used by: AWS CLI, SDKs, CI/CD pipelines                  │\n└─────────────────────────────────────────────────────────────┘\n\n⚠️ NEVER put access keys in code. NEVER push to GitHub.\n   Bots scan GitHub 24/7 looking for leaked AWS keys.\n   Average time from GitHub push to first unauthorized API call: 4 minutes.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Root Account"
+        },
+        {
+          "type": "diagram",
+          "content": "Created when: you first sign up for AWS (email + password)\nHas:          UNLIMITED access to everything in the account\nCan:          never be restricted by any IAM policy\nRisk:         if leaked → attacker has complete control forever\n\nGOLDEN RULE: NEVER use root for daily work. EVER.\n\nRoot account should ONLY be used for:\n→ Initial account setup (first 15 minutes)\n→ Creating the first IAM admin user\n→ Changing billing settings\n→ Closing the AWS account\n→ Restoring access if all admin IAM users are locked out\n\nPROTECT ROOT:\n✅ Enable MFA immediately\n✅ Never create access keys for root\n✅ Don't share root credentials with ANYONE\n✅ Lock it away — pretend it doesn't exist"
+        },
+        {
+          "type": "paragraph",
+          "content": "### IAM Users"
+        },
+        {
+          "type": "diagram",
+          "content": "Created by:  root or IAM admin\nHas:         ZERO permissions by default (must explicitly grant)\nCan do:      only what their policies allow\nRisk:        limited — if compromised, can be disabled/deleted instantly\n\nONE USER PER PERSON — never share IAM users\nEach person on your team = their own IAM user\n\nTypes of access an IAM user can have:\n┌─────────────────────────────────────────────────────────────┐\n│ CONSOLE ACCESS (for humans):                               │\n│   Username + Password + (MFA if enabled)                   │\n│   Login at: https://ACCOUNT_ID.signin.aws.amazon.com       │\n│                                                             │\n│ PROGRAMMATIC ACCESS (for code/scripts):                    │\n│   Access Key ID     → like a username (AKIAIOSFODNN7...)   │\n│   Secret Access Key → like a password (wJalrX...)          │\n│   Used by: AWS CLI, SDKs, CI/CD pipelines                  │\n└─────────────────────────────────────────────────────────────┘\n\n⚠️ NEVER put access keys in code. NEVER push to GitHub.\n   Bots scan GitHub 24/7 looking for leaked AWS keys.\n   Average time from GitHub push to first unauthorized API call: 4 minutes."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Initial account setup (first 15 minutes)",
+        "→ Creating the first IAM admin user",
+        "→ Changing billing settings",
+        "→ Closing the AWS account",
+        "→ Restoring access if all admin IAM users are locked out",
+        "✅ Enable MFA immediately",
+        "✅ Never create access keys for root",
+        "✅ Don't share root credentials with ANYONE"
+      ]
+    },
+    {
+      "id": "iam-groups",
+      "title": "👥 IAM Groups",
+      "type": "concept",
+      "rawMarkdown": "```\nA group = a collection of IAM users that share permissions\n\nWHY GROUPS EXIST:\nYou have 50 developers. Don't attach policy to each one.\n→ Create \"Developers\" group → attach developer policy once\n→ Add all 50 devs to group → all get permissions instantly\n→ New dev joins → add to group → done\n→ Dev leaves → remove from group → permissions revoked\n\nRULES:\n→ Groups contain USERS only (not other groups)\n→ A user can be in MULTIPLE groups (gets combined permissions)\n→ Users don't HAVE to be in a group (but should be)\n→ No limit on number of groups\n→ Max 10 groups per user (soft limit)\n\nCOMMON GROUPS IN REAL COMPANIES:\n┌─────────────────┬──────────────────────────────────────────┐\n│ Group           │ Permissions                              │\n├─────────────────┼──────────────────────────────────────────┤\n│ Admins          │ Full AWS access (AdministratorAccess)    │\n│ Developers      │ EC2, S3, Lambda, RDS, CloudWatch         │\n│ DevOps          │ EC2, ECS, CodePipeline, CloudFormation   │\n│ DataScientists  │ S3 read, SageMaker, Athena, Redshift     │\n│ ReadOnly        │ View everything, change nothing          │\n│ Billing         │ Cost Explorer, billing only              │\n└─────────────────┴──────────────────────────────────────────┘\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "A group = a collection of IAM users that share permissions\n\nWHY GROUPS EXIST:\nYou have 50 developers. Don't attach policy to each one.\n→ Create \"Developers\" group → attach developer policy once\n→ Add all 50 devs to group → all get permissions instantly\n→ New dev joins → add to group → done\n→ Dev leaves → remove from group → permissions revoked\n\nRULES:\n→ Groups contain USERS only (not other groups)\n→ A user can be in MULTIPLE groups (gets combined permissions)\n→ Users don't HAVE to be in a group (but should be)\n→ No limit on number of groups\n→ Max 10 groups per user (soft limit)\n\nCOMMON GROUPS IN REAL COMPANIES:\n┌─────────────────┬──────────────────────────────────────────┐\n│ Group           │ Permissions                              │\n├─────────────────┼──────────────────────────────────────────┤\n│ Admins          │ Full AWS access (AdministratorAccess)    │\n│ Developers      │ EC2, S3, Lambda, RDS, CloudWatch         │\n│ DevOps          │ EC2, ECS, CodePipeline, CloudFormation   │\n│ DataScientists  │ S3 read, SageMaker, Athena, Redshift     │\n│ ReadOnly        │ View everything, change nothing          │\n│ Billing         │ Cost Explorer, billing only              │\n└─────────────────┴──────────────────────────────────────────┘"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Create \"Developers\" group → attach developer policy once",
+        "→ Add all 50 devs to group → all get permissions instantly",
+        "→ New dev joins → add to group → done",
+        "→ Dev leaves → remove from group → permissions revoked",
+        "→ Groups contain USERS only (not other groups)",
+        "→ A user can be in MULTIPLE groups (gets combined permissions)",
+        "→ Users don't HAVE to be in a group (but should be)",
+        "→ No limit on number of groups"
+      ]
+    },
+    {
+      "id": "iam-roles",
+      "title": "🎭 IAM Roles",
+      "type": "concept",
+      "rawMarkdown": "> **Key insight:** Roles are for AWS services and temporary access. They're actually MORE secure than users because credentials auto-expire.\n\n```\nIAM User  → permanent identity for a PERSON (long-lived credentials)\nIAM Role  → temporary identity for a SERVICE or SITUATION\n\nA role can be ASSUMED by:\n→ AWS services (EC2 accessing S3, Lambda writing to DynamoDB)\n→ Applications running inside AWS\n→ External users (federated from company Active Directory)\n→ Other AWS accounts (cross-account access)\n→ Web identity (users logged in with Google/Facebook via Cognito)\n\nWhen assumed → AWS generates TEMPORARY credentials (expire in 1–12 hours)\n→ No password. No access keys. Auto-rotated. Much safer.\n```\n\n### Why Roles Instead of Access Keys for Services\n\n```\nTHE WRONG WAY (never do this):\nEC2 instance needs to read from S3\n→ Create IAM user \"app-service\"\n→ Generate access keys\n→ SSH into EC2, store keys in ~/.aws/credentials or .env file\n→ \nProblems:\n  - Keys stored on disk → if EC2 hacked, attacker gets permanent keys\n  - Keys don't expire → attacker has access until you manually rotate\n  - Everyone on team now knows (or has seen) the keys\n  - Keys in .env file → often accidentally committed to GitHub\n\nTHE RIGHT WAY (always do this):\nEC2 instance needs to read from S3\n→ Create IAM Role with S3 read permissions\n→ Attach Role to EC2 instance\n→ EC2 automatically gets temporary credentials via instance metadata\n→ \nBenefits:\n  - Credentials are temporary (expire in hours, auto-refreshed)\n  - If EC2 is hacked, credentials expire soon anyway\n  - No keys stored anywhere on disk\n  - Zero code changes needed — AWS SDK automatically uses the role\n```\n\n### Common Role Examples\n\n```\nEC2 Instance Role:\n  Trust: EC2 service can assume this role\n  Policies: S3GetObject, DynamoDBFullAccess, CloudWatchLogsFullAccess\n\nLambda Execution Role:\n  Trust: Lambda service can assume this role  \n  Policies: AWSLambdaBasicExecutionRole (CloudWatch logs)\n            + whatever your function specifically needs\n\nECS Task Role:\n  Trust: ECS tasks can assume this role\n  Policies: specific services your container needs to call\n\nCross-Account Role:\n  Trust: AWS account 111122223333 can assume this role\n  Use case: Company A's team accesses Company B's resources\n  Use case: CI/CD pipeline in one account deploys to another\n\nCodePipeline Role:\n  Trust: CodePipeline service can assume this role\n  Policies: CodeBuild, S3, ECS deploy, CloudFormation\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "> **Key insight:** Roles are for AWS services and temporary access. They're actually MORE secure than users because credentials auto-expire."
+        },
+        {
+          "type": "diagram",
+          "content": "IAM User  → permanent identity for a PERSON (long-lived credentials)\nIAM Role  → temporary identity for a SERVICE or SITUATION\n\nA role can be ASSUMED by:\n→ AWS services (EC2 accessing S3, Lambda writing to DynamoDB)\n→ Applications running inside AWS\n→ External users (federated from company Active Directory)\n→ Other AWS accounts (cross-account access)\n→ Web identity (users logged in with Google/Facebook via Cognito)\n\nWhen assumed → AWS generates TEMPORARY credentials (expire in 1–12 hours)\n→ No password. No access keys. Auto-rotated. Much safer."
+        },
+        {
+          "type": "paragraph",
+          "content": "### Why Roles Instead of Access Keys for Services"
+        },
+        {
+          "type": "diagram",
+          "content": "THE WRONG WAY (never do this):\nEC2 instance needs to read from S3\n→ Create IAM user \"app-service\"\n→ Generate access keys\n→ SSH into EC2, store keys in ~/.aws/credentials or .env file\n→ \nProblems:\n  - Keys stored on disk → if EC2 hacked, attacker gets permanent keys\n  - Keys don't expire → attacker has access until you manually rotate\n  - Everyone on team now knows (or has seen) the keys\n  - Keys in .env file → often accidentally committed to GitHub\n\nTHE RIGHT WAY (always do this):\nEC2 instance needs to read from S3\n→ Create IAM Role with S3 read permissions\n→ Attach Role to EC2 instance\n→ EC2 automatically gets temporary credentials via instance metadata\n→ \nBenefits:\n  - Credentials are temporary (expire in hours, auto-refreshed)\n  - If EC2 is hacked, credentials expire soon anyway\n  - No keys stored anywhere on disk\n  - Zero code changes needed — AWS SDK automatically uses the role"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Common Role Examples"
+        },
+        {
+          "type": "text-panel",
+          "content": "EC2 Instance Role:\n  Trust: EC2 service can assume this role\n  Policies: S3GetObject, DynamoDBFullAccess, CloudWatchLogsFullAccess\n\nLambda Execution Role:\n  Trust: Lambda service can assume this role  \n  Policies: AWSLambdaBasicExecutionRole (CloudWatch logs)\n            + whatever your function specifically needs\n\nECS Task Role:\n  Trust: ECS tasks can assume this role\n  Policies: specific services your container needs to call\n\nCross-Account Role:\n  Trust: AWS account 111122223333 can assume this role\n  Use case: Company A's team accesses Company B's resources\n  Use case: CI/CD pipeline in one account deploys to another\n\nCodePipeline Role:\n  Trust: CodePipeline service can assume this role\n  Policies: CodeBuild, S3, ECS deploy, CloudFormation"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ AWS services (EC2 accessing S3, Lambda writing to DynamoDB)",
+        "→ Applications running inside AWS",
+        "→ External users (federated from company Active Directory)",
+        "→ Other AWS accounts (cross-account access)",
+        "→ Web identity (users logged in with Google/Facebook via Cognito)",
+        "→ No password. No access keys. Auto-rotated. Much safer.",
+        "→ Create IAM user \"app-service\"",
+        "→ Generate access keys"
+      ]
+    },
+    {
+      "id": "iam-policies-the-core-of-everything",
+      "title": "📜 IAM Policies — The Core of Everything",
+      "type": "concept",
+      "rawMarkdown": "> Policies are JSON documents that define what is ALLOWED or DENIED. Understanding policies is the difference between a junior and senior engineer.\n\n### Policy Structure\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"AllowS3ReadOnSpecificBucket\",\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"s3:GetObject\",\n        \"s3:ListBucket\"\n      ],\n      \"Resource\": [\n        \"arn:aws:s3:::my-company-bucket\",\n        \"arn:aws:s3:::my-company-bucket/*\"\n      ],\n      \"Condition\": {\n        \"StringEquals\": {\n          \"aws:RequestedRegion\": \"us-east-1\"\n        }\n      }\n    }\n  ]\n}\n```\n\n**Every field explained:**\n\n| Field | Values | Meaning |\n|-------|--------|---------|\n| `Version` | Always `\"2012-10-17\"` | Policy language version (don't change this) |\n| `Sid` | Any string | Statement ID — optional label for humans |\n| `Effect` | `\"Allow\"` or `\"Deny\"` | Explicitly allow or deny this action |\n| `Action` | `\"service:action\"` | What AWS API call (e.g., `s3:GetObject`) |\n| `Resource` | ARN or `\"*\"` | Which specific resource |\n| `Principal` | Account/user/role ARN | WHO gets this (used in resource policies) |\n| `Condition` | Key-value conditions | Only apply if condition is true |\n\n### ARN — Amazon Resource Name\n```\nARN format: arn:partition:service:region:account-id:resource\n\nExamples:\narn:aws:s3:::my-bucket                    → S3 bucket (no region/account — global)\narn:aws:s3:::my-bucket/*                  → all objects inside bucket\narn:aws:ec2:us-east-1:123456:instance/i-abc → specific EC2 instance\narn:aws:iam::123456789:user/alice          → IAM user (no region — global)\narn:aws:iam::123456789:role/LambdaRole    → IAM role\narn:aws:lambda:us-east-1:123456:function:myFunc → Lambda function\n\n\"*\" → wildcard (matches anything)\nUse carefully — \"Resource\": \"*\" means ALL resources of that type\n```\n\n### Policy Evaluation Logic (Critical — Most Missed)\n\n```\nWhen you make an AWS API call, IAM evaluates in this ORDER:\n\n1. EXPLICIT DENY → if ANY policy says Deny → DENIED. Stop. Final.\n2. EXPLICIT ALLOW → if ANY policy says Allow (and no Deny) → ALLOWED\n3. IMPLICIT DENY  → if nothing matches → DENIED (default)\n\nDENY ALWAYS WINS over ALLOW. No exceptions.\n\nExample:\n  Group policy:  Allow s3:* on *  (full S3 access)\n  User policy:   Deny s3:DeleteObject on *\n  Result:        User can do ALL S3 actions EXCEPT delete\n                 The Deny overrides the Allow for that specific action\n\nANOTHER EXAMPLE:\n  User has: Allow ec2:* on *\n  User has: No policy about S3\n  Result for S3: DENIED (implicit deny — no policy = denied)\n  Result for EC2: ALLOWED (explicit allow)\n```\n\n### Types of Policies\n\n```\n1. AWS MANAGED POLICIES\n   Created and maintained by AWS. You cannot edit them.\n   Examples: AmazonS3FullAccess, ReadOnlyAccess, AdministratorAccess\n   Pros: always up-to-date when AWS releases new features\n   Cons: often too permissive (broader than you need)\n   Use: quick start, non-sensitive environments\n\n2. CUSTOMER MANAGED POLICIES (recommended)\n   You create them. You control them. Reusable across users/groups/roles.\n   Best practice: create specific policies for specific needs\n   Example: \"AllowReadFromReportsBucketOnly\"\n   Version-controlled. Audit who changed what.\n\n3. INLINE POLICIES\n   Attached directly to ONE specific user/group/role\n   Deleted when that user/group/role is deleted\n   NOT reusable. Hard to audit at scale.\n   Avoid in production. Use for: tightly coupled, one-off permissions.\n\n4. RESOURCE-BASED POLICIES\n   Attached to the RESOURCE (not the user)\n   Examples: S3 Bucket Policy, SQS Queue Policy, Lambda Resource Policy\n   Has a Principal field (who is being granted access)\n   Allows cross-account access without assuming a role\n   \n   S3 Bucket Policy example — make bucket readable by everyone:\n   {\n     \"Principal\": \"*\",\n     \"Effect\": \"Allow\",\n     \"Action\": \"s3:GetObject\",\n     \"Resource\": \"arn:aws:s3:::my-public-bucket/*\"\n   }\n```\n\n### Least Privilege — The Golden Rule\n\n```\nGive every user, role, and service the MINIMUM permissions \nrequired to do EXACTLY their job. Nothing more. Nothing ever.\n\nWHY:\n→ Hacker compromises developer account\n  WITH least privilege:  can only access dev bucket, not prod DB\n  WITHOUT least privilege: admin access → deletes everything, steals all data\n\nHOW TO IMPLEMENT:\n1. Start with ZERO permissions on every new entity\n2. Add ONLY what is actually needed, one service at a time\n3. Use specific ARNs (never \"*\" on Resource unless truly needed)\n4. Review permissions quarterly — remove what's unused\n5. Use IAM Access Analyzer to find overly permissive policies\n6. Use IAM Access Advisor to see what permissions are actually used\n\nEXAMPLE — Lambda that reads from one S3 bucket:\nWRONG: AmazonS3FullAccess (can delete any bucket in account!)\nRIGHT: \n{\n  \"Effect\": \"Allow\",\n  \"Action\": [\"s3:GetObject\"],\n  \"Resource\": \"arn:aws:s3:::my-specific-bucket/*\"\n}\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "> Policies are JSON documents that define what is ALLOWED or DENIED. Understanding policies is the difference between a junior and senior engineer.\n\n### Policy Structure"
+        },
+        {
+          "type": "code",
+          "content": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"AllowS3ReadOnSpecificBucket\",\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"s3:GetObject\",\n        \"s3:ListBucket\"\n      ],\n      \"Resource\": [\n        \"arn:aws:s3:::my-company-bucket\",\n        \"arn:aws:s3:::my-company-bucket/*\"\n      ],\n      \"Condition\": {\n        \"StringEquals\": {\n          \"aws:RequestedRegion\": \"us-east-1\"\n        }\n      }\n    }\n  ]\n}",
+          "language": "json"
+        },
+        {
+          "type": "paragraph",
+          "content": "**Every field explained:**\n\n| Field | Values | Meaning |\n|-------|--------|---------|\n| `Version` | Always `\"2012-10-17\"` | Policy language version (don't change this) |\n| `Sid` | Any string | Statement ID — optional label for humans |\n| `Effect` | `\"Allow\"` or `\"Deny\"` | Explicitly allow or deny this action |\n| `Action` | `\"service:action\"` | What AWS API call (e.g., `s3:GetObject`) |\n| `Resource` | ARN or `\"*\"` | Which specific resource |\n| `Principal` | Account/user/role ARN | WHO gets this (used in resource policies) |\n| `Condition` | Key-value conditions | Only apply if condition is true |\n\n### ARN — Amazon Resource Name"
+        },
+        {
+          "type": "diagram",
+          "content": "ARN format: arn:partition:service:region:account-id:resource\n\nExamples:\narn:aws:s3:::my-bucket                    → S3 bucket (no region/account — global)\narn:aws:s3:::my-bucket/*                  → all objects inside bucket\narn:aws:ec2:us-east-1:123456:instance/i-abc → specific EC2 instance\narn:aws:iam::123456789:user/alice          → IAM user (no region — global)\narn:aws:iam::123456789:role/LambdaRole    → IAM role\narn:aws:lambda:us-east-1:123456:function:myFunc → Lambda function\n\n\"*\" → wildcard (matches anything)\nUse carefully — \"Resource\": \"*\" means ALL resources of that type"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Policy Evaluation Logic (Critical — Most Missed)"
+        },
+        {
+          "type": "diagram",
+          "content": "When you make an AWS API call, IAM evaluates in this ORDER:\n\n1. EXPLICIT DENY → if ANY policy says Deny → DENIED. Stop. Final.\n2. EXPLICIT ALLOW → if ANY policy says Allow (and no Deny) → ALLOWED\n3. IMPLICIT DENY  → if nothing matches → DENIED (default)\n\nDENY ALWAYS WINS over ALLOW. No exceptions.\n\nExample:\n  Group policy:  Allow s3:* on *  (full S3 access)\n  User policy:   Deny s3:DeleteObject on *\n  Result:        User can do ALL S3 actions EXCEPT delete\n                 The Deny overrides the Allow for that specific action\n\nANOTHER EXAMPLE:\n  User has: Allow ec2:* on *\n  User has: No policy about S3\n  Result for S3: DENIED (implicit deny — no policy = denied)\n  Result for EC2: ALLOWED (explicit allow)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Types of Policies"
+        },
+        {
+          "type": "text-panel",
+          "content": "1. AWS MANAGED POLICIES\n   Created and maintained by AWS. You cannot edit them.\n   Examples: AmazonS3FullAccess, ReadOnlyAccess, AdministratorAccess\n   Pros: always up-to-date when AWS releases new features\n   Cons: often too permissive (broader than you need)\n   Use: quick start, non-sensitive environments\n\n2. CUSTOMER MANAGED POLICIES (recommended)\n   You create them. You control them. Reusable across users/groups/roles.\n   Best practice: create specific policies for specific needs\n   Example: \"AllowReadFromReportsBucketOnly\"\n   Version-controlled. Audit who changed what.\n\n3. INLINE POLICIES\n   Attached directly to ONE specific user/group/role\n   Deleted when that user/group/role is deleted\n   NOT reusable. Hard to audit at scale.\n   Avoid in production. Use for: tightly coupled, one-off permissions.\n\n4. RESOURCE-BASED POLICIES\n   Attached to the RESOURCE (not the user)\n   Examples: S3 Bucket Policy, SQS Queue Policy, Lambda Resource Policy\n   Has a Principal field (who is being granted access)\n   Allows cross-account access without assuming a role\n   \n   S3 Bucket Policy example — make bucket readable by everyone:\n   {\n     \"Principal\": \"*\",\n     \"Effect\": \"Allow\",\n     \"Action\": \"s3:GetObject\",\n     \"Resource\": \"arn:aws:s3:::my-public-bucket/*\"\n   }"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Least Privilege — The Golden Rule"
+        },
+        {
+          "type": "diagram",
+          "content": "Give every user, role, and service the MINIMUM permissions \nrequired to do EXACTLY their job. Nothing more. Nothing ever.\n\nWHY:\n→ Hacker compromises developer account\n  WITH least privilege:  can only access dev bucket, not prod DB\n  WITHOUT least privilege: admin access → deletes everything, steals all data\n\nHOW TO IMPLEMENT:\n1. Start with ZERO permissions on every new entity\n2. Add ONLY what is actually needed, one service at a time\n3. Use specific ARNs (never \"*\" on Resource unless truly needed)\n4. Review permissions quarterly — remove what's unused\n5. Use IAM Access Analyzer to find overly permissive policies\n6. Use IAM Access Advisor to see what permissions are actually used\n\nEXAMPLE — Lambda that reads from one S3 bucket:\nWRONG: AmazonS3FullAccess (can delete any bucket in account!)\nRIGHT: \n{\n  \"Effect\": \"Allow\",\n  \"Action\": [\"s3:GetObject\"],\n  \"Resource\": \"arn:aws:s3:::my-specific-bucket/*\"\n}"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Hacker compromises developer account"
+      ]
+    },
+    {
+      "id": "mfa-multifactor-authentication",
+      "title": "🔐 MFA — Multi-Factor Authentication",
+      "type": "concept",
+      "rawMarkdown": "```\nMFA = password you know + device you own\n\nEven if password is stolen → attacker CANNOT login without the physical device.\nThis single control prevents 99% of account takeovers.\n\nMFA DEVICE OPTIONS:\n┌──────────────────────┬────────────────────────────────────────┐\n│ Virtual MFA App      │ Google Authenticator, Authy, 1Password │\n│                      │ 6-digit code changes every 30 seconds  │\n│                      │ Most common, free, easy to set up      │\n├──────────────────────┼────────────────────────────────────────┤\n│ FIDO Security Key    │ YubiKey — physical USB/NFC device      │\n│                      │ Tap to authenticate. Most secure.      │\n│                      │ Cannot be phished. Hardware-bound.     │\n├──────────────────────┼────────────────────────────────────────┤\n│ Hardware TOTP Token  │ Physical device from Gemalto/RSA       │\n│                      │ For air-gapped environments            │\n└──────────────────────┴────────────────────────────────────────┘\n\nWHERE TO ENFORCE MFA:\n✅ Root account: MANDATORY. Non-negotiable. First thing to do.\n✅ All IAM users with console access: MANDATORY\n✅ Privileged users (admins): MANDATORY\n✅ Production deployments: enforce via SCP or IAM Condition\n\nHOW TO ENFORCE MFA via IAM Policy:\nAdd this condition to any policy to require MFA:\n\"Condition\": {\n  \"BoolIfExists\": {\n    \"aws:MultiFactorAuthPresent\": \"true\"\n  }\n}\n→ If MFA not used → action denied, even with correct password\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "MFA = password you know + device you own\n\nEven if password is stolen → attacker CANNOT login without the physical device.\nThis single control prevents 99% of account takeovers.\n\nMFA DEVICE OPTIONS:\n┌──────────────────────┬────────────────────────────────────────┐\n│ Virtual MFA App      │ Google Authenticator, Authy, 1Password │\n│                      │ 6-digit code changes every 30 seconds  │\n│                      │ Most common, free, easy to set up      │\n├──────────────────────┼────────────────────────────────────────┤\n│ FIDO Security Key    │ YubiKey — physical USB/NFC device      │\n│                      │ Tap to authenticate. Most secure.      │\n│                      │ Cannot be phished. Hardware-bound.     │\n├──────────────────────┼────────────────────────────────────────┤\n│ Hardware TOTP Token  │ Physical device from Gemalto/RSA       │\n│                      │ For air-gapped environments            │\n└──────────────────────┴────────────────────────────────────────┘\n\nWHERE TO ENFORCE MFA:\n✅ Root account: MANDATORY. Non-negotiable. First thing to do.\n✅ All IAM users with console access: MANDATORY\n✅ Privileged users (admins): MANDATORY\n✅ Production deployments: enforce via SCP or IAM Condition\n\nHOW TO ENFORCE MFA via IAM Policy:\nAdd this condition to any policy to require MFA:\n\"Condition\": {\n  \"BoolIfExists\": {\n    \"aws:MultiFactorAuthPresent\": \"true\"\n  }\n}\n→ If MFA not used → action denied, even with correct password"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "✅ Root account: MANDATORY. Non-negotiable. First thing to do.",
+        "✅ All IAM users with console access: MANDATORY",
+        "✅ Privileged users (admins): MANDATORY",
+        "✅ Production deployments: enforce via SCP or IAM Condition",
+        "→ If MFA not used → action denied, even with correct password"
+      ]
+    },
+    {
+      "id": "how-to-access-aws-3-ways",
+      "title": "💻 How to Access AWS (3 Ways)",
+      "type": "concept",
+      "rawMarkdown": "### 1. AWS Management Console (Browser)\n```\nURL: https://ACCOUNT_ID.signin.aws.amazon.com/console\nAuth: username + password (+ MFA if enabled)\n\nBest for: learning, exploration, occasional tasks, monitoring dashboards\nNOT for: automation, repeated tasks, CI/CD\n\nTip: Alias your account ID → settings → create account alias\n     makes URL: https://mycompany.signin.aws.amazon.com/console\n```\n\n### 2. AWS CLI (Command Line)\n```bash\n# Install\nbrew install awscli                    # macOS\npip install awscli                     # Python\n# or download from aws.amazon.com/cli\n\n# Configure\naws configure\n# Enter: Access Key ID, Secret Access Key, Region, Output format\n\n# Common commands\naws s3 ls                              # list buckets\naws ec2 describe-instances             # list EC2 instances\naws lambda list-functions              # list Lambda functions\naws iam list-users                     # list IAM users\naws logs tail /aws/lambda/myfunction   # stream Lambda logs\n\n# Use profiles (multiple accounts)\naws configure --profile production\naws s3 ls --profile production\n\n# Use role (assume role)\naws sts assume-role \\\n  --role-arn arn:aws:iam::123456:role/MyRole \\\n  --role-session-name my-session\n```\n\n### 3. AWS SDK (In Your Code)\n```javascript\n// JavaScript / Node.js\nconst { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');\n\n// SDK automatically uses: IAM Role (if on EC2/Lambda) OR\n// environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) OR\n// ~/.aws/credentials file\n\nconst client = new S3Client({ region: 'us-east-1' });\nconst response = await client.send(new GetObjectCommand({\n  Bucket: 'my-bucket',\n  Key: 'my-file.json'\n}));\n```\n\n```python\n# Python (boto3)\nimport boto3\n\ns3 = boto3.client('s3', region_name='us-east-1')\nresponse = s3.get_object(Bucket='my-bucket', Key='my-file.json')\n```\n\n```\nSDK CREDENTIAL LOOKUP ORDER (automatic):\n1. Explicit credentials in code (NEVER do this)\n2. Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)\n3. AWS CLI credentials file (~/.aws/credentials)\n4. IAM Role attached to EC2/Lambda/ECS (BEST for production)\n→ Always use IAM Roles in production — never hardcode keys\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### 1. AWS Management Console (Browser)"
+        },
+        {
+          "type": "diagram",
+          "content": "URL: https://ACCOUNT_ID.signin.aws.amazon.com/console\nAuth: username + password (+ MFA if enabled)\n\nBest for: learning, exploration, occasional tasks, monitoring dashboards\nNOT for: automation, repeated tasks, CI/CD\n\nTip: Alias your account ID → settings → create account alias\n     makes URL: https://mycompany.signin.aws.amazon.com/console"
+        },
+        {
+          "type": "paragraph",
+          "content": "### 2. AWS CLI (Command Line)"
+        },
+        {
+          "type": "code",
+          "content": "# Install\nbrew install awscli                    # macOS\npip install awscli                     # Python\n# or download from aws.amazon.com/cli\n\n# Configure\naws configure\n# Enter: Access Key ID, Secret Access Key, Region, Output format\n\n# Common commands\naws s3 ls                              # list buckets\naws ec2 describe-instances             # list EC2 instances\naws lambda list-functions              # list Lambda functions\naws iam list-users                     # list IAM users\naws logs tail /aws/lambda/myfunction   # stream Lambda logs\n\n# Use profiles (multiple accounts)\naws configure --profile production\naws s3 ls --profile production\n\n# Use role (assume role)\naws sts assume-role \\\n  --role-arn arn:aws:iam::123456:role/MyRole \\\n  --role-session-name my-session",
+          "language": "bash"
+        },
+        {
+          "type": "paragraph",
+          "content": "### 3. AWS SDK (In Your Code)"
+        },
+        {
+          "type": "code",
+          "content": "// JavaScript / Node.js\nconst { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');\n\n// SDK automatically uses: IAM Role (if on EC2/Lambda) OR\n// environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) OR\n// ~/.aws/credentials file\n\nconst client = new S3Client({ region: 'us-east-1' });\nconst response = await client.send(new GetObjectCommand({\n  Bucket: 'my-bucket',\n  Key: 'my-file.json'\n}));",
+          "language": "javascript"
+        },
+        {
+          "type": "code",
+          "content": "# Python (boto3)\nimport boto3\n\ns3 = boto3.client('s3', region_name='us-east-1')\nresponse = s3.get_object(Bucket='my-bucket', Key='my-file.json')",
+          "language": "python"
+        },
+        {
+          "type": "diagram",
+          "content": "SDK CREDENTIAL LOOKUP ORDER (automatic):\n1. Explicit credentials in code (NEVER do this)\n2. Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)\n3. AWS CLI credentials file (~/.aws/credentials)\n4. IAM Role attached to EC2/Lambda/ECS (BEST for production)\n→ Always use IAM Roles in production — never hardcode keys"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Always use IAM Roles in production — never hardcode keys"
+      ]
+    },
+    {
+      "id": "iam-advanced-concepts",
+      "title": "🔬 IAM Advanced Concepts",
+      "type": "concept",
+      "rawMarkdown": "### Permission Boundaries\n```\nA permission boundary = maximum permissions an identity can EVER have.\nEven if you attach more permissive policies → boundary caps it.\n\nUSE CASE:\nYou want developers to create their own IAM roles (for their apps),\nbut you don't want them to create roles with MORE access than they themselves have.\n\nSolution:\n→ Set permission boundary on developer user\n→ Any role they create is ALSO bounded by that boundary\n→ Developer cannot accidentally (or maliciously) escalate privileges\n\n{\n  \"Effect\": \"Allow\",\n  \"Action\": [\"iam:CreateRole\", \"iam:AttachRolePolicy\"],\n  \"Resource\": \"*\",\n  \"Condition\": {\n    \"StringEquals\": {\n      \"iam:PermissionsBoundary\": \"arn:aws:iam::123456:policy/DevBoundary\"\n    }\n  }\n}\n```\n\n### IAM Conditions (Fine-Grained Control)\n```\nConditions make policies context-aware. Examples:\n\nONLY allow from specific IP:\n\"Condition\": {\n  \"IpAddress\": {\"aws:SourceIp\": [\"203.0.113.0/24\"]}\n}\n\nONLY allow if MFA was used:\n\"Condition\": {\n  \"Bool\": {\"aws:MultiFactorAuthPresent\": \"true\"}\n}\n\nONLY allow during business hours (UTC):\n\"Condition\": {\n  \"DateGreaterThan\": {\"aws:CurrentTime\": \"2024-01-01T09:00:00Z\"},\n  \"DateLessThan\": {\"aws:CurrentTime\": \"2024-12-31T17:00:00Z\"}\n}\n\nONLY allow specific regions:\n\"Condition\": {\n  \"StringEquals\": {\"aws:RequestedRegion\": [\"us-east-1\", \"eu-west-1\"]}\n}\n\nONLY allow with specific tag:\n\"Condition\": {\n  \"StringEquals\": {\"ec2:ResourceTag/Environment\": \"dev\"}\n}\n→ Developers can only start/stop EC2 instances tagged Environment=dev\n```\n\n### Service Control Policies (SCPs)\n```\nSCPs = IAM policies applied at the AWS ORGANIZATION level\n→ Apply to entire AWS accounts (not individual users)\n→ Cannot be overridden by anything inside the account — not even root!\n→ Used by large enterprises with multiple AWS accounts\n\nEXAMPLE USE CASES:\n→ \"No one in the dev account can delete CloudTrail logs\"\n→ \"No one can create resources in regions outside us-east-1\"\n→ \"No one can create IAM users with admin access\"\n→ \"Everyone must use MFA for console access\"\n\nSCPs work differently from IAM policies:\n→ SCP does NOT grant permissions (it just LIMITS what's possible)\n→ You STILL need IAM policies to actually allow actions\n→ Think of SCP as a jail — defines the walls\n   IAM policies = keys that work inside the jail\n```\n\n### IAM Access Analyzer\n```\nFree service that analyzes resource policies to find:\n→ S3 buckets accessible outside your account\n→ IAM roles assumable by external accounts\n→ Lambda functions with public access\n→ SQS queues accessible to external accounts\n→ KMS keys accessible externally\n\nReports: \"This S3 bucket is accessible from account 999888777\"\nYou decide: intended (external partner) → archive the finding\n            not intended → fix the policy\n\nALSO does:\n→ Policy validation (checks for syntax errors, typos in actions)\n→ Unused access analysis (finds permissions you have but never use)\n→ Policy generation (watch CloudTrail for 90 days → generate tight policy)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Permission Boundaries"
+        },
+        {
+          "type": "diagram",
+          "content": "A permission boundary = maximum permissions an identity can EVER have.\nEven if you attach more permissive policies → boundary caps it.\n\nUSE CASE:\nYou want developers to create their own IAM roles (for their apps),\nbut you don't want them to create roles with MORE access than they themselves have.\n\nSolution:\n→ Set permission boundary on developer user\n→ Any role they create is ALSO bounded by that boundary\n→ Developer cannot accidentally (or maliciously) escalate privileges\n\n{\n  \"Effect\": \"Allow\",\n  \"Action\": [\"iam:CreateRole\", \"iam:AttachRolePolicy\"],\n  \"Resource\": \"*\",\n  \"Condition\": {\n    \"StringEquals\": {\n      \"iam:PermissionsBoundary\": \"arn:aws:iam::123456:policy/DevBoundary\"\n    }\n  }\n}"
+        },
+        {
+          "type": "paragraph",
+          "content": "### IAM Conditions (Fine-Grained Control)"
+        },
+        {
+          "type": "diagram",
+          "content": "Conditions make policies context-aware. Examples:\n\nONLY allow from specific IP:\n\"Condition\": {\n  \"IpAddress\": {\"aws:SourceIp\": [\"203.0.113.0/24\"]}\n}\n\nONLY allow if MFA was used:\n\"Condition\": {\n  \"Bool\": {\"aws:MultiFactorAuthPresent\": \"true\"}\n}\n\nONLY allow during business hours (UTC):\n\"Condition\": {\n  \"DateGreaterThan\": {\"aws:CurrentTime\": \"2024-01-01T09:00:00Z\"},\n  \"DateLessThan\": {\"aws:CurrentTime\": \"2024-12-31T17:00:00Z\"}\n}\n\nONLY allow specific regions:\n\"Condition\": {\n  \"StringEquals\": {\"aws:RequestedRegion\": [\"us-east-1\", \"eu-west-1\"]}\n}\n\nONLY allow with specific tag:\n\"Condition\": {\n  \"StringEquals\": {\"ec2:ResourceTag/Environment\": \"dev\"}\n}\n→ Developers can only start/stop EC2 instances tagged Environment=dev"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Service Control Policies (SCPs)"
+        },
+        {
+          "type": "diagram",
+          "content": "SCPs = IAM policies applied at the AWS ORGANIZATION level\n→ Apply to entire AWS accounts (not individual users)\n→ Cannot be overridden by anything inside the account — not even root!\n→ Used by large enterprises with multiple AWS accounts\n\nEXAMPLE USE CASES:\n→ \"No one in the dev account can delete CloudTrail logs\"\n→ \"No one can create resources in regions outside us-east-1\"\n→ \"No one can create IAM users with admin access\"\n→ \"Everyone must use MFA for console access\"\n\nSCPs work differently from IAM policies:\n→ SCP does NOT grant permissions (it just LIMITS what's possible)\n→ You STILL need IAM policies to actually allow actions\n→ Think of SCP as a jail — defines the walls\n   IAM policies = keys that work inside the jail"
+        },
+        {
+          "type": "paragraph",
+          "content": "### IAM Access Analyzer"
+        },
+        {
+          "type": "diagram",
+          "content": "Free service that analyzes resource policies to find:\n→ S3 buckets accessible outside your account\n→ IAM roles assumable by external accounts\n→ Lambda functions with public access\n→ SQS queues accessible to external accounts\n→ KMS keys accessible externally\n\nReports: \"This S3 bucket is accessible from account 999888777\"\nYou decide: intended (external partner) → archive the finding\n            not intended → fix the policy\n\nALSO does:\n→ Policy validation (checks for syntax errors, typos in actions)\n→ Unused access analysis (finds permissions you have but never use)\n→ Policy generation (watch CloudTrail for 90 days → generate tight policy)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Set permission boundary on developer user",
+        "→ Any role they create is ALSO bounded by that boundary",
+        "→ Developer cannot accidentally (or maliciously) escalate privileges",
+        "→ Developers can only start/stop EC2 instances tagged Environment=dev",
+        "→ Apply to entire AWS accounts (not individual users)",
+        "→ Cannot be overridden by anything inside the account — not even root!",
+        "→ Used by large enterprises with multiple AWS accounts",
+        "→ \"No one in the dev account can delete CloudTrail logs\""
+      ]
+    },
+    {
+      "id": "iam-best-practices-checklist",
+      "title": "✅ IAM Best Practices Checklist",
+      "type": "checklist",
+      "rawMarkdown": "```\nACCOUNT SETUP:\n☐ Enable MFA on root account (day 1, non-negotiable)\n☐ Never create access keys for root account\n☐ Create IAM admin user for daily use\n☐ Enable IAM Access Analyzer in all regions\n\nUSERS:\n☐ One IAM user per real person (no sharing)\n☐ Enable MFA for ALL users with console access\n☐ Use groups to assign permissions (not direct user policies)\n☐ Review and remove inactive users quarterly\n\nACCESS KEYS:\n☐ Never put access keys in code\n☐ Never commit .env files with keys to version control\n☐ Rotate access keys every 90 days\n☐ Delete unused access keys immediately\n☐ Use IAM roles instead of access keys wherever possible\n\nPOLICIES:\n☐ Apply least privilege everywhere, always\n☐ Use specific ARNs, not \"*\" on Resource when possible\n☐ Use Customer Managed Policies (not inline) for reusability\n☐ Review AWS Managed Policies before using (often too broad)\n☐ Add Conditions for extra control (IP, MFA, region, tags)\n\nSERVICES:\n☐ Always use IAM Roles for EC2, Lambda, ECS, CodePipeline\n☐ Use Secrets Manager for secrets (not environment variables)\n☐ Enable CloudTrail in ALL regions (records all IAM activity)\n☐ Set up alerting for: root login, new admin user, policy changes\n```\n\n---",
+      "blocks": [
+        {
+          "type": "text-panel",
+          "content": "ACCOUNT SETUP:\n☐ Enable MFA on root account (day 1, non-negotiable)\n☐ Never create access keys for root account\n☐ Create IAM admin user for daily use\n☐ Enable IAM Access Analyzer in all regions\n\nUSERS:\n☐ One IAM user per real person (no sharing)\n☐ Enable MFA for ALL users with console access\n☐ Use groups to assign permissions (not direct user policies)\n☐ Review and remove inactive users quarterly\n\nACCESS KEYS:\n☐ Never put access keys in code\n☐ Never commit .env files with keys to version control\n☐ Rotate access keys every 90 days\n☐ Delete unused access keys immediately\n☐ Use IAM roles instead of access keys wherever possible\n\nPOLICIES:\n☐ Apply least privilege everywhere, always\n☐ Use specific ARNs, not \"*\" on Resource when possible\n☐ Use Customer Managed Policies (not inline) for reusability\n☐ Review AWS Managed Policies before using (often too broad)\n☐ Add Conditions for extra control (IP, MFA, region, tags)\n\nSERVICES:\n☐ Always use IAM Roles for EC2, Lambda, ECS, CodePipeline\n☐ Use Secrets Manager for secrets (not environment variables)\n☐ Enable CloudTrail in ALL regions (records all IAM activity)\n☐ Set up alerting for: root login, new admin user, policy changes"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "☐ Enable MFA on root account (day 1, non-negotiable)",
+        "☐ Never create access keys for root account",
+        "☐ Create IAM admin user for daily use",
+        "☐ Enable IAM Access Analyzer in all regions",
+        "☐ One IAM user per real person (no sharing)",
+        "☐ Enable MFA for ALL users with console access",
+        "☐ Use groups to assign permissions (not direct user policies)",
+        "☐ Review and remove inactive users quarterly"
+      ]
+    },
+    {
+      "id": "interview-qa-iam",
+      "title": "🎯 Interview Q&A — IAM",
+      "type": "qa",
+      "rawMarkdown": "**Q: What is the difference between an IAM User, Group, and Role?**\n```\n\"IAM User is a permanent identity for a specific person or application.\nHas their own credentials — password for console, access keys for CLI.\nBy default has zero permissions.\n\nIAM Group is a collection of users. You attach policies to groups, not\nindividual users. Users inherit the group's permissions. Makes management\nmuch easier — add a developer to the Developers group and they instantly\nget all developer permissions.\n\nIAM Role is a temporary identity that can be assumed by AWS services,\napplications, or users from other accounts. Has no permanent credentials —\nwhen assumed, AWS generates temporary credentials that auto-expire.\nUse roles for: EC2 instances accessing S3, Lambda functions, cross-account,\nanything AWS-to-AWS. Always prefer roles over access keys for services.\"\n```\n\n**Q: Why should you use IAM Roles for EC2 instead of storing access keys?**\n```\n\"Two reasons: security and operational simplicity.\n\nSecurity: if an access key is stored on EC2 and the instance is compromised,\nthe attacker has permanent credentials that work until you manually rotate them.\nWith IAM Roles, the credentials are temporary — they auto-expire every few hours\nand auto-refresh. Even if the instance is fully compromised, the window of\nexposure is limited.\n\nOperational: with IAM Roles, there are no keys to manage, rotate, audit, or\naccidentally commit to GitHub. The AWS SDK automatically finds the role\ncredentials from the instance metadata service. Zero code changes needed.\nYou can update the role's permissions without touching the EC2 instance at all.\"\n```\n\n**Q: A Deny policy and an Allow policy exist for the same action. What happens?**\n```\n\"Deny wins. Always. Without exception.\n\nIAM evaluation order:\n1. Explicit DENY → denied immediately, evaluation stops\n2. Explicit ALLOW → allowed (if no deny exists)\n3. Nothing matches → implicitly denied (default is deny everything)\n\nThe only way to allow an action is: explicit Allow AND no Deny.\nThis is why Deny statements are powerful — they're the final word.\nUse this for guardrails: 'No one can delete CloudTrail, period.'\nEven if someone has AdministratorAccess, a Deny for CloudTrail deletion wins.\"\n```\n\n**Q: How would you design IAM for a startup with 20 developers, 5 DevOps, 2 admins?**\n```\n\"Four groups:\n  Admins group: AdministratorAccess (2 people, both with MFA enforced)\n  DevOps group: EC2, ECS, CodePipeline, CloudFormation, CloudWatch\n  Developers group: specific services only — Lambda, S3 (dev buckets only),\n                   RDS (dev databases), CloudWatch logs\n  ReadOnly group: for auditors, contractors, view-only access\n\nCreate individual IAM users for each person, MFA enforced for all.\nAll production service accounts use IAM Roles (not IAM users with keys).\nEnable IAM Access Analyzer. CloudTrail in all regions.\nSet up alerting for: console login without MFA, root account usage,\nnew admin-level policy attachment, any access to prod from non-prod accounts.\n\nIf company grows > 50 people: move to AWS SSO (Identity Center) —\nsingle login for all AWS accounts, integrated with corporate directory.\"\n```\n\n**Q: You discover an IAM access key was committed to a public GitHub repo. What do you do?**\n```\n\"Treat this as an active security incident. Immediate response:\n\nT+0 minutes:\n→ DEACTIVATE the access key in IAM console immediately (takes 5 seconds)\n→ This stops any ongoing unauthorized use instantly\n\nT+5 minutes:\n→ Open CloudTrail → filter by the compromised access key ID\n→ Look at ALL API calls made with that key in the past 90 days\n→ Specifically: look for CreateUser, AttachPolicy, PutBucketPolicy (signs of escalation)\n→ Check which regions, which services, unusual times\n\nT+15 minutes:\n→ Create new access key for the affected user (if legitimate use was needed)\n→ Update any applications that were using the old key\n→ Revoke any resources created by the attacker (EC2 instances, etc.)\n\nT+30 minutes:\n→ Remove the key from GitHub history (git filter-branch or BFG Repo Cleaner)\n→ Force-push to GitHub\n→ GitHub has their own token scanning — notify them too\n\nPrevention going forward:\n→ Add pre-commit hooks (git-secrets, truffleHog) that block key commits\n→ Enable AWS Config rule for 'iam-no-inline-policy' and similar\n→ Enable GuardDuty — it would have alerted 'Credentials used from unusual location'\n→ Consider: do CI/CD pipelines even need user access keys? Switch to OIDC roles.\"\n```\n\n**Q: What is the principle of least privilege and how do you implement it at scale?**\n```\n\"Least privilege: every identity gets the minimum permissions needed to do\ntheir job — nothing more, nothing less.\n\nAt scale, implementing it is a process:\n\n1. Policy generation: use IAM Access Analyzer to watch real usage for 90 days,\n   then generate a policy based on what was actually called. Much tighter than guessing.\n\n2. Permission boundaries: for developer self-service, let them create roles but\n   with a boundary that caps what those roles can do.\n\n3. Tag-based access control: 'developers can only access resources tagged with\n   Environment=dev' — one policy, scales to hundreds of resources.\n\n4. Regular reviews: IAM Access Advisor shows last time each permission was used.\n   Remove permissions unused for 90+ days.\n\n5. Service Control Policies at org level: hard limits that can't be bypassed.\n   'No one in any account can disable CloudTrail' — even admins.\n\nThe goal isn't perfection on day one. It's a culture of progressively tightening\naccess over time, combined with tooling that makes overly-broad permissions visible.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: What is the difference between an IAM User, Group, and Role?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"IAM User is a permanent identity for a specific person or application.\nHas their own credentials — password for console, access keys for CLI.\nBy default has zero permissions.\n\nIAM Group is a collection of users. You attach policies to groups, not\nindividual users. Users inherit the group's permissions. Makes management\nmuch easier — add a developer to the Developers group and they instantly\nget all developer permissions.\n\nIAM Role is a temporary identity that can be assumed by AWS services,\napplications, or users from other accounts. Has no permanent credentials —\nwhen assumed, AWS generates temporary credentials that auto-expire.\nUse roles for: EC2 instances accessing S3, Lambda functions, cross-account,\nanything AWS-to-AWS. Always prefer roles over access keys for services.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Why should you use IAM Roles for EC2 instead of storing access keys?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Two reasons: security and operational simplicity.\n\nSecurity: if an access key is stored on EC2 and the instance is compromised,\nthe attacker has permanent credentials that work until you manually rotate them.\nWith IAM Roles, the credentials are temporary — they auto-expire every few hours\nand auto-refresh. Even if the instance is fully compromised, the window of\nexposure is limited.\n\nOperational: with IAM Roles, there are no keys to manage, rotate, audit, or\naccidentally commit to GitHub. The AWS SDK automatically finds the role\ncredentials from the instance metadata service. Zero code changes needed.\nYou can update the role's permissions without touching the EC2 instance at all.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: A Deny policy and an Allow policy exist for the same action. What happens?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Deny wins. Always. Without exception.\n\nIAM evaluation order:\n1. Explicit DENY → denied immediately, evaluation stops\n2. Explicit ALLOW → allowed (if no deny exists)\n3. Nothing matches → implicitly denied (default is deny everything)\n\nThe only way to allow an action is: explicit Allow AND no Deny.\nThis is why Deny statements are powerful — they're the final word.\nUse this for guardrails: 'No one can delete CloudTrail, period.'\nEven if someone has AdministratorAccess, a Deny for CloudTrail deletion wins.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How would you design IAM for a startup with 20 developers, 5 DevOps, 2 admins?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Four groups:\n  Admins group: AdministratorAccess (2 people, both with MFA enforced)\n  DevOps group: EC2, ECS, CodePipeline, CloudFormation, CloudWatch\n  Developers group: specific services only — Lambda, S3 (dev buckets only),\n                   RDS (dev databases), CloudWatch logs\n  ReadOnly group: for auditors, contractors, view-only access\n\nCreate individual IAM users for each person, MFA enforced for all.\nAll production service accounts use IAM Roles (not IAM users with keys).\nEnable IAM Access Analyzer. CloudTrail in all regions.\nSet up alerting for: console login without MFA, root account usage,\nnew admin-level policy attachment, any access to prod from non-prod accounts.\n\nIf company grows > 50 people: move to AWS SSO (Identity Center) —\nsingle login for all AWS accounts, integrated with corporate directory.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: You discover an IAM access key was committed to a public GitHub repo. What do you do?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Treat this as an active security incident. Immediate response:\n\nT+0 minutes:\n→ DEACTIVATE the access key in IAM console immediately (takes 5 seconds)\n→ This stops any ongoing unauthorized use instantly\n\nT+5 minutes:\n→ Open CloudTrail → filter by the compromised access key ID\n→ Look at ALL API calls made with that key in the past 90 days\n→ Specifically: look for CreateUser, AttachPolicy, PutBucketPolicy (signs of escalation)\n→ Check which regions, which services, unusual times\n\nT+15 minutes:\n→ Create new access key for the affected user (if legitimate use was needed)\n→ Update any applications that were using the old key\n→ Revoke any resources created by the attacker (EC2 instances, etc.)\n\nT+30 minutes:\n→ Remove the key from GitHub history (git filter-branch or BFG Repo Cleaner)\n→ Force-push to GitHub\n→ GitHub has their own token scanning — notify them too\n\nPrevention going forward:\n→ Add pre-commit hooks (git-secrets, truffleHog) that block key commits\n→ Enable AWS Config rule for 'iam-no-inline-policy' and similar\n→ Enable GuardDuty — it would have alerted 'Credentials used from unusual location'\n→ Consider: do CI/CD pipelines even need user access keys? Switch to OIDC roles.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: What is the principle of least privilege and how do you implement it at scale?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Least privilege: every identity gets the minimum permissions needed to do\ntheir job — nothing more, nothing less.\n\nAt scale, implementing it is a process:\n\n1. Policy generation: use IAM Access Analyzer to watch real usage for 90 days,\n   then generate a policy based on what was actually called. Much tighter than guessing.\n\n2. Permission boundaries: for developer self-service, let them create roles but\n   with a boundary that caps what those roles can do.\n\n3. Tag-based access control: 'developers can only access resources tagged with\n   Environment=dev' — one policy, scales to hundreds of resources.\n\n4. Regular reviews: IAM Access Advisor shows last time each permission was used.\n   Remove permissions unused for 90+ days.\n\n5. Service Control Policies at org level: hard limits that can't be bypassed.\n   'No one in any account can disable CloudTrail' — even admins.\n\nThe goal isn't perfection on day one. It's a culture of progressively tightening\naccess over time, combined with tooling that makes overly-broad permissions visible.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "02-iam-identity-access-management-q1",
+          "question": "What is the difference between an IAM User, Group, and Role?",
+          "answer": "\"IAM User is a permanent identity for a specific person or application.\nHas their own credentials — password for console, access keys for CLI.\nBy default has zero permissions.\n\nIAM Group is a collection of users. You attach policies to groups, not\nindividual users. Users inherit the group's permissions. Makes management\nmuch easier — add a developer to the Developers group and they instantly\nget all developer permissions.\n\nIAM Role is a temporary identity that can be assumed by AWS services,\napplications, or users from other accounts. Has no permanent credentials —\nwhen assumed, AWS generates temporary credentials that auto-expire.\nUse roles for: EC2 instances accessing S3, Lambda functions, cross-account,\nanything AWS-to-AWS. Always prefer roles over access keys for services.\"",
+          "topicNumber": 2,
+          "topicSlug": "02-iam-identity-access-management",
+          "topic": "IAM (Identity & Access Management)"
+        },
+        {
+          "id": "02-iam-identity-access-management-q2",
+          "question": "Why should you use IAM Roles for EC2 instead of storing access keys?",
+          "answer": "\"Two reasons: security and operational simplicity.\n\nSecurity: if an access key is stored on EC2 and the instance is compromised,\nthe attacker has permanent credentials that work until you manually rotate them.\nWith IAM Roles, the credentials are temporary — they auto-expire every few hours\nand auto-refresh. Even if the instance is fully compromised, the window of\nexposure is limited.\n\nOperational: with IAM Roles, there are no keys to manage, rotate, audit, or\naccidentally commit to GitHub. The AWS SDK automatically finds the role\ncredentials from the instance metadata service. Zero code changes needed.\nYou can update the role's permissions without touching the EC2 instance at all.\"",
+          "topicNumber": 2,
+          "topicSlug": "02-iam-identity-access-management",
+          "topic": "IAM (Identity & Access Management)"
+        },
+        {
+          "id": "02-iam-identity-access-management-q3",
+          "question": "A Deny policy and an Allow policy exist for the same action. What happens?",
+          "answer": "\"Deny wins. Always. Without exception.\n\nIAM evaluation order:\n1. Explicit DENY → denied immediately, evaluation stops\n2. Explicit ALLOW → allowed (if no deny exists)\n3. Nothing matches → implicitly denied (default is deny everything)\n\nThe only way to allow an action is: explicit Allow AND no Deny.\nThis is why Deny statements are powerful — they're the final word.\nUse this for guardrails: 'No one can delete CloudTrail, period.'\nEven if someone has AdministratorAccess, a Deny for CloudTrail deletion wins.\"",
+          "topicNumber": 2,
+          "topicSlug": "02-iam-identity-access-management",
+          "topic": "IAM (Identity & Access Management)"
+        },
+        {
+          "id": "02-iam-identity-access-management-q4",
+          "question": "How would you design IAM for a startup with 20 developers, 5 DevOps, 2 admins?",
+          "answer": "\"Four groups:\n  Admins group: AdministratorAccess (2 people, both with MFA enforced)\n  DevOps group: EC2, ECS, CodePipeline, CloudFormation, CloudWatch\n  Developers group: specific services only — Lambda, S3 (dev buckets only),\n                   RDS (dev databases), CloudWatch logs\n  ReadOnly group: for auditors, contractors, view-only access\n\nCreate individual IAM users for each person, MFA enforced for all.\nAll production service accounts use IAM Roles (not IAM users with keys).\nEnable IAM Access Analyzer. CloudTrail in all regions.\nSet up alerting for: console login without MFA, root account usage,\nnew admin-level policy attachment, any access to prod from non-prod accounts.\n\nIf company grows > 50 people: move to AWS SSO (Identity Center) —\nsingle login for all AWS accounts, integrated with corporate directory.\"",
+          "topicNumber": 2,
+          "topicSlug": "02-iam-identity-access-management",
+          "topic": "IAM (Identity & Access Management)"
+        },
+        {
+          "id": "02-iam-identity-access-management-q5",
+          "question": "You discover an IAM access key was committed to a public GitHub repo. What do you do?",
+          "answer": "\"Treat this as an active security incident. Immediate response:\n\nT+0 minutes:\n→ DEACTIVATE the access key in IAM console immediately (takes 5 seconds)\n→ This stops any ongoing unauthorized use instantly\n\nT+5 minutes:\n→ Open CloudTrail → filter by the compromised access key ID\n→ Look at ALL API calls made with that key in the past 90 days\n→ Specifically: look for CreateUser, AttachPolicy, PutBucketPolicy (signs of escalation)\n→ Check which regions, which services, unusual times\n\nT+15 minutes:\n→ Create new access key for the affected user (if legitimate use was needed)\n→ Update any applications that were using the old key\n→ Revoke any resources created by the attacker (EC2 instances, etc.)\n\nT+30 minutes:\n→ Remove the key from GitHub history (git filter-branch or BFG Repo Cleaner)\n→ Force-push to GitHub\n→ GitHub has their own token scanning — notify them too\n\nPrevention going forward:\n→ Add pre-commit hooks (git-secrets, truffleHog) that block key commits\n→ Enable AWS Config rule for 'iam-no-inline-policy' and similar\n→ Enable GuardDuty — it would have alerted 'Credentials used from unusual location'\n→ Consider: do CI/CD pipelines even need user access keys? Switch to OIDC roles.\"",
+          "topicNumber": 2,
+          "topicSlug": "02-iam-identity-access-management",
+          "topic": "IAM (Identity & Access Management)"
+        },
+        {
+          "id": "02-iam-identity-access-management-q6",
+          "question": "What is the principle of least privilege and how do you implement it at scale?",
+          "answer": "\"Least privilege: every identity gets the minimum permissions needed to do\ntheir job — nothing more, nothing less.\n\nAt scale, implementing it is a process:\n\n1. Policy generation: use IAM Access Analyzer to watch real usage for 90 days,\n   then generate a policy based on what was actually called. Much tighter than guessing.\n\n2. Permission boundaries: for developer self-service, let them create roles but\n   with a boundary that caps what those roles can do.\n\n3. Tag-based access control: 'developers can only access resources tagged with\n   Environment=dev' — one policy, scales to hundreds of resources.\n\n4. Regular reviews: IAM Access Advisor shows last time each permission was used.\n   Remove permissions unused for 90+ days.\n\n5. Service Control Policies at org level: hard limits that can't be bypassed.\n   'No one in any account can disable CloudTrail' — even admins.\n\nThe goal isn't perfection on day one. It's a culture of progressively tightening\naccess over time, combined with tooling that makes overly-broad permissions visible.\"",
+          "topicNumber": 2,
+          "topicSlug": "02-iam-identity-access-management",
+          "topic": "IAM (Identity & Access Management)"
+        }
+      ],
+      "revisionPoints": [
+        "→ DEACTIVATE the access key in IAM console immediately (takes 5 seconds)",
+        "→ This stops any ongoing unauthorized use instantly",
+        "→ Open CloudTrail → filter by the compromised access key ID",
+        "→ Look at ALL API calls made with that key in the past 90 days",
+        "→ Specifically: look for CreateUser, AttachPolicy, PutBucketPolicy (signs of escalation)",
+        "→ Check which regions, which services, unusual times",
+        "→ Create new access key for the affected user (if legitimate use was needed)",
+        "→ Update any applications that were using the old key"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nIAM connects to EVERY AWS service. Literally every one.\nYou cannot use any AWS service without IAM allowing it.\n\nSPECIFICALLY:\n→ EC2: needs an IAM Role to access S3, DynamoDB, etc.\n→ Lambda: needs an IAM Execution Role to write logs, read SQS\n→ S3: uses Bucket Policies (resource-based IAM) for access control\n→ RDS: IAM authentication available (instead of DB password)\n→ CodePipeline: IAM Roles to deploy to EC2, ECS, Lambda\n→ CloudTrail: records every IAM API call (audit trail)\n→ Organizations + SCPs: org-level IAM guardrails\n\nNEXT TOPIC: EC2 — the first actual compute service.\nYou'll create an IAM Role for EC2 in the very first EC2 lesson.\n```\n\n---\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "IAM connects to EVERY AWS service. Literally every one.\nYou cannot use any AWS service without IAM allowing it.\n\nSPECIFICALLY:\n→ EC2: needs an IAM Role to access S3, DynamoDB, etc.\n→ Lambda: needs an IAM Execution Role to write logs, read SQS\n→ S3: uses Bucket Policies (resource-based IAM) for access control\n→ RDS: IAM authentication available (instead of DB password)\n→ CodePipeline: IAM Roles to deploy to EC2, ECS, Lambda\n→ CloudTrail: records every IAM API call (audit trail)\n→ Organizations + SCPs: org-level IAM guardrails\n\nNEXT TOPIC: EC2 — the first actual compute service.\nYou'll create an IAM Role for EC2 in the very first EC2 lesson."
+        },
+        {
+          "type": "paragraph",
+          "content": "---\n\n---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ EC2: needs an IAM Role to access S3, DynamoDB, etc.",
+        "→ Lambda: needs an IAM Execution Role to write logs, read SQS",
+        "→ S3: uses Bucket Policies (resource-based IAM) for access control",
+        "→ RDS: IAM authentication available (instead of DB password)",
+        "→ CodePipeline: IAM Roles to deploy to EC2, ECS, Lambda",
+        "→ CloudTrail: records every IAM API call (audit trail)",
+        "→ Organizations + SCPs: org-level IAM guardrails"
+      ]
+    }
+  ]
+}

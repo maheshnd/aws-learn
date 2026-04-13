@@ -1,0 +1,263 @@
+{
+  "number": 9,
+  "slug": "09-route-53-dns",
+  "title": "Route 53 (DNS)",
+  "sections": [
+    {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nYou type: www.myapp.com\nYour browser needs to know: what IP address is that?\n\nWithout DNS: you'd need to remember 54.210.167.23 for every website.\nWith DNS: type a name → DNS translates → gets the IP → connects.\n\nROUTE 53 = AWS's DNS service\nNamed after: Route 66 (famous US highway) + port 53 (DNS port)\n\nRoute 53 does more than just translate names:\n→ It can check if your servers are healthy\n→ Route traffic to nearest server (lowest latency)\n→ Automatically failover if a server goes down\n→ Split traffic between versions (A/B testing)\n→ Route users in Europe to EU servers, US users to US servers\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "You type: www.myapp.com\nYour browser needs to know: what IP address is that?\n\nWithout DNS: you'd need to remember 54.210.167.23 for every website.\nWith DNS: type a name → DNS translates → gets the IP → connects.\n\nROUTE 53 = AWS's DNS service\nNamed after: Route 66 (famous US highway) + port 53 (DNS port)\n\nRoute 53 does more than just translate names:\n→ It can check if your servers are healthy\n→ Route traffic to nearest server (lowest latency)\n→ Automatically failover if a server goes down\n→ Split traffic between versions (A/B testing)\n→ Route users in Europe to EU servers, US users to US servers"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ It can check if your servers are healthy",
+        "→ Route traffic to nearest server (lowest latency)",
+        "→ Automatically failover if a server goes down",
+        "→ Split traffic between versions (A/B testing)",
+        "→ Route users in Europe to EU servers, US users to US servers"
+      ]
+    },
+    {
+      "id": "dns-record-types",
+      "title": "📋 DNS Record Types",
+      "type": "concept",
+      "rawMarkdown": "```\nA RECORD:\n→ Maps domain → IPv4 address\n→ example.com → 54.210.167.23\n→ www.example.com → 54.210.167.23\n→ Most common record type\n\nAAAA RECORD:\n→ Maps domain → IPv6 address\n→ example.com → 2001:0db8:85a3::8a2e:0370:7334\n\nCNAME RECORD:\n→ Maps domain → another domain name (alias)\n→ www.example.com → example.com (then resolved again)\n→ CANNOT be used on root domain (example.com → must use ALIAS instead)\n→ Every CNAME lookup = extra DNS query (slight overhead)\n\nALIAS RECORD (AWS-specific):\n→ Maps domain → AWS resource (ALB, CloudFront, S3 website, etc.)\n→ Works on root domain! (example.com → ALB)\n→ FREE (no charge for Alias queries to AWS resources)\n→ AWS automatically follows resource IP changes\n→ PREFER Alias over CNAME for AWS resources\n\nNS RECORD:\n→ Name Server — where to find DNS records for this domain\n→ Route 53 gives you 4 NS records for each hosted zone\n→ Register these with your domain registrar\n\nMX RECORD:\n→ Mail Exchange — where to send email for this domain\n→ Priority: 10 mymail.example.com (lower number = higher priority)\n\nTXT RECORD:\n→ Text data — used for domain verification, SPF, DKIM\n→ Google/AWS verify domain ownership via TXT records\n\nSOA RECORD:\n→ Start of Authority — admin info about the zone\n→ Auto-created by Route 53\n\nTTL (Time To Live):\n→ How long DNS resolvers cache the record (in seconds)\n→ Low TTL (60s): changes propagate fast, but more DNS queries (cost)\n→ High TTL (86400s/24hr): fewer queries but slow to update\n→ BEFORE making changes: lower TTL to 60s, make change, raise TTL back\n→ Route 53 propagates globally in < 60 seconds\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "A RECORD:\n→ Maps domain → IPv4 address\n→ example.com → 54.210.167.23\n→ www.example.com → 54.210.167.23\n→ Most common record type\n\nAAAA RECORD:\n→ Maps domain → IPv6 address\n→ example.com → 2001:0db8:85a3::8a2e:0370:7334\n\nCNAME RECORD:\n→ Maps domain → another domain name (alias)\n→ www.example.com → example.com (then resolved again)\n→ CANNOT be used on root domain (example.com → must use ALIAS instead)\n→ Every CNAME lookup = extra DNS query (slight overhead)\n\nALIAS RECORD (AWS-specific):\n→ Maps domain → AWS resource (ALB, CloudFront, S3 website, etc.)\n→ Works on root domain! (example.com → ALB)\n→ FREE (no charge for Alias queries to AWS resources)\n→ AWS automatically follows resource IP changes\n→ PREFER Alias over CNAME for AWS resources\n\nNS RECORD:\n→ Name Server — where to find DNS records for this domain\n→ Route 53 gives you 4 NS records for each hosted zone\n→ Register these with your domain registrar\n\nMX RECORD:\n→ Mail Exchange — where to send email for this domain\n→ Priority: 10 mymail.example.com (lower number = higher priority)\n\nTXT RECORD:\n→ Text data — used for domain verification, SPF, DKIM\n→ Google/AWS verify domain ownership via TXT records\n\nSOA RECORD:\n→ Start of Authority — admin info about the zone\n→ Auto-created by Route 53\n\nTTL (Time To Live):\n→ How long DNS resolvers cache the record (in seconds)\n→ Low TTL (60s): changes propagate fast, but more DNS queries (cost)\n→ High TTL (86400s/24hr): fewer queries but slow to update\n→ BEFORE making changes: lower TTL to 60s, make change, raise TTL back\n→ Route 53 propagates globally in < 60 seconds"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Maps domain → IPv4 address",
+        "→ example.com → 54.210.167.23",
+        "→ www.example.com → 54.210.167.23",
+        "→ Most common record type",
+        "→ Maps domain → IPv6 address",
+        "→ example.com → 2001:0db8:85a3::8a2e:0370:7334",
+        "→ Maps domain → another domain name (alias)",
+        "→ www.example.com → example.com (then resolved again)"
+      ]
+    },
+    {
+      "id": "hosted-zones",
+      "title": "🗂️ Hosted Zones",
+      "type": "concept",
+      "rawMarkdown": "```\nHOSTED ZONE = container for DNS records for ONE domain\n\nPUBLIC HOSTED ZONE:\n→ Records visible to internet\n→ Used for: your.com, api.your.com, www.your.com\n→ Cost: $0.50/month per hosted zone\n\nPRIVATE HOSTED ZONE:\n→ Records visible ONLY within specific VPC(s)\n→ Used for: internal.mycompany.com, db.internal (private DNS names)\n→ EC2 instances use VPC's DNS resolver → finds private records\n→ Cost: $0.50/month per hosted zone\n→ Must enable: enableDnsHostnames + enableDnsSupport in VPC\n\nEXAMPLE — PRIVATE HOSTED ZONE:\nZone: internal.myapp.com\nRecords:\n  db.internal.myapp.com     → 10.0.21.15 (RDS private IP)\n  cache.internal.myapp.com  → 10.0.21.30 (ElastiCache private IP)\n  api.internal.myapp.com    → 10.0.11.0/24 (private app servers)\n\n→ From EC2 inside VPC: ping db.internal.myapp.com → resolves\n→ From internet: db.internal.myapp.com → does NOT resolve (private)\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "HOSTED ZONE = container for DNS records for ONE domain\n\nPUBLIC HOSTED ZONE:\n→ Records visible to internet\n→ Used for: your.com, api.your.com, www.your.com\n→ Cost: $0.50/month per hosted zone\n\nPRIVATE HOSTED ZONE:\n→ Records visible ONLY within specific VPC(s)\n→ Used for: internal.mycompany.com, db.internal (private DNS names)\n→ EC2 instances use VPC's DNS resolver → finds private records\n→ Cost: $0.50/month per hosted zone\n→ Must enable: enableDnsHostnames + enableDnsSupport in VPC\n\nEXAMPLE — PRIVATE HOSTED ZONE:\nZone: internal.myapp.com\nRecords:\n  db.internal.myapp.com     → 10.0.21.15 (RDS private IP)\n  cache.internal.myapp.com  → 10.0.21.30 (ElastiCache private IP)\n  api.internal.myapp.com    → 10.0.11.0/24 (private app servers)\n\n→ From EC2 inside VPC: ping db.internal.myapp.com → resolves\n→ From internet: db.internal.myapp.com → does NOT resolve (private)"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Records visible to internet",
+        "→ Used for: your.com, api.your.com, www.your.com",
+        "→ Cost: $0.50/month per hosted zone",
+        "→ Records visible ONLY within specific VPC(s)",
+        "→ Used for: internal.mycompany.com, db.internal (private DNS names)",
+        "→ EC2 instances use VPC's DNS resolver → finds private records",
+        "→ Cost: $0.50/month per hosted zone",
+        "→ Must enable: enableDnsHostnames + enableDnsSupport in VPC"
+      ]
+    },
+    {
+      "id": "routing-policies-the-core-of-route-53",
+      "title": "🌍 Routing Policies — The Core of Route 53",
+      "type": "concept",
+      "rawMarkdown": "### 1. Simple Routing\n```\nOne record → one or more IP values\n→ Multiple IPs: Route 53 returns ALL, client picks one randomly\n→ No health checks (returns even if server is down)\n→ Use for: single resource, simple setups\n\nexample.com → [54.1.1.1, 54.1.1.2]\n```\n\n### 2. Weighted Routing\n```\nRoute % of traffic to different resources\n→ Total weight doesn't need to equal 100 (it's proportional)\n→ With health checks: unhealthy record gets 0% traffic\n→ Use for: A/B testing, blue-green deployments, gradual migration\n\nRecord 1: example.com → 54.1.1.1  Weight: 80\nRecord 2: example.com → 54.2.2.2  Weight: 20\n→ 80% of traffic → server 1, 20% → server 2\n\nMIGRATION EXAMPLE:\nWeek 1: old=90, new=10  (canary test)\nWeek 2: old=50, new=50  (split test)\nWeek 3: old=10, new=90  (mostly new)\nWeek 4: old=0,  new=100 (complete migration)\n```\n\n### 3. Latency-Based Routing\n```\nRoute users to the region with LOWEST latency for them\n→ AWS measures latency from user → each region\n→ Routes to fastest region\n→ With health checks: unhealthy regions excluded\n\nRecords:\nexample.com → ALB-us-east-1  Region: us-east-1\nexample.com → ALB-eu-west-1  Region: eu-west-1\nexample.com → ALB-ap-south-1 Region: ap-south-1\n\nUser in Mumbai → measured latency: US=180ms, EU=120ms, India=8ms\n→ Routed to ap-south-1 (8ms wins!)\n\nUSE FOR: global applications where response time matters\n```\n\n### 4. Failover Routing\n```\nActive-Passive failover with health checks\n→ PRIMARY: receives all traffic while healthy\n→ SECONDARY: receives traffic only if primary is unhealthy\n\nRecords:\nexample.com → ALB-primary  Type: PRIMARY  Health Check: ✓\nexample.com → ALB-secondary Type: SECONDARY (no health check — always shown as backup)\n\nHealth Check fails on primary → Route 53 automatically routes to secondary\nHealth Check passes again → traffic returns to primary\n\nUSE FOR: disaster recovery, high availability\nDR STRATEGY WITH ROUTE 53:\nPrimary region fails → Route 53 detects unhealthy → switches DNS to DR region\nFailover time: ~60 seconds (health check interval + TTL)\n```\n\n### 5. Geolocation Routing\n```\nRoute based on USER'S GEOGRAPHIC LOCATION\n→ NOT latency (that's latency-based) — this is purely geography\n→ Country, continent, or US state level\n→ Must have a default record (catch-all for unknown locations)\n\nRecords:\nexample.com → EU-servers    Location: Europe\nexample.com → US-servers    Location: United States\nexample.com → APAC-servers  Location: Asia Pacific\nexample.com → US-servers    Location: Default (catch-all)\n\nUSE CASES:\n→ Compliance: EU users MUST be served from EU (GDPR data residency)\n→ Language: Japanese users → Japanese content\n→ Legal: some content only licensed for specific countries\n→ NOT for performance (use latency-based for performance)\n```\n\n### 6. Geoproximity Routing (Traffic Flow)\n```\nRoute based on geographic location of users AND resources\n→ Can BIAS (shift) traffic toward a region artificially\n→ Bias +1 to +99: attract MORE traffic to that region\n→ Bias -1 to -99: push traffic AWAY from that region\n→ Requires Route 53 Traffic Flow (visual editor, $50/month/policy)\n\nUSE FOR: fine-tuned global traffic distribution\n```\n\n### 7. Multi-Value Answer Routing\n```\nLike Simple but WITH health checks\n→ Returns up to 8 healthy records randomly\n→ Client picks one (client-side load balancing)\n→ Unhealthy → excluded from responses\n→ NOT a substitute for a real load balancer (no stickiness, no advanced features)\n→ Good for: simple client-side load balancing with health awareness\n```\n\n### 8. IP-Based Routing\n```\nRoute based on CLIENT'S IP ADDRESS (not geography)\n→ Useful when you know your users' IP CIDR ranges\n→ Example: corporate users (specific IP range) → internal version\n→ Internet users (all other IPs) → public version\n→ ISP optimization: route certain ISPs to specific endpoints\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### 1. Simple Routing"
+        },
+        {
+          "type": "diagram",
+          "content": "One record → one or more IP values\n→ Multiple IPs: Route 53 returns ALL, client picks one randomly\n→ No health checks (returns even if server is down)\n→ Use for: single resource, simple setups\n\nexample.com → [54.1.1.1, 54.1.1.2]"
+        },
+        {
+          "type": "paragraph",
+          "content": "### 2. Weighted Routing"
+        },
+        {
+          "type": "diagram",
+          "content": "Route % of traffic to different resources\n→ Total weight doesn't need to equal 100 (it's proportional)\n→ With health checks: unhealthy record gets 0% traffic\n→ Use for: A/B testing, blue-green deployments, gradual migration\n\nRecord 1: example.com → 54.1.1.1  Weight: 80\nRecord 2: example.com → 54.2.2.2  Weight: 20\n→ 80% of traffic → server 1, 20% → server 2\n\nMIGRATION EXAMPLE:\nWeek 1: old=90, new=10  (canary test)\nWeek 2: old=50, new=50  (split test)\nWeek 3: old=10, new=90  (mostly new)\nWeek 4: old=0,  new=100 (complete migration)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### 3. Latency-Based Routing"
+        },
+        {
+          "type": "diagram",
+          "content": "Route users to the region with LOWEST latency for them\n→ AWS measures latency from user → each region\n→ Routes to fastest region\n→ With health checks: unhealthy regions excluded\n\nRecords:\nexample.com → ALB-us-east-1  Region: us-east-1\nexample.com → ALB-eu-west-1  Region: eu-west-1\nexample.com → ALB-ap-south-1 Region: ap-south-1\n\nUser in Mumbai → measured latency: US=180ms, EU=120ms, India=8ms\n→ Routed to ap-south-1 (8ms wins!)\n\nUSE FOR: global applications where response time matters"
+        },
+        {
+          "type": "paragraph",
+          "content": "### 4. Failover Routing"
+        },
+        {
+          "type": "diagram",
+          "content": "Active-Passive failover with health checks\n→ PRIMARY: receives all traffic while healthy\n→ SECONDARY: receives traffic only if primary is unhealthy\n\nRecords:\nexample.com → ALB-primary  Type: PRIMARY  Health Check: ✓\nexample.com → ALB-secondary Type: SECONDARY (no health check — always shown as backup)\n\nHealth Check fails on primary → Route 53 automatically routes to secondary\nHealth Check passes again → traffic returns to primary\n\nUSE FOR: disaster recovery, high availability\nDR STRATEGY WITH ROUTE 53:\nPrimary region fails → Route 53 detects unhealthy → switches DNS to DR region\nFailover time: ~60 seconds (health check interval + TTL)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### 5. Geolocation Routing"
+        },
+        {
+          "type": "diagram",
+          "content": "Route based on USER'S GEOGRAPHIC LOCATION\n→ NOT latency (that's latency-based) — this is purely geography\n→ Country, continent, or US state level\n→ Must have a default record (catch-all for unknown locations)\n\nRecords:\nexample.com → EU-servers    Location: Europe\nexample.com → US-servers    Location: United States\nexample.com → APAC-servers  Location: Asia Pacific\nexample.com → US-servers    Location: Default (catch-all)\n\nUSE CASES:\n→ Compliance: EU users MUST be served from EU (GDPR data residency)\n→ Language: Japanese users → Japanese content\n→ Legal: some content only licensed for specific countries\n→ NOT for performance (use latency-based for performance)"
+        },
+        {
+          "type": "paragraph",
+          "content": "### 6. Geoproximity Routing (Traffic Flow)"
+        },
+        {
+          "type": "diagram",
+          "content": "Route based on geographic location of users AND resources\n→ Can BIAS (shift) traffic toward a region artificially\n→ Bias +1 to +99: attract MORE traffic to that region\n→ Bias -1 to -99: push traffic AWAY from that region\n→ Requires Route 53 Traffic Flow (visual editor, $50/month/policy)\n\nUSE FOR: fine-tuned global traffic distribution"
+        },
+        {
+          "type": "paragraph",
+          "content": "### 7. Multi-Value Answer Routing"
+        },
+        {
+          "type": "diagram",
+          "content": "Like Simple but WITH health checks\n→ Returns up to 8 healthy records randomly\n→ Client picks one (client-side load balancing)\n→ Unhealthy → excluded from responses\n→ NOT a substitute for a real load balancer (no stickiness, no advanced features)\n→ Good for: simple client-side load balancing with health awareness"
+        },
+        {
+          "type": "paragraph",
+          "content": "### 8. IP-Based Routing"
+        },
+        {
+          "type": "diagram",
+          "content": "Route based on CLIENT'S IP ADDRESS (not geography)\n→ Useful when you know your users' IP CIDR ranges\n→ Example: corporate users (specific IP range) → internal version\n→ Internet users (all other IPs) → public version\n→ ISP optimization: route certain ISPs to specific endpoints"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Multiple IPs: Route 53 returns ALL, client picks one randomly",
+        "→ No health checks (returns even if server is down)",
+        "→ Use for: single resource, simple setups",
+        "→ Total weight doesn't need to equal 100 (it's proportional)",
+        "→ With health checks: unhealthy record gets 0% traffic",
+        "→ Use for: A/B testing, blue-green deployments, gradual migration",
+        "→ 80% of traffic → server 1, 20% → server 2",
+        "→ AWS measures latency from user → each region"
+      ]
+    },
+    {
+      "id": "health-checks",
+      "title": "💚 Health Checks",
+      "type": "concept",
+      "rawMarkdown": "```\nRoute 53 health checks = monitors endpoint health, used by routing policies\n\nTYPES:\n1. Endpoint Health Check:\n   → HTTP/HTTPS/TCP check to specific endpoint\n   → Checks from 15+ global Route 53 locations\n   → Threshold: 3/5 health checkers must agree it's unhealthy\n   → Interval: 30 seconds (standard) or 10 seconds (fast, extra cost)\n   → Expected response: 2xx/3xx status codes (or specific string match)\n\n2. Calculated Health Check:\n   → Combines multiple health checks with AND/OR logic\n   → \"Healthy if 2 out of 3 checks pass\"\n   → Use for: complex health determination\n\n3. CloudWatch Alarm Health Check:\n   → Health = based on CloudWatch alarm state\n   → Use for: private resources (Route 53 can't reach private VPC directly)\n   → EC2 in private subnet → CloudWatch alarm → health check watches alarm\n\nHEALTH CHECK → ROUTING POLICY INTEGRATION:\nFailover: health check on primary → fails → Route 53 uses secondary\nWeighted: health check on each record → unhealthy = 0% traffic\nLatency: health check on each region → unhealthy region excluded\nMulti-Value: health check on each → only healthy IPs returned\n\nMONITORING:\n→ Health checks publish to CloudWatch\n→ Create CloudWatch Alarm on health check status\n→ Alert on-call if health check fails\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Route 53 health checks = monitors endpoint health, used by routing policies\n\nTYPES:\n1. Endpoint Health Check:\n   → HTTP/HTTPS/TCP check to specific endpoint\n   → Checks from 15+ global Route 53 locations\n   → Threshold: 3/5 health checkers must agree it's unhealthy\n   → Interval: 30 seconds (standard) or 10 seconds (fast, extra cost)\n   → Expected response: 2xx/3xx status codes (or specific string match)\n\n2. Calculated Health Check:\n   → Combines multiple health checks with AND/OR logic\n   → \"Healthy if 2 out of 3 checks pass\"\n   → Use for: complex health determination\n\n3. CloudWatch Alarm Health Check:\n   → Health = based on CloudWatch alarm state\n   → Use for: private resources (Route 53 can't reach private VPC directly)\n   → EC2 in private subnet → CloudWatch alarm → health check watches alarm\n\nHEALTH CHECK → ROUTING POLICY INTEGRATION:\nFailover: health check on primary → fails → Route 53 uses secondary\nWeighted: health check on each record → unhealthy = 0% traffic\nLatency: health check on each region → unhealthy region excluded\nMulti-Value: health check on each → only healthy IPs returned\n\nMONITORING:\n→ Health checks publish to CloudWatch\n→ Create CloudWatch Alarm on health check status\n→ Alert on-call if health check fails"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Health checks publish to CloudWatch",
+        "→ Create CloudWatch Alarm on health check status",
+        "→ Alert on-call if health check fails"
+      ]
+    },
+    {
+      "id": "interview-qa-route-53",
+      "title": "🎯 Interview Q&A — Route 53",
+      "type": "qa",
+      "rawMarkdown": "**Q: What's the difference between CNAME and Alias records?**\n```\n\"CNAME maps a name to another name, which then gets resolved again.\nLimitation: cannot be used at the zone apex (root domain).\nexample.com CANNOT have a CNAME record (DNS spec prohibits it).\nwww.example.com can have CNAME → example.com. Fine.\n\nAlias is AWS-specific. It maps a name directly to an AWS resource\n(ALB, CloudFront distribution, S3 website endpoint, another Route 53 record).\nWorks at the zone apex! example.com → your ALB. This is what you need\nfor pointing your root domain at an AWS load balancer.\n\nAlso: Alias queries to AWS resources are free. Route 53 doesn't charge\nfor DNS queries that resolve to AWS resources via Alias. CNAME queries\nare charged normally.\n\nIn practice: always use Alias for AWS resources, CNAME for non-AWS.\"\n```\n\n**Q: How do you implement blue-green deployment with Route 53?**\n```\n\"Two approaches depending on speed requirement:\n\nWeighted routing approach (gradual):\nBlue environment: example.com → blue-ALB, Weight: 100\nGreen environment: example.com → green-ALB, Weight: 0\n\nDeploy to green. Test it.\nShift: blue=90, green=10 (canary — 10% gets new version)\nMonitor error rates, latency for 30 minutes.\nShift: blue=0, green=100 (complete cutover)\nIf problems: blue=100, green=0 (instant rollback)\nTTL: set to 60 seconds so changes propagate in 1 minute.\n\nFailover routing approach (instant):\nPrimary: example.com → green-ALB (active, health check enabled)\nSecondary: example.com → blue-ALB (standby)\n\nDeploy to secondary. Test it. Promote secondary to primary.\nFor true instant switchover: \nJust update the primary record to point to green. Takes < 60 seconds\nwith low TTL. But requires DNS to propagate (clients may cache old TTL).\n\nFor zero-propagation-delay switching: do it at the ALB level\n(weighted target groups) not DNS level.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: What's the difference between CNAME and Alias records?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"CNAME maps a name to another name, which then gets resolved again.\nLimitation: cannot be used at the zone apex (root domain).\nexample.com CANNOT have a CNAME record (DNS spec prohibits it).\nwww.example.com can have CNAME → example.com. Fine.\n\nAlias is AWS-specific. It maps a name directly to an AWS resource\n(ALB, CloudFront distribution, S3 website endpoint, another Route 53 record).\nWorks at the zone apex! example.com → your ALB. This is what you need\nfor pointing your root domain at an AWS load balancer.\n\nAlso: Alias queries to AWS resources are free. Route 53 doesn't charge\nfor DNS queries that resolve to AWS resources via Alias. CNAME queries\nare charged normally.\n\nIn practice: always use Alias for AWS resources, CNAME for non-AWS.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How do you implement blue-green deployment with Route 53?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Two approaches depending on speed requirement:\n\nWeighted routing approach (gradual):\nBlue environment: example.com → blue-ALB, Weight: 100\nGreen environment: example.com → green-ALB, Weight: 0\n\nDeploy to green. Test it.\nShift: blue=90, green=10 (canary — 10% gets new version)\nMonitor error rates, latency for 30 minutes.\nShift: blue=0, green=100 (complete cutover)\nIf problems: blue=100, green=0 (instant rollback)\nTTL: set to 60 seconds so changes propagate in 1 minute.\n\nFailover routing approach (instant):\nPrimary: example.com → green-ALB (active, health check enabled)\nSecondary: example.com → blue-ALB (standby)\n\nDeploy to secondary. Test it. Promote secondary to primary.\nFor true instant switchover: \nJust update the primary record to point to green. Takes < 60 seconds\nwith low TTL. But requires DNS to propagate (clients may cache old TTL).\n\nFor zero-propagation-delay switching: do it at the ALB level\n(weighted target groups) not DNS level.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "09-route-53-dns-q1",
+          "question": "What's the difference between CNAME and Alias records?",
+          "answer": "\"CNAME maps a name to another name, which then gets resolved again.\nLimitation: cannot be used at the zone apex (root domain).\nexample.com CANNOT have a CNAME record (DNS spec prohibits it).\nwww.example.com can have CNAME → example.com. Fine.\n\nAlias is AWS-specific. It maps a name directly to an AWS resource\n(ALB, CloudFront distribution, S3 website endpoint, another Route 53 record).\nWorks at the zone apex! example.com → your ALB. This is what you need\nfor pointing your root domain at an AWS load balancer.\n\nAlso: Alias queries to AWS resources are free. Route 53 doesn't charge\nfor DNS queries that resolve to AWS resources via Alias. CNAME queries\nare charged normally.\n\nIn practice: always use Alias for AWS resources, CNAME for non-AWS.\"",
+          "topicNumber": 9,
+          "topicSlug": "09-route-53-dns",
+          "topic": "Route 53 (DNS)"
+        },
+        {
+          "id": "09-route-53-dns-q2",
+          "question": "How do you implement blue-green deployment with Route 53?",
+          "answer": "\"Two approaches depending on speed requirement:\n\nWeighted routing approach (gradual):\nBlue environment: example.com → blue-ALB, Weight: 100\nGreen environment: example.com → green-ALB, Weight: 0\n\nDeploy to green. Test it.\nShift: blue=90, green=10 (canary — 10% gets new version)\nMonitor error rates, latency for 30 minutes.\nShift: blue=0, green=100 (complete cutover)\nIf problems: blue=100, green=0 (instant rollback)\nTTL: set to 60 seconds so changes propagate in 1 minute.\n\nFailover routing approach (instant):\nPrimary: example.com → green-ALB (active, health check enabled)\nSecondary: example.com → blue-ALB (standby)\n\nDeploy to secondary. Test it. Promote secondary to primary.\nFor true instant switchover: \nJust update the primary record to point to green. Takes < 60 seconds\nwith low TTL. But requires DNS to propagate (clients may cache old TTL).\n\nFor zero-propagation-delay switching: do it at the ALB level\n(weighted target groups) not DNS level.\"",
+          "topicNumber": 9,
+          "topicSlug": "09-route-53-dns",
+          "topic": "Route 53 (DNS)"
+        }
+      ],
+      "revisionPoints": [
+        "**Q: What's the difference between CNAME and Alias records?**"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nRoute 53 ← Domain Registration: buy domains directly in Route 53\nRoute 53 → ALB: most common A record target (Alias)\nRoute 53 → CloudFront: CDN endpoint (Alias)\nRoute 53 → S3 Website: static sites (Alias)\nRoute 53 → EC2 Elastic IP: direct IP (A record)\nRoute 53 → Health Checks → CloudWatch: alerting on endpoint health\nRoute 53 ← Traffic Flow: visual routing policy editor\n\nNEXT: CloudFront — CDN\nHow to serve your content globally with low latency, and how\nCloudFront integrates with S3, ALB, and Route 53.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Route 53 ← Domain Registration: buy domains directly in Route 53\nRoute 53 → ALB: most common A record target (Alias)\nRoute 53 → CloudFront: CDN endpoint (Alias)\nRoute 53 → S3 Website: static sites (Alias)\nRoute 53 → EC2 Elastic IP: direct IP (A record)\nRoute 53 → Health Checks → CloudWatch: alerting on endpoint health\nRoute 53 ← Traffic Flow: visual routing policy editor\n\nNEXT: CloudFront — CDN\nHow to serve your content globally with low latency, and how\nCloudFront integrates with S3, ALB, and Route 53."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "Route 53 ← Domain Registration: buy domains directly in Route 53"
+      ]
+    }
+  ]
+}

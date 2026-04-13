@@ -1,0 +1,78 @@
+{
+  "number": 17,
+  "slug": "17-cost-optimization",
+  "title": "Cost Optimization",
+  "sections": [
+    {
+      "id": "aws-cost-optimization-complete-guide",
+      "title": "💰 AWS Cost Optimization — Complete Guide",
+      "type": "pricing",
+      "rawMarkdown": "### Finding Where Money Goes\n```\nCOST EXPLORER:\n→ Visualize costs by: service, region, account, tag, usage type\n→ Filter: last 12 months historical or 12-month forecast\n→ Rightsizing recommendations built-in\n→ Reserved Instance recommendations (which to buy)\n→ Access: Billing → Cost Explorer\n\nCOST AND USAGE REPORT (CUR):\n→ Most detailed billing data available\n→ Line-item level: every API call that incurred a charge\n→ Delivered to S3 hourly or daily\n→ Query with Athena (SQL on billing data)\n→ Use for: chargeback (billing per team/product), detailed optimization\n\nAWS TRUSTED ADVISOR:\n→ Automated best practice checks across 5 categories\n→ Cost Optimization: idle EC2, unattached EBS, underutilized RDS\n→ Performance: high-utilization EC2, CloudFront TTL\n→ Security: open security groups, root MFA, public S3 buckets\n→ Fault Tolerance: Multi-AZ RDS, S3 versioning\n→ Service Limits: approaching limits\n→ Basic (free): 6 core checks\n→ Business/Enterprise support: all checks + automated actions\n\nAWS COMPUTE OPTIMIZER:\n→ ML-based rightsizing recommendations\n→ Analyzes: 14 days of CloudWatch metrics\n→ Recommends: optimal EC2 instance type, Lambda memory, ECS resources\n→ Shows: savings if you resize (often 20-40% potential savings)\n→ Free to use\n```\n\n### EC2 Cost Optimization\n```\nRIGHTSIZING:\n→ Compute Optimizer → \"this t3.large uses avg 8% CPU → use t3.small\"\n→ Don't rightsize on peak — rightsize on P95 (95th percentile)\n→ Step-down gradually: 2xlarge → xlarge → large (test performance)\n\nSAVINGS PLANS (recommended approach):\n→ Analyze last 3 months of On-Demand spend\n→ Commit to 70% of consistent baseline as Savings Plans\n→ Save 30-72% on committed usage\n→ Keep 30% as On-Demand buffer for spikes\n\nSPOT INSTANCES:\n→ 60-90% discount for interruptible workloads\n→ Batch jobs, ML training, CI/CD runners, dev environments\n→ Spot Fleet: request multiple instance types → diversify → less interruption\n→ Instance types with less interruption: use Spot Advisor to find them\n\nSCHEDULED INSTANCES / START-STOP:\n→ Dev EC2 running 24/7 when devs only work 10 hours/day?\n→ Stop instances at 7pm, start at 8am\n→ Save ~58% (8 hours running instead of 24)\n→ Use AWS Instance Scheduler (free solution from AWS)\n→ Or Lambda + EventBridge to stop/start on schedule\n```\n\n### Database Cost Optimization\n```\nRDS:\n→ Stop RDS instances in dev/test when not in use (saves ~70%)\n→ RDS can be stopped for up to 7 days (then auto-starts — plan for this)\n→ Right-size: db.r5.2xlarge → db.r5.large if memory utilization is low\n→ Aurora: use Aurora Serverless v2 for dev/test (scales to minimum when idle)\n→ Delete automated backups after project ends (still charged for them!)\n\nDynamoDB:\n→ On-Demand → Provisioned with Auto Scaling for predictable traffic\n   (up to 4x cheaper for steady workloads)\n→ Use DynamoDB Standard-IA table class for infrequently accessed data (60% cheaper)\n→ TTL: automatically delete expired items (free, reduces storage cost)\n→ Reserved Capacity: commit 1-3 years → up to 76% discount on provisioned capacity\n```\n\n### S3 Cost Optimization\n```\n→ Intelligent-Tiering: set and forget for uncertain access patterns\n→ Lifecycle policies: auto-transition old data to cheaper tiers\n→ S3 Storage Lens: find forgotten large objects, identify optimization opportunities\n→ Request costs: avoid S3 for high-request-rate objects (use CloudFront cache)\n→ Multipart upload cleanup: incomplete multipart uploads cost money!\n  Add lifecycle rule: abort incomplete multipart uploads after 7 days\n→ S3 inventory: get list of all objects + metadata → find cost optimization\n```\n\n### Data Transfer Cost Optimization\n```\nBIGGEST SAVINGS OPPORTUNITIES:\n\n1. CloudFront in front of everything:\n   Direct EC2 → internet: $0.09/GB\n   CloudFront: $0.0085/GB (91% cheaper!)\n   + reduces origin load significantly\n\n2. VPC Gateway Endpoints for S3 and DynamoDB (FREE):\n   Without endpoint: EC2 → NAT Gateway → S3 → $0.045/GB\n   With endpoint: EC2 → VPC Endpoint → S3 → $0\n\n3. Same-region same-AZ architecture:\n   Cross-AZ data transfer: $0.01/GB each direction\n   Keep compute and data in same AZ when possible (at cost of HA)\n   Multi-AZ HA workloads: unavoidable, but be aware\n\n4. Direct Connect for large data volumes:\n   Internet: $0.09/GB out\n   Direct Connect: $0.02/GB out (78% cheaper)\n   Worth it if transferring TBs monthly\n```\n\n### Cost Allocation Tags\n```\nWHY TAGS MATTER FOR COST:\nWithout tags: \"AWS bill: $50,000 this month. Which team spent what?\"\n→ Nobody knows. No accountability. No optimization possible.\n\nWith tags: filter Cost Explorer by tag:\n→ Team:Backend: $20,000\n→ Team:Frontend: $5,000\n→ Team:DataScience: $25,000 ← 50% of bill, investigate!\n→ Environment:Dev: $15,000 ← devs running 24/7? Use scheduling.\n→ Environment:Prod: $35,000\n\nTAG STRATEGY:\nRequired tags on ALL resources:\n  Environment: dev/staging/prod\n  Team: backend/frontend/data/devops\n  Project: myapp/internaltools/experiments\n  CostCenter: eng-001/data-002\n\nENFORCEMENT:\n→ AWS Config rule: required-tags → alert if missing\n→ Service Control Policy: deny resource creation without required tags\n→ AWS Budgets: per-tag budget with alerts\n→ Cost Allocation Tags: activate in Billing → appears in Cost Explorer\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### Finding Where Money Goes"
+        },
+        {
+          "type": "diagram",
+          "content": "COST EXPLORER:\n→ Visualize costs by: service, region, account, tag, usage type\n→ Filter: last 12 months historical or 12-month forecast\n→ Rightsizing recommendations built-in\n→ Reserved Instance recommendations (which to buy)\n→ Access: Billing → Cost Explorer\n\nCOST AND USAGE REPORT (CUR):\n→ Most detailed billing data available\n→ Line-item level: every API call that incurred a charge\n→ Delivered to S3 hourly or daily\n→ Query with Athena (SQL on billing data)\n→ Use for: chargeback (billing per team/product), detailed optimization\n\nAWS TRUSTED ADVISOR:\n→ Automated best practice checks across 5 categories\n→ Cost Optimization: idle EC2, unattached EBS, underutilized RDS\n→ Performance: high-utilization EC2, CloudFront TTL\n→ Security: open security groups, root MFA, public S3 buckets\n→ Fault Tolerance: Multi-AZ RDS, S3 versioning\n→ Service Limits: approaching limits\n→ Basic (free): 6 core checks\n→ Business/Enterprise support: all checks + automated actions\n\nAWS COMPUTE OPTIMIZER:\n→ ML-based rightsizing recommendations\n→ Analyzes: 14 days of CloudWatch metrics\n→ Recommends: optimal EC2 instance type, Lambda memory, ECS resources\n→ Shows: savings if you resize (often 20-40% potential savings)\n→ Free to use"
+        },
+        {
+          "type": "paragraph",
+          "content": "### EC2 Cost Optimization"
+        },
+        {
+          "type": "diagram",
+          "content": "RIGHTSIZING:\n→ Compute Optimizer → \"this t3.large uses avg 8% CPU → use t3.small\"\n→ Don't rightsize on peak — rightsize on P95 (95th percentile)\n→ Step-down gradually: 2xlarge → xlarge → large (test performance)\n\nSAVINGS PLANS (recommended approach):\n→ Analyze last 3 months of On-Demand spend\n→ Commit to 70% of consistent baseline as Savings Plans\n→ Save 30-72% on committed usage\n→ Keep 30% as On-Demand buffer for spikes\n\nSPOT INSTANCES:\n→ 60-90% discount for interruptible workloads\n→ Batch jobs, ML training, CI/CD runners, dev environments\n→ Spot Fleet: request multiple instance types → diversify → less interruption\n→ Instance types with less interruption: use Spot Advisor to find them\n\nSCHEDULED INSTANCES / START-STOP:\n→ Dev EC2 running 24/7 when devs only work 10 hours/day?\n→ Stop instances at 7pm, start at 8am\n→ Save ~58% (8 hours running instead of 24)\n→ Use AWS Instance Scheduler (free solution from AWS)\n→ Or Lambda + EventBridge to stop/start on schedule"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Database Cost Optimization"
+        },
+        {
+          "type": "diagram",
+          "content": "RDS:\n→ Stop RDS instances in dev/test when not in use (saves ~70%)\n→ RDS can be stopped for up to 7 days (then auto-starts — plan for this)\n→ Right-size: db.r5.2xlarge → db.r5.large if memory utilization is low\n→ Aurora: use Aurora Serverless v2 for dev/test (scales to minimum when idle)\n→ Delete automated backups after project ends (still charged for them!)\n\nDynamoDB:\n→ On-Demand → Provisioned with Auto Scaling for predictable traffic\n   (up to 4x cheaper for steady workloads)\n→ Use DynamoDB Standard-IA table class for infrequently accessed data (60% cheaper)\n→ TTL: automatically delete expired items (free, reduces storage cost)\n→ Reserved Capacity: commit 1-3 years → up to 76% discount on provisioned capacity"
+        },
+        {
+          "type": "paragraph",
+          "content": "### S3 Cost Optimization"
+        },
+        {
+          "type": "diagram",
+          "content": "→ Intelligent-Tiering: set and forget for uncertain access patterns\n→ Lifecycle policies: auto-transition old data to cheaper tiers\n→ S3 Storage Lens: find forgotten large objects, identify optimization opportunities\n→ Request costs: avoid S3 for high-request-rate objects (use CloudFront cache)\n→ Multipart upload cleanup: incomplete multipart uploads cost money!\n  Add lifecycle rule: abort incomplete multipart uploads after 7 days\n→ S3 inventory: get list of all objects + metadata → find cost optimization"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Data Transfer Cost Optimization"
+        },
+        {
+          "type": "diagram",
+          "content": "BIGGEST SAVINGS OPPORTUNITIES:\n\n1. CloudFront in front of everything:\n   Direct EC2 → internet: $0.09/GB\n   CloudFront: $0.0085/GB (91% cheaper!)\n   + reduces origin load significantly\n\n2. VPC Gateway Endpoints for S3 and DynamoDB (FREE):\n   Without endpoint: EC2 → NAT Gateway → S3 → $0.045/GB\n   With endpoint: EC2 → VPC Endpoint → S3 → $0\n\n3. Same-region same-AZ architecture:\n   Cross-AZ data transfer: $0.01/GB each direction\n   Keep compute and data in same AZ when possible (at cost of HA)\n   Multi-AZ HA workloads: unavoidable, but be aware\n\n4. Direct Connect for large data volumes:\n   Internet: $0.09/GB out\n   Direct Connect: $0.02/GB out (78% cheaper)\n   Worth it if transferring TBs monthly"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Cost Allocation Tags"
+        },
+        {
+          "type": "diagram",
+          "content": "WHY TAGS MATTER FOR COST:\nWithout tags: \"AWS bill: $50,000 this month. Which team spent what?\"\n→ Nobody knows. No accountability. No optimization possible.\n\nWith tags: filter Cost Explorer by tag:\n→ Team:Backend: $20,000\n→ Team:Frontend: $5,000\n→ Team:DataScience: $25,000 ← 50% of bill, investigate!\n→ Environment:Dev: $15,000 ← devs running 24/7? Use scheduling.\n→ Environment:Prod: $35,000\n\nTAG STRATEGY:\nRequired tags on ALL resources:\n  Environment: dev/staging/prod\n  Team: backend/frontend/data/devops\n  Project: myapp/internaltools/experiments\n  CostCenter: eng-001/data-002\n\nENFORCEMENT:\n→ AWS Config rule: required-tags → alert if missing\n→ Service Control Policy: deny resource creation without required tags\n→ AWS Budgets: per-tag budget with alerts\n→ Cost Allocation Tags: activate in Billing → appears in Cost Explorer"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Visualize costs by: service, region, account, tag, usage type",
+        "→ Filter: last 12 months historical or 12-month forecast",
+        "→ Rightsizing recommendations built-in",
+        "→ Reserved Instance recommendations (which to buy)",
+        "→ Access: Billing → Cost Explorer",
+        "→ Most detailed billing data available",
+        "→ Line-item level: every API call that incurred a charge",
+        "→ Delivered to S3 hourly or daily"
+      ]
+    }
+  ]
+}
