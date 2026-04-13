@@ -3,7 +3,7 @@
 A fully static learning app for mastering AWS from zero to senior architect level.
 
 ## Live App
-https://github.com/maheshnd.github.io/aws-learn
+https://maheshnd.github.io/aws-learn/
 
 ## Local Development
 ```bash
