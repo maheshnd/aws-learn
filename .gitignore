@@ -1,0 +1,31 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# next.js
+/.next/
+/out/
+
+# misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.test
+.env.production
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+.ts-scripts/
+
+# generated data (rebuilt by CI)
+/public/data/
+
+# Do not push to GitHub — keep local only
+BUILD_PROMPT.md
+aws_master_notes.md
