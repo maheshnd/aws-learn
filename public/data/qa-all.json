@@ -529,6 +529,54 @@
       "topic": "Cost Optimization"
     },
     {
+      "id": "18-infrastructure-as-code-cloudformation-q1",
+      "question": "Why is Infrastructure as Code important beyond 'automation'?",
+      "answer": "\"Because the real value is control, repeatability, and safe change.\n\nIaC gives:\n→ peer review\n→ version history\n→ consistent environments\n→ repeatable recovery\n→ easier compliance evidence\n\nWithout IaC, every environment becomes a snowflake and outages become harder to reproduce or fix.\"",
+      "topicNumber": 18,
+      "topicSlug": "18-infrastructure-as-code-cloudformation",
+      "topic": "Infrastructure as Code (CloudFormation)"
+    },
+    {
+      "id": "18-infrastructure-as-code-cloudformation-q2",
+      "question": "A CloudFormation stack update failed halfway. How do you handle that?",
+      "answer": "\"First I check stack events, not guesses.\n\nI want to know:\n→ which resource failed?\n→ was rollback successful?\n→ is stack in UPDATE_ROLLBACK_FAILED?\n\nIf rollback failed, I may need to continue rollback or repair the resource dependency first.\nThe senior move is not manual clicking everywhere; it is understanding stack state and getting\nback to a clean declarative baseline.\"",
+      "topicNumber": 18,
+      "topicSlug": "18-infrastructure-as-code-cloudformation",
+      "topic": "Infrastructure as Code (CloudFormation)"
+    },
+    {
+      "id": "18-infrastructure-as-code-cloudformation-q3",
+      "question": "What is drift and why is it dangerous?",
+      "answer": "\"Drift means the real resource differs from the template.\n\nThat is dangerous because:\n→ future updates become unpredictable\n→ disaster recovery recreates the wrong thing\n→ compliance evidence becomes unreliable\n\nConsole changes feel fast, but they create hidden entropy.\nSenior teams treat manual production edits as exceptions and reconcile them back into IaC quickly.\"",
+      "topicNumber": 18,
+      "topicSlug": "18-infrastructure-as-code-cloudformation",
+      "topic": "Infrastructure as Code (CloudFormation)"
+    },
+    {
+      "id": "19-ci-cd-codepipeline-codebuild-codedeploy-q1",
+      "question": "What makes a deployment pipeline production-grade?",
+      "answer": "\"Not just automation. A production-grade pipeline has safety.\n\nI look for:\n→ immutable artifacts\n→ automated tests\n→ environment promotion path\n→ approvals where needed\n→ health verification after deployment\n→ rollback mechanism tied to alarms\n\nA script that copies files to prod is automation.\nA pipeline that reduces change risk is CI/CD.\"",
+      "topicNumber": 19,
+      "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+      "topic": "CI/CD (CodePipeline, CodeBuild, CodeDeploy)"
+    },
+    {
+      "id": "19-ci-cd-codepipeline-codebuild-codedeploy-q2",
+      "question": "How do you reduce deployment risk for critical services?",
+      "answer": "\"Use progressive delivery.\n\nMy preferred sequence:\n→ deploy to staging with realistic tests\n→ blue/green or canary in production\n→ watch latency, errors, saturation, business KPIs\n→ auto-rollback if thresholds breach\n\nSenior delivery is about limiting blast radius, not just making deployment faster.\"",
+      "topicNumber": 19,
+      "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+      "topic": "CI/CD (CodePipeline, CodeBuild, CodeDeploy)"
+    },
+    {
+      "id": "19-ci-cd-codepipeline-codebuild-codedeploy-q3",
+      "question": "Why separate CodeBuild from CodeDeploy instead of doing everything in one script?",
+      "answer": "\"Because build and deploy solve different problems.\n\nBuild should create a tested immutable artifact.\nDeploy should promote that exact artifact into environments.\n\nIf you rebuild per environment, you lose traceability and increase drift.\nSeparation gives you reproducibility, auditing, and safer rollback.\"",
+      "topicNumber": 19,
+      "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+      "topic": "CI/CD (CodePipeline, CodeBuild, CodeDeploy)"
+    },
+    {
       "id": "20-aws-well-architected-architecture-patterns-q1",
       "question": "In a senior interview, how do you answer 'design a scalable AWS system' without sounding generic?",
       "answer": "\"I structure the answer in layers and tradeoffs:\n→ ingress\n→ compute\n→ data\n→ async decoupling\n→ security\n→ observability\n→ failure handling\n→ cost\n\nThen I explicitly state assumptions:\ntraffic pattern, RTO/RPO, read/write ratio, compliance needs, team maturity.\n\nWhat interviewers want from a 10+ year engineer is not a list of AWS services.\nThey want to hear how you reason about failure, operational burden, and where the design will break first.\"",
@@ -553,5 +601,5 @@
       "topic": "AWS Well-Architected + Architecture Patterns"
     }
   ],
-  "totalCount": 69
+  "totalCount": 75
 }

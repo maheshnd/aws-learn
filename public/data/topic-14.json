@@ -4,6 +4,33 @@
   "title": "API Gateway",
   "sections": [
     {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nImagine your mobile app calls five backend endpoints.\nWithout a gateway, every backend team solves the same problems again:\n→ auth token validation\n→ throttling\n→ request logging\n→ CORS\n→ versioning\n→ partner access control\n\nThat creates duplicated logic and inconsistent security.\n\nAPI Gateway centralizes those cross-cutting concerns.\n\nMENTAL MODEL:\nAPI Gateway is the policy layer in front of your application.\nYour backend should answer:\n→ what business logic should happen?\n\nThe gateway should answer:\n→ who can call this?\n→ how much traffic is allowed?\n→ what shape should request/response take?\n→ should this response be cached?\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Imagine your mobile app calls five backend endpoints.\nWithout a gateway, every backend team solves the same problems again:\n→ auth token validation\n→ throttling\n→ request logging\n→ CORS\n→ versioning\n→ partner access control\n\nThat creates duplicated logic and inconsistent security.\n\nAPI Gateway centralizes those cross-cutting concerns.\n\nMENTAL MODEL:\nAPI Gateway is the policy layer in front of your application.\nYour backend should answer:\n→ what business logic should happen?\n\nThe gateway should answer:\n→ who can call this?\n→ how much traffic is allowed?\n→ what shape should request/response take?\n→ should this response be cached?"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ auth token validation",
+        "→ throttling",
+        "→ request logging",
+        "→ CORS",
+        "→ versioning",
+        "→ partner access control",
+        "→ what business logic should happen?",
+        "→ who can call this?"
+      ]
+    },
+    {
       "id": "what-is-api-gateway",
       "title": "🚪 What is API Gateway?",
       "type": "concept",
@@ -166,6 +193,26 @@
         "→ CloudWatch metric: 4XXError and specifically 429 count",
         "→ access logs with requestId, API key, route, status",
         "→ whether one customer or route is noisy"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nAPI Gateway → Lambda: most common serverless integration\nAPI Gateway → ECS/ALB/HTTP backends: proxy to containers and services\nAPI Gateway → Cognito/JWT authorizers/Lambda authorizers: auth layer\nAPI Gateway → CloudWatch: access logs, execution logs, metrics\nAPI Gateway → WAF: request filtering when attached\nAPI Gateway ← CloudFront: optional edge caching and global acceleration\nAPI Gateway ← Route 53: custom domain routing\n\nNEXT: Observability — CloudWatch, CloudTrail, X-Ray\nHow you see, debug, and operate everything you just built.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "API Gateway → Lambda: most common serverless integration\nAPI Gateway → ECS/ALB/HTTP backends: proxy to containers and services\nAPI Gateway → Cognito/JWT authorizers/Lambda authorizers: auth layer\nAPI Gateway → CloudWatch: access logs, execution logs, metrics\nAPI Gateway → WAF: request filtering when attached\nAPI Gateway ← CloudFront: optional edge caching and global acceleration\nAPI Gateway ← Route 53: custom domain routing\n\nNEXT: Observability — CloudWatch, CloudTrail, X-Ray\nHow you see, debug, and operate everything you just built."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "API Gateway → Lambda: most common serverless integration"
       ]
     }
   ]

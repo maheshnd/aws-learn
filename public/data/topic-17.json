@@ -4,6 +4,32 @@
   "title": "Cost Optimization",
   "sections": [
     {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nThe cloud makes bad decisions cheap to start and expensive to forget.\n\nTypical first-month behavior:\n→ launch resources quickly\n→ leave dev stacks running\n→ over-provision \"just to be safe\"\n→ ignore transfer and log costs\n\nThen finance asks:\n\"Why did the AWS bill double?\"\n\nCost optimization is not \"be cheap.\"\nIt is:\n→ spend intentionally\n→ map cost to business value\n→ remove waste without removing resilience\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "The cloud makes bad decisions cheap to start and expensive to forget.\n\nTypical first-month behavior:\n→ launch resources quickly\n→ leave dev stacks running\n→ over-provision \"just to be safe\"\n→ ignore transfer and log costs\n\nThen finance asks:\n\"Why did the AWS bill double?\"\n\nCost optimization is not \"be cheap.\"\nIt is:\n→ spend intentionally\n→ map cost to business value\n→ remove waste without removing resilience"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ launch resources quickly",
+        "→ leave dev stacks running",
+        "→ over-provision \"just to be safe\"",
+        "→ ignore transfer and log costs",
+        "→ spend intentionally",
+        "→ map cost to business value",
+        "→ remove waste without removing resilience"
+      ]
+    },
+    {
       "id": "aws-cost-optimization-complete-guide",
       "title": "💰 AWS Cost Optimization — Complete Guide",
       "type": "pricing",
@@ -144,6 +170,26 @@
         "→ data transfer spike",
         "→ NAT Gateway growth",
         "→ accidental On-Demand instead of Savings Plan coverage"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nCost Explorer/CUR ← all AWS services: billing and usage data\nCompute Optimizer → EC2/Lambda/ECS/EBS: rightsizing recommendations\nTrusted Advisor → cost, security, and limit hygiene\nBudgets → SNS/email/Slack: spend alerts\nTagging → Cost Explorer and chargeback visibility\n\nNEXT: Infrastructure as Code — CloudFormation\nHow to make infrastructure repeatable, reviewable, and safe to change.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Cost Explorer/CUR ← all AWS services: billing and usage data\nCompute Optimizer → EC2/Lambda/ECS/EBS: rightsizing recommendations\nTrusted Advisor → cost, security, and limit hygiene\nBudgets → SNS/email/Slack: spend alerts\nTagging → Cost Explorer and chargeback visibility\n\nNEXT: Infrastructure as Code — CloudFormation\nHow to make infrastructure repeatable, reviewable, and safe to change."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "Cost Explorer/CUR ← all AWS services: billing and usage data"
       ]
     }
   ]

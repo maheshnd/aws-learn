@@ -4,6 +4,31 @@
   "title": "Security (KMS, Secrets Manager, WAF, GuardDuty, Shield)",
   "sections": [
     {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nMost AWS breaches are not because AWS forgot security.\nThey happen because customers misconfigured identity, networking, or secrets.\n\nSecurity in AWS is layered:\n→ IAM decides who can do things\n→ KMS protects data cryptographically\n→ Secrets Manager stores credentials safely\n→ WAF blocks malicious web traffic\n→ GuardDuty detects suspicious behavior\n→ Shield absorbs DDoS attacks\n\nMENTAL MODEL:\nNo single service \"does security.\"\nSecurity is a stack of preventive, detective, and responsive controls.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Most AWS breaches are not because AWS forgot security.\nThey happen because customers misconfigured identity, networking, or secrets.\n\nSecurity in AWS is layered:\n→ IAM decides who can do things\n→ KMS protects data cryptographically\n→ Secrets Manager stores credentials safely\n→ WAF blocks malicious web traffic\n→ GuardDuty detects suspicious behavior\n→ Shield absorbs DDoS attacks\n\nMENTAL MODEL:\nNo single service \"does security.\"\nSecurity is a stack of preventive, detective, and responsive controls."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ IAM decides who can do things",
+        "→ KMS protects data cryptographically",
+        "→ Secrets Manager stores credentials safely",
+        "→ WAF blocks malicious web traffic",
+        "→ GuardDuty detects suspicious behavior",
+        "→ Shield absorbs DDoS attacks"
+      ]
+    },
+    {
       "id": "kms-key-management-service",
       "title": "🔑 KMS — Key Management Service",
       "type": "concept",
@@ -112,6 +137,33 @@
       ]
     },
     {
+      "id": "shield-ddos-protection",
+      "title": "🛡️ Shield — DDoS Protection",
+      "type": "concept",
+      "rawMarkdown": "```\nAWS Shield = managed DDoS protection service\n\nSHIELD STANDARD:\n→ Included automatically, free\n→ Protects CloudFront, Route 53, ALB, Global Accelerator\n→ Handles common network and transport layer DDoS attacks\n\nSHIELD ADVANCED:\n→ Extra cost, enterprise-focused\n→ Better visibility into attacks\n→ 24/7 DDoS Response Team access\n→ Cost protection for scaling charges caused by attacks\n→ More advanced detection and mitigation support\n\nMENTAL MODEL:\nWAF blocks bad HTTP requests at Layer 7.\nShield absorbs volumetric DDoS at network/transport layers.\nUse both together for internet-facing applications.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "AWS Shield = managed DDoS protection service\n\nSHIELD STANDARD:\n→ Included automatically, free\n→ Protects CloudFront, Route 53, ALB, Global Accelerator\n→ Handles common network and transport layer DDoS attacks\n\nSHIELD ADVANCED:\n→ Extra cost, enterprise-focused\n→ Better visibility into attacks\n→ 24/7 DDoS Response Team access\n→ Cost protection for scaling charges caused by attacks\n→ More advanced detection and mitigation support\n\nMENTAL MODEL:\nWAF blocks bad HTTP requests at Layer 7.\nShield absorbs volumetric DDoS at network/transport layers.\nUse both together for internet-facing applications."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ Included automatically, free",
+        "→ Protects CloudFront, Route 53, ALB, Global Accelerator",
+        "→ Handles common network and transport layer DDoS attacks",
+        "→ Extra cost, enterprise-focused",
+        "→ Better visibility into attacks",
+        "→ 24/7 DDoS Response Team access",
+        "→ Cost protection for scaling charges caused by attacks",
+        "→ More advanced detection and mitigation support"
+      ]
+    },
+    {
       "id": "interview-qa-security",
       "title": "🎯 Interview Q&A — Security",
       "type": "qa",
@@ -181,6 +233,26 @@
         "→ need to disable access quickly by disabling the key",
         "→ regulatory requirement to control rotation and deletion schedule",
         "→ identify which rule is firing"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nKMS → S3/EBS/RDS/Secrets Manager/Lambda: encryption backbone\nSecrets Manager → Lambda/ECS/EC2/RDS: credential distribution and rotation\nWAF → CloudFront/ALB/API Gateway: HTTP request filtering\nGuardDuty ← CloudTrail/VPC Flow Logs/DNS logs: threat detection signals\nShield → CloudFront/Route 53/ALB: DDoS protection\nSecurity → EventBridge/SNS/Lambda: automated incident response\n\nNEXT: Cost Optimization\nHow to keep architectures efficient without breaking reliability.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "KMS → S3/EBS/RDS/Secrets Manager/Lambda: encryption backbone\nSecrets Manager → Lambda/ECS/EC2/RDS: credential distribution and rotation\nWAF → CloudFront/ALB/API Gateway: HTTP request filtering\nGuardDuty ← CloudTrail/VPC Flow Logs/DNS logs: threat detection signals\nShield → CloudFront/Route 53/ALB: DDoS protection\nSecurity → EventBridge/SNS/Lambda: automated incident response\n\nNEXT: Cost Optimization\nHow to keep architectures efficient without breaking reliability."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "KMS → S3/EBS/RDS/Secrets Manager/Lambda: encryption backbone"
       ]
     }
   ]

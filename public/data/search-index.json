@@ -781,7 +781,7 @@
       "sectionId": "eventbridge-event-bus",
       "sectionTitle": "🚌 EventBridge — Event Bus",
       "type": "concept",
-      "text": " What is EventBridge? EventBridge Components EventBridge vs SNS vs SQS ---"
+      "text": " What is EventBridge? EventBridge Components EventBridge Big Picture Diagram EventBridge vs SNS vs SQS ---"
     },
     {
       "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-step-functions-workflow-orchestration",
@@ -790,7 +790,7 @@
       "sectionId": "step-functions-workflow-orchestration",
       "sectionTitle": "🔄 Step Functions — Workflow Orchestration",
       "type": "concept",
-      "text": " What is Step Functions? State Machine Concepts Express vs Standard Workflows ---"
+      "text": " What is Step Functions? Step Functions Big Picture Diagram State Machine Concepts Express vs Standard Workflows ---"
     },
     {
       "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-interview-qa-messaging",
@@ -809,6 +809,15 @@
       "sectionTitle": "🔗 Connects To",
       "type": "relations",
       "text": " --- ---"
+    },
+    {
+      "id": "12-lambda-serverless-compute-deep-dive-the-story",
+      "topicNumber": 12,
+      "topicSlug": "12-lambda-serverless-compute-deep-dive",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
     },
     {
       "id": "12-lambda-serverless-compute-deep-dive-lambda-internals-how-it-actually-works",
@@ -856,6 +865,15 @@
       "text": " Q: Our Lambda suddenly started timing out and throttling during a production spike. How would you investigate? Q: How do you make Lambda safe for retries and duplicate events in real life? Q: When does a team regret choosing Lambda, even though the design looked good at first? ---"
     },
     {
+      "id": "12-lambda-serverless-compute-deep-dive-connects-to",
+      "topicNumber": 12,
+      "topicSlug": "12-lambda-serverless-compute-deep-dive",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " ---"
+    },
+    {
       "id": "13-containers-ecs-ecr-eks-docker-quick-review",
       "topicNumber": 13,
       "topicSlug": "13-containers-ecs-ecr-eks",
@@ -901,6 +919,15 @@
       "text": " --- ---"
     },
     {
+      "id": "14-api-gateway-the-story",
+      "topicNumber": 14,
+      "topicSlug": "14-api-gateway",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
+    },
+    {
       "id": "14-api-gateway-what-is-api-gateway",
       "topicNumber": 14,
       "topicSlug": "14-api-gateway",
@@ -935,6 +962,24 @@
       "sectionTitle": "🎯 Interview Q&A — API Gateway",
       "type": "qa",
       "text": " Q: Clients are getting random 429 errors from API Gateway. How do you debug that in production? Q: When would you choose API Gateway over ALB for Lambda or container backends? Q: A backend deploy succeeded, but users still see old or broken API behavior. Where do you look? ---"
+    },
+    {
+      "id": "14-api-gateway-connects-to",
+      "topicNumber": 14,
+      "topicSlug": "14-api-gateway",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " ---"
+    },
+    {
+      "id": "15-observability-cloudwatch-cloudtrail-x-ray-the-story",
+      "topicNumber": 15,
+      "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
     },
     {
       "id": "15-observability-cloudwatch-cloudtrail-x-ray-cloudwatch-deep-dive",
@@ -973,6 +1018,24 @@
       "text": " Q: A service is 'slow', but CPU looks fine everywhere. How do you lead that investigation? Q: What logs, metrics, and alarms are mandatory before you call a system production-ready? Q: CloudTrail shows who changed something, but how do you turn that into a real incident response workflow? ---"
     },
     {
+      "id": "15-observability-cloudwatch-cloudtrail-x-ray-connects-to",
+      "topicNumber": 15,
+      "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " ---"
+    },
+    {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-the-story",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
+    },
+    {
       "id": "16-security-kms-secrets-manager-waf-guardduty-shield-kms-key-management-service",
       "topicNumber": 16,
       "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
@@ -1009,6 +1072,15 @@
       "text": " ---"
     },
     {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-shield-ddos-protection",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "sectionId": "shield-ddos-protection",
+      "sectionTitle": "🛡️ Shield — DDoS Protection",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
       "id": "16-security-kms-secrets-manager-waf-guardduty-shield-interview-qa-security",
       "topicNumber": 16,
       "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
@@ -1016,6 +1088,24 @@
       "sectionTitle": "🎯 Interview Q&A — Security",
       "type": "qa",
       "text": " Q: A developer accidentally exposed AWS credentials. What do you do in the first 30 minutes? Q: When do you use a customer-managed KMS key instead of the default AWS-managed key? Q: WAF is blocking legitimate traffic after a new rule rollout. How do you handle that safely? ---"
+    },
+    {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-connects-to",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " ---"
+    },
+    {
+      "id": "17-cost-optimization-the-story",
+      "topicNumber": 17,
+      "topicSlug": "17-cost-optimization",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
     },
     {
       "id": "17-cost-optimization-aws-cost-optimization-complete-guide",
@@ -1034,6 +1124,123 @@
       "sectionTitle": "🎯 Interview Q&A — Cost Optimization",
       "type": "qa",
       "text": " Q: CFO says AWS spend jumped 40% this month. How do you investigate without guessing? Q: What are the most common hidden AWS cost traps that junior engineers miss? Q: How do you optimize cost without damaging reliability or performance? ---"
+    },
+    {
+      "id": "17-cost-optimization-connects-to",
+      "topicNumber": 17,
+      "topicSlug": "17-cost-optimization",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " ---"
+    },
+    {
+      "id": "18-infrastructure-as-code-cloudformation-the-story",
+      "topicNumber": 18,
+      "topicSlug": "18-infrastructure-as-code-cloudformation",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "18-infrastructure-as-code-cloudformation-core-concepts",
+      "topicNumber": 18,
+      "topicSlug": "18-infrastructure-as-code-cloudformation",
+      "sectionId": "core-concepts",
+      "sectionTitle": "🧱 Core Concepts",
+      "type": "concept",
+      "text": " Example Template Shape ---"
+    },
+    {
+      "id": "18-infrastructure-as-code-cloudformation-advanced-patterns",
+      "topicNumber": 18,
+      "topicSlug": "18-infrastructure-as-code-cloudformation",
+      "sectionId": "advanced-patterns",
+      "sectionTitle": "🧩 Advanced Patterns",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "18-infrastructure-as-code-cloudformation-best-practices",
+      "topicNumber": 18,
+      "topicSlug": "18-infrastructure-as-code-cloudformation",
+      "sectionId": "best-practices",
+      "sectionTitle": "💡 Best Practices",
+      "type": "checklist",
+      "text": " ---"
+    },
+    {
+      "id": "18-infrastructure-as-code-cloudformation-interview-qa-cloudformation",
+      "topicNumber": 18,
+      "topicSlug": "18-infrastructure-as-code-cloudformation",
+      "sectionId": "interview-qa-cloudformation",
+      "sectionTitle": "🎯 Interview Q&A — CloudFormation",
+      "type": "qa",
+      "text": " Q: Why is Infrastructure as Code important beyond 'automation'? Q: A CloudFormation stack update failed halfway. How do you handle that? Q: What is drift and why is it dangerous? ---"
+    },
+    {
+      "id": "18-infrastructure-as-code-cloudformation-connects-to",
+      "topicNumber": 18,
+      "topicSlug": "18-infrastructure-as-code-cloudformation",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " ---"
+    },
+    {
+      "id": "19-ci-cd-codepipeline-codebuild-codedeploy-the-story",
+      "topicNumber": 19,
+      "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+      "sectionId": "the-story",
+      "sectionTitle": "🧒 The Story",
+      "type": "story",
+      "text": " ---"
+    },
+    {
+      "id": "19-ci-cd-codepipeline-codebuild-codedeploy-core-services",
+      "topicNumber": 19,
+      "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+      "sectionId": "core-services",
+      "sectionTitle": "🔁 Core Services",
+      "type": "concept",
+      "text": " CodePipeline CodeBuild CodeDeploy ---"
+    },
+    {
+      "id": "19-ci-cd-codepipeline-codebuild-codedeploy-deployment-strategies",
+      "topicNumber": 19,
+      "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+      "sectionId": "deployment-strategies",
+      "sectionTitle": "🚦 Deployment Strategies",
+      "type": "concept",
+      "text": " ---"
+    },
+    {
+      "id": "19-ci-cd-codepipeline-codebuild-codedeploy-cicd-best-practices",
+      "topicNumber": 19,
+      "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+      "sectionId": "cicd-best-practices",
+      "sectionTitle": "💡 CI/CD Best Practices",
+      "type": "checklist",
+      "text": " ---"
+    },
+    {
+      "id": "19-ci-cd-codepipeline-codebuild-codedeploy-interview-qa-cicd",
+      "topicNumber": 19,
+      "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+      "sectionId": "interview-qa-cicd",
+      "sectionTitle": "🎯 Interview Q&A — CI/CD",
+      "type": "qa",
+      "text": " Q: What makes a deployment pipeline production-grade? Q: How do you reduce deployment risk for critical services? Q: Why separate CodeBuild from CodeDeploy instead of doing everything in one script? ---"
+    },
+    {
+      "id": "19-ci-cd-codepipeline-codebuild-codedeploy-connects-to",
+      "topicNumber": 19,
+      "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+      "sectionId": "connects-to",
+      "sectionTitle": "🔗 Connects To",
+      "type": "relations",
+      "text": " ---"
     },
     {
       "id": "20-aws-well-architected-architecture-patterns-wellarchitected-framework-6-pillars",

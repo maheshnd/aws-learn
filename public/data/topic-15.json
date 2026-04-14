@@ -4,6 +4,32 @@
   "title": "Observability (CloudWatch, CloudTrail, X-Ray)",
   "sections": [
     {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nEvery team says \"the system is down.\"\nBut until you can answer these three questions, you are still guessing:\n→ what is broken?\n→ where is it broken?\n→ since when?\n\nObservability is what turns panic into diagnosis.\n\nMETRICS answer:\n→ is the system healthy right now?\n\nLOGS answer:\n→ what exactly happened?\n\nTRACES answer:\n→ where did the time go across services?\n\nAUDIT TRAILS answer:\n→ who changed what?\n\nMENTAL MODEL:\nMonitoring tells you there is pain.\nObservability helps you explain the pain quickly enough to fix it.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Every team says \"the system is down.\"\nBut until you can answer these three questions, you are still guessing:\n→ what is broken?\n→ where is it broken?\n→ since when?\n\nObservability is what turns panic into diagnosis.\n\nMETRICS answer:\n→ is the system healthy right now?\n\nLOGS answer:\n→ what exactly happened?\n\nTRACES answer:\n→ where did the time go across services?\n\nAUDIT TRAILS answer:\n→ who changed what?\n\nMENTAL MODEL:\nMonitoring tells you there is pain.\nObservability helps you explain the pain quickly enough to fix it."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ what is broken?",
+        "→ where is it broken?",
+        "→ since when?",
+        "→ is the system healthy right now?",
+        "→ what exactly happened?",
+        "→ where did the time go across services?",
+        "→ who changed what?"
+      ]
+    },
+    {
       "id": "cloudwatch-deep-dive",
       "title": "📊 CloudWatch — Deep Dive",
       "type": "concept",
@@ -174,6 +200,26 @@
         "→ CloudWatch metrics for high-level symptoms",
         "→ logs for error context and request IDs",
         "→ X-Ray or tracing for end-to-end timeline"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nCloudWatch ← every AWS service: metrics and alarms\nCloudWatch Logs ← Lambda/ECS/EC2/API Gateway/apps: operational detail\nCloudTrail ← all AWS API calls: control plane audit\nX-Ray ← API Gateway/Lambda/ECS/SDK calls: request tracing\nObservability → SNS/PagerDuty/Slack: incident alerting\nObservability → Auto Scaling/runbooks: automated response\n\nNEXT: Security — KMS, Secrets Manager, WAF, GuardDuty, Shield\nThe controls that protect your systems once they are in production.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "CloudWatch ← every AWS service: metrics and alarms\nCloudWatch Logs ← Lambda/ECS/EC2/API Gateway/apps: operational detail\nCloudTrail ← all AWS API calls: control plane audit\nX-Ray ← API Gateway/Lambda/ECS/SDK calls: request tracing\nObservability → SNS/PagerDuty/Slack: incident alerting\nObservability → Auto Scaling/runbooks: automated response\n\nNEXT: Security — KMS, Secrets Manager, WAF, GuardDuty, Shield\nThe controls that protect your systems once they are in production."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "CloudWatch ← every AWS service: metrics and alarms"
       ]
     }
   ]

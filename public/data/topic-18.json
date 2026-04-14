@@ -1,0 +1,212 @@
+{
+  "number": 18,
+  "slug": "18-infrastructure-as-code-cloudformation",
+  "title": "Infrastructure as Code (CloudFormation)",
+  "sections": [
+    {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nManual console setup works once.\nIt fails when you need:\n→ the same stack in dev, staging, and prod\n→ disaster recovery in another region\n→ peer review of infra changes\n→ rollback after a bad change\n\nCloudFormation solves that by making infrastructure declarative.\n\nMENTAL MODEL:\nYou do not tell AWS \"click this, then this.\"\nYou declare the desired end state:\n→ VPC\n→ subnets\n→ ALB\n→ ECS service\n→ RDS\n\nCloudFormation figures out creation order and keeps stack state.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Manual console setup works once.\nIt fails when you need:\n→ the same stack in dev, staging, and prod\n→ disaster recovery in another region\n→ peer review of infra changes\n→ rollback after a bad change\n\nCloudFormation solves that by making infrastructure declarative.\n\nMENTAL MODEL:\nYou do not tell AWS \"click this, then this.\"\nYou declare the desired end state:\n→ VPC\n→ subnets\n→ ALB\n→ ECS service\n→ RDS\n\nCloudFormation figures out creation order and keeps stack state."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ the same stack in dev, staging, and prod",
+        "→ disaster recovery in another region",
+        "→ peer review of infra changes",
+        "→ rollback after a bad change",
+        "→ VPC",
+        "→ subnets",
+        "→ ALB",
+        "→ ECS service"
+      ]
+    },
+    {
+      "id": "core-concepts",
+      "title": "🧱 Core Concepts",
+      "type": "concept",
+      "rawMarkdown": "```\nTEMPLATE:\n→ YAML or JSON file describing resources\n\nSTACK:\n→ a deployed instance of that template\n→ same template can create dev/prod stacks with different parameters\n\nCHANGE SET:\n→ preview of what CloudFormation will change before executing\n\nDRIFT:\n→ real infrastructure no longer matches template\n→ happens when someone changes resources manually in console\n\nROLLBACK:\n→ if stack creation/update fails, CloudFormation rolls back changes automatically\n```\n\n### Example Template Shape\n```\nParameters:\n  Environment:\n    Type: String\n    AllowedValues: [dev, prod]\n\nResources:\n  AppBucket:\n    Type: AWS::S3::Bucket\n    Properties:\n      BucketName: !Sub myapp-${Environment}-assets\n\nOutputs:\n  BucketName:\n    Value: !Ref AppBucket\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "TEMPLATE:\n→ YAML or JSON file describing resources\n\nSTACK:\n→ a deployed instance of that template\n→ same template can create dev/prod stacks with different parameters\n\nCHANGE SET:\n→ preview of what CloudFormation will change before executing\n\nDRIFT:\n→ real infrastructure no longer matches template\n→ happens when someone changes resources manually in console\n\nROLLBACK:\n→ if stack creation/update fails, CloudFormation rolls back changes automatically"
+        },
+        {
+          "type": "paragraph",
+          "content": "### Example Template Shape"
+        },
+        {
+          "type": "text-panel",
+          "content": "Parameters:\n  Environment:\n    Type: String\n    AllowedValues: [dev, prod]\n\nResources:\n  AppBucket:\n    Type: AWS::S3::Bucket\n    Properties:\n      BucketName: !Sub myapp-${Environment}-assets\n\nOutputs:\n  BucketName:\n    Value: !Ref AppBucket"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ YAML or JSON file describing resources",
+        "→ a deployed instance of that template",
+        "→ same template can create dev/prod stacks with different parameters",
+        "→ preview of what CloudFormation will change before executing",
+        "→ real infrastructure no longer matches template",
+        "→ happens when someone changes resources manually in console",
+        "→ if stack creation/update fails, CloudFormation rolls back changes automatically"
+      ]
+    },
+    {
+      "id": "advanced-patterns",
+      "title": "🧩 Advanced Patterns",
+      "type": "concept",
+      "rawMarkdown": "```\nNESTED STACKS:\n→ split huge infrastructure into reusable parts\n→ network stack, database stack, app stack\n\nCROSS-STACK EXPORTS:\n→ share outputs from one stack to another\n→ VPC ID exported from network stack → imported by app stack\n\nSTACK POLICIES:\n→ protect critical resources from accidental update/delete\n\nDELETION POLICY:\n→ Retain: keep resource after stack deletion\n→ critical for databases, S3 buckets with important data\n\nWAIT CONDITIONS / DEPENDS_ON:\n→ control order when custom readiness matters\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "NESTED STACKS:\n→ split huge infrastructure into reusable parts\n→ network stack, database stack, app stack\n\nCROSS-STACK EXPORTS:\n→ share outputs from one stack to another\n→ VPC ID exported from network stack → imported by app stack\n\nSTACK POLICIES:\n→ protect critical resources from accidental update/delete\n\nDELETION POLICY:\n→ Retain: keep resource after stack deletion\n→ critical for databases, S3 buckets with important data\n\nWAIT CONDITIONS / DEPENDS_ON:\n→ control order when custom readiness matters"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ split huge infrastructure into reusable parts",
+        "→ network stack, database stack, app stack",
+        "→ share outputs from one stack to another",
+        "→ VPC ID exported from network stack → imported by app stack",
+        "→ protect critical resources from accidental update/delete",
+        "→ Retain: keep resource after stack deletion",
+        "→ critical for databases, S3 buckets with important data",
+        "→ control order when custom readiness matters"
+      ]
+    },
+    {
+      "id": "best-practices",
+      "title": "💡 Best Practices",
+      "type": "checklist",
+      "rawMarkdown": "```\n✅ one repo + review process for infra changes\n✅ use parameters for environment-specific values, not copied templates\n✅ use Change Sets before risky updates\n✅ add DeletionPolicy: Retain for critical data stores\n✅ run drift detection regularly\n✅ never hotfix prod manually unless incident requires it — then reconcile template after\n```\n\n---",
+      "blocks": [
+        {
+          "type": "text-panel",
+          "content": "✅ one repo + review process for infra changes\n✅ use parameters for environment-specific values, not copied templates\n✅ use Change Sets before risky updates\n✅ add DeletionPolicy: Retain for critical data stores\n✅ run drift detection regularly\n✅ never hotfix prod manually unless incident requires it — then reconcile template after"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "✅ one repo + review process for infra changes",
+        "✅ use parameters for environment-specific values, not copied templates",
+        "✅ use Change Sets before risky updates",
+        "✅ add DeletionPolicy: Retain for critical data stores",
+        "✅ run drift detection regularly",
+        "✅ never hotfix prod manually unless incident requires it — then reconcile template after"
+      ]
+    },
+    {
+      "id": "interview-qa-cloudformation",
+      "title": "🎯 Interview Q&A — CloudFormation",
+      "type": "qa",
+      "rawMarkdown": "**Q: Why is Infrastructure as Code important beyond 'automation'?**\n```\n\"Because the real value is control, repeatability, and safe change.\n\nIaC gives:\n→ peer review\n→ version history\n→ consistent environments\n→ repeatable recovery\n→ easier compliance evidence\n\nWithout IaC, every environment becomes a snowflake and outages become harder to reproduce or fix.\"\n```\n\n**Q: A CloudFormation stack update failed halfway. How do you handle that?**\n```\n\"First I check stack events, not guesses.\n\nI want to know:\n→ which resource failed?\n→ was rollback successful?\n→ is stack in UPDATE_ROLLBACK_FAILED?\n\nIf rollback failed, I may need to continue rollback or repair the resource dependency first.\nThe senior move is not manual clicking everywhere; it is understanding stack state and getting\nback to a clean declarative baseline.\"\n```\n\n**Q: What is drift and why is it dangerous?**\n```\n\"Drift means the real resource differs from the template.\n\nThat is dangerous because:\n→ future updates become unpredictable\n→ disaster recovery recreates the wrong thing\n→ compliance evidence becomes unreliable\n\nConsole changes feel fast, but they create hidden entropy.\nSenior teams treat manual production edits as exceptions and reconcile them back into IaC quickly.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: Why is Infrastructure as Code important beyond 'automation'?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Because the real value is control, repeatability, and safe change.\n\nIaC gives:\n→ peer review\n→ version history\n→ consistent environments\n→ repeatable recovery\n→ easier compliance evidence\n\nWithout IaC, every environment becomes a snowflake and outages become harder to reproduce or fix.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: A CloudFormation stack update failed halfway. How do you handle that?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"First I check stack events, not guesses.\n\nI want to know:\n→ which resource failed?\n→ was rollback successful?\n→ is stack in UPDATE_ROLLBACK_FAILED?\n\nIf rollback failed, I may need to continue rollback or repair the resource dependency first.\nThe senior move is not manual clicking everywhere; it is understanding stack state and getting\nback to a clean declarative baseline.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: What is drift and why is it dangerous?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Drift means the real resource differs from the template.\n\nThat is dangerous because:\n→ future updates become unpredictable\n→ disaster recovery recreates the wrong thing\n→ compliance evidence becomes unreliable\n\nConsole changes feel fast, but they create hidden entropy.\nSenior teams treat manual production edits as exceptions and reconcile them back into IaC quickly.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "18-infrastructure-as-code-cloudformation-q1",
+          "question": "Why is Infrastructure as Code important beyond 'automation'?",
+          "answer": "\"Because the real value is control, repeatability, and safe change.\n\nIaC gives:\n→ peer review\n→ version history\n→ consistent environments\n→ repeatable recovery\n→ easier compliance evidence\n\nWithout IaC, every environment becomes a snowflake and outages become harder to reproduce or fix.\"",
+          "topicNumber": 18,
+          "topicSlug": "18-infrastructure-as-code-cloudformation",
+          "topic": "Infrastructure as Code (CloudFormation)"
+        },
+        {
+          "id": "18-infrastructure-as-code-cloudformation-q2",
+          "question": "A CloudFormation stack update failed halfway. How do you handle that?",
+          "answer": "\"First I check stack events, not guesses.\n\nI want to know:\n→ which resource failed?\n→ was rollback successful?\n→ is stack in UPDATE_ROLLBACK_FAILED?\n\nIf rollback failed, I may need to continue rollback or repair the resource dependency first.\nThe senior move is not manual clicking everywhere; it is understanding stack state and getting\nback to a clean declarative baseline.\"",
+          "topicNumber": 18,
+          "topicSlug": "18-infrastructure-as-code-cloudformation",
+          "topic": "Infrastructure as Code (CloudFormation)"
+        },
+        {
+          "id": "18-infrastructure-as-code-cloudformation-q3",
+          "question": "What is drift and why is it dangerous?",
+          "answer": "\"Drift means the real resource differs from the template.\n\nThat is dangerous because:\n→ future updates become unpredictable\n→ disaster recovery recreates the wrong thing\n→ compliance evidence becomes unreliable\n\nConsole changes feel fast, but they create hidden entropy.\nSenior teams treat manual production edits as exceptions and reconcile them back into IaC quickly.\"",
+          "topicNumber": 18,
+          "topicSlug": "18-infrastructure-as-code-cloudformation",
+          "topic": "Infrastructure as Code (CloudFormation)"
+        }
+      ],
+      "revisionPoints": [
+        "→ peer review",
+        "→ version history",
+        "→ consistent environments",
+        "→ repeatable recovery",
+        "→ easier compliance evidence",
+        "→ which resource failed?",
+        "→ was rollback successful?",
+        "→ is stack in UPDATE_ROLLBACK_FAILED?"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nCloudFormation → almost every AWS service: declarative provisioning\nCloudFormation ← CI/CD: deploy templates as reviewed infrastructure changes\nCloudFormation → IAM: execution roles and permissions for stack actions\nCloudFormation → Outputs/Exports: connect stacks together\n\nNEXT: CI/CD — CodePipeline, CodeBuild, CodeDeploy\nHow code and infrastructure changes move safely into production.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "CloudFormation → almost every AWS service: declarative provisioning\nCloudFormation ← CI/CD: deploy templates as reviewed infrastructure changes\nCloudFormation → IAM: execution roles and permissions for stack actions\nCloudFormation → Outputs/Exports: connect stacks together\n\nNEXT: CI/CD — CodePipeline, CodeBuild, CodeDeploy\nHow code and infrastructure changes move safely into production."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "CloudFormation → almost every AWS service: declarative provisioning"
+      ]
+    }
+  ]
+}

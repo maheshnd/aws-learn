@@ -4,6 +4,33 @@
   "title": "Lambda (Serverless Compute Deep Dive)",
   "sections": [
     {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nBefore Lambda, even tiny background tasks needed a server:\n→ resize uploaded image? spin up EC2\n→ run nightly cleanup? keep cron server alive 24/7\n→ process webhook? maintain autoscaling group for occasional traffic\n\nThat meant:\n→ patching OS for code that ran 300ms\n→ paying for idle compute\n→ guessing capacity for spiky workloads\n\nLambda changed the model:\nevent happens → AWS runs your code → AWS stops billing when code stops.\n\nMENTAL MODEL:\nLambda is not \"a tiny server.\"\nLambda is an event execution engine.\nYou give AWS:\n→ code\n→ memory/timeout\n→ trigger\n\nAWS gives you:\n→ automatic scaling\n→ no server management\n→ pay-per-use\n\nBest for:\n→ event-driven workloads\n→ bursty traffic\n→ glue code between services\n→ APIs with variable load\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Before Lambda, even tiny background tasks needed a server:\n→ resize uploaded image? spin up EC2\n→ run nightly cleanup? keep cron server alive 24/7\n→ process webhook? maintain autoscaling group for occasional traffic\n\nThat meant:\n→ patching OS for code that ran 300ms\n→ paying for idle compute\n→ guessing capacity for spiky workloads\n\nLambda changed the model:\nevent happens → AWS runs your code → AWS stops billing when code stops.\n\nMENTAL MODEL:\nLambda is not \"a tiny server.\"\nLambda is an event execution engine.\nYou give AWS:\n→ code\n→ memory/timeout\n→ trigger\n\nAWS gives you:\n→ automatic scaling\n→ no server management\n→ pay-per-use\n\nBest for:\n→ event-driven workloads\n→ bursty traffic\n→ glue code between services\n→ APIs with variable load"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ resize uploaded image? spin up EC2",
+        "→ run nightly cleanup? keep cron server alive 24/7",
+        "→ process webhook? maintain autoscaling group for occasional traffic",
+        "→ patching OS for code that ran 300ms",
+        "→ paying for idle compute",
+        "→ guessing capacity for spiky workloads",
+        "→ code",
+        "→ memory/timeout"
+      ]
+    },
+    {
       "id": "lambda-internals-how-it-actually-works",
       "title": "⚙️ Lambda Internals — How it Actually Works",
       "type": "concept",
@@ -197,6 +224,26 @@
         "→ reserved concurrency on that function",
         "→ whether another noisy function consumed regional concurrency",
         "→ RDS connection exhaustion"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nLambda ← API Gateway/ALB/Function URLs: synchronous HTTP triggers\nLambda ← S3/SNS/EventBridge: asynchronous events\nLambda ← SQS/Kinesis/DynamoDB Streams: polled event sources\nLambda → DynamoDB/S3/SQS/SNS: common managed dependencies\nLambda → RDS Proxy: safe relational DB access at scale\nLambda → CloudWatch/X-Ray: logs, metrics, traces\nLambda → IAM: execution role defines what code can access\nLambda → VPC: private resource access when needed\n\nNEXT: Containers — ECS, ECR, EKS\nWhen the workload should keep running continuously instead of per-event execution.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Lambda ← API Gateway/ALB/Function URLs: synchronous HTTP triggers\nLambda ← S3/SNS/EventBridge: asynchronous events\nLambda ← SQS/Kinesis/DynamoDB Streams: polled event sources\nLambda → DynamoDB/S3/SQS/SNS: common managed dependencies\nLambda → RDS Proxy: safe relational DB access at scale\nLambda → CloudWatch/X-Ray: logs, metrics, traces\nLambda → IAM: execution role defines what code can access\nLambda → VPC: private resource access when needed\n\nNEXT: Containers — ECS, ECR, EKS\nWhen the workload should keep running continuously instead of per-event execution."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "Lambda ← API Gateway/ALB/Function URLs: synchronous HTTP triggers"
       ]
     }
   ]

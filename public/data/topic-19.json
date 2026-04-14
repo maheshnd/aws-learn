@@ -1,0 +1,226 @@
+{
+  "number": 19,
+  "slug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+  "title": "CI/CD (CodePipeline, CodeBuild, CodeDeploy)",
+  "sections": [
+    {
+      "id": "the-story",
+      "title": "🧒 The Story",
+      "type": "story",
+      "rawMarkdown": "```\nWithout CI/CD:\n→ developer merges code\n→ someone builds manually on laptop\n→ someone SSHs into server\n→ restarts app and hopes it works\n\nProblems:\n→ no repeatability\n→ no audit trail\n→ deploys depend on one hero engineer\n→ rollback is stressful and slow\n\nCI/CD turns releases into a defined system:\ncommit → build → test → deploy → verify → rollback if needed\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "Without CI/CD:\n→ developer merges code\n→ someone builds manually on laptop\n→ someone SSHs into server\n→ restarts app and hopes it works\n\nProblems:\n→ no repeatability\n→ no audit trail\n→ deploys depend on one hero engineer\n→ rollback is stressful and slow\n\nCI/CD turns releases into a defined system:\ncommit → build → test → deploy → verify → rollback if needed"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ developer merges code",
+        "→ someone builds manually on laptop",
+        "→ someone SSHs into server",
+        "→ restarts app and hopes it works",
+        "→ no repeatability",
+        "→ no audit trail",
+        "→ deploys depend on one hero engineer",
+        "→ rollback is stressful and slow"
+      ]
+    },
+    {
+      "id": "core-services",
+      "title": "🔁 Core Services",
+      "type": "concept",
+      "rawMarkdown": "### CodePipeline\n```\nCodePipeline = orchestration layer\n→ defines stages: Source → Build → Test → Deploy\n→ integrates with GitHub, CodeBuild, CodeDeploy, CloudFormation\n→ visual pipeline state and history\n```\n\n### CodeBuild\n```\nCodeBuild = managed build runner\n→ compiles code, runs tests, builds Docker images\n→ ephemeral environment per build\n→ buildspec.yml defines commands\n\nExample buildspec phases:\ninstall  → dependencies\npre_build → auth/login/setup\nbuild    → tests + package/build\npost_build → push image / create artifacts\n```\n\n### CodeDeploy\n```\nCodeDeploy = deployment engine\n→ deploy to EC2, ECS, Lambda\n→ rolling, blue/green, canary styles depending on target\n→ lifecycle hooks for validation before/after traffic shift\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### CodePipeline"
+        },
+        {
+          "type": "diagram",
+          "content": "CodePipeline = orchestration layer\n→ defines stages: Source → Build → Test → Deploy\n→ integrates with GitHub, CodeBuild, CodeDeploy, CloudFormation\n→ visual pipeline state and history"
+        },
+        {
+          "type": "paragraph",
+          "content": "### CodeBuild"
+        },
+        {
+          "type": "diagram",
+          "content": "CodeBuild = managed build runner\n→ compiles code, runs tests, builds Docker images\n→ ephemeral environment per build\n→ buildspec.yml defines commands\n\nExample buildspec phases:\ninstall  → dependencies\npre_build → auth/login/setup\nbuild    → tests + package/build\npost_build → push image / create artifacts"
+        },
+        {
+          "type": "paragraph",
+          "content": "### CodeDeploy"
+        },
+        {
+          "type": "diagram",
+          "content": "CodeDeploy = deployment engine\n→ deploy to EC2, ECS, Lambda\n→ rolling, blue/green, canary styles depending on target\n→ lifecycle hooks for validation before/after traffic shift"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ defines stages: Source → Build → Test → Deploy",
+        "→ integrates with GitHub, CodeBuild, CodeDeploy, CloudFormation",
+        "→ visual pipeline state and history",
+        "→ compiles code, runs tests, builds Docker images",
+        "→ ephemeral environment per build",
+        "→ buildspec.yml defines commands",
+        "→ deploy to EC2, ECS, Lambda",
+        "→ rolling, blue/green, canary styles depending on target"
+      ]
+    },
+    {
+      "id": "deployment-strategies",
+      "title": "🚦 Deployment Strategies",
+      "type": "concept",
+      "rawMarkdown": "```\nROLLING:\n→ replace instances/tasks gradually\n→ lower extra cost\n→ slower rollback than true blue/green\n\nBLUE/GREEN:\n→ old version and new version run side by side\n→ shift traffic when green proves healthy\n→ fastest rollback: move traffic back to blue\n\nCANARY:\n→ small percentage first\n→ good for catching production-only issues early\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "ROLLING:\n→ replace instances/tasks gradually\n→ lower extra cost\n→ slower rollback than true blue/green\n\nBLUE/GREEN:\n→ old version and new version run side by side\n→ shift traffic when green proves healthy\n→ fastest rollback: move traffic back to blue\n\nCANARY:\n→ small percentage first\n→ good for catching production-only issues early"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "→ replace instances/tasks gradually",
+        "→ lower extra cost",
+        "→ slower rollback than true blue/green",
+        "→ old version and new version run side by side",
+        "→ shift traffic when green proves healthy",
+        "→ fastest rollback: move traffic back to blue",
+        "→ small percentage first",
+        "→ good for catching production-only issues early"
+      ]
+    },
+    {
+      "id": "cicd-best-practices",
+      "title": "💡 CI/CD Best Practices",
+      "type": "checklist",
+      "rawMarkdown": "```\n✅ small frequent releases\n✅ automated tests before deploy\n✅ immutable artifacts (same artifact moves across environments)\n✅ separate build from deploy\n✅ health checks and smoke tests after deploy\n✅ automated rollback criteria on alarms\n✅ infrastructure changes go through pipeline too, not only app code\n```\n\n---",
+      "blocks": [
+        {
+          "type": "text-panel",
+          "content": "✅ small frequent releases\n✅ automated tests before deploy\n✅ immutable artifacts (same artifact moves across environments)\n✅ separate build from deploy\n✅ health checks and smoke tests after deploy\n✅ automated rollback criteria on alarms\n✅ infrastructure changes go through pipeline too, not only app code"
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "✅ small frequent releases",
+        "✅ automated tests before deploy",
+        "✅ immutable artifacts (same artifact moves across environments)",
+        "✅ separate build from deploy",
+        "✅ health checks and smoke tests after deploy",
+        "✅ automated rollback criteria on alarms",
+        "✅ infrastructure changes go through pipeline too, not only app code"
+      ]
+    },
+    {
+      "id": "interview-qa-cicd",
+      "title": "🎯 Interview Q&A — CI/CD",
+      "type": "qa",
+      "rawMarkdown": "**Q: What makes a deployment pipeline production-grade?**\n```\n\"Not just automation. A production-grade pipeline has safety.\n\nI look for:\n→ immutable artifacts\n→ automated tests\n→ environment promotion path\n→ approvals where needed\n→ health verification after deployment\n→ rollback mechanism tied to alarms\n\nA script that copies files to prod is automation.\nA pipeline that reduces change risk is CI/CD.\"\n```\n\n**Q: How do you reduce deployment risk for critical services?**\n```\n\"Use progressive delivery.\n\nMy preferred sequence:\n→ deploy to staging with realistic tests\n→ blue/green or canary in production\n→ watch latency, errors, saturation, business KPIs\n→ auto-rollback if thresholds breach\n\nSenior delivery is about limiting blast radius, not just making deployment faster.\"\n```\n\n**Q: Why separate CodeBuild from CodeDeploy instead of doing everything in one script?**\n```\n\"Because build and deploy solve different problems.\n\nBuild should create a tested immutable artifact.\nDeploy should promote that exact artifact into environments.\n\nIf you rebuild per environment, you lose traceability and increase drift.\nSeparation gives you reproducibility, auditing, and safer rollback.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: What makes a deployment pipeline production-grade?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Not just automation. A production-grade pipeline has safety.\n\nI look for:\n→ immutable artifacts\n→ automated tests\n→ environment promotion path\n→ approvals where needed\n→ health verification after deployment\n→ rollback mechanism tied to alarms\n\nA script that copies files to prod is automation.\nA pipeline that reduces change risk is CI/CD.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How do you reduce deployment risk for critical services?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Use progressive delivery.\n\nMy preferred sequence:\n→ deploy to staging with realistic tests\n→ blue/green or canary in production\n→ watch latency, errors, saturation, business KPIs\n→ auto-rollback if thresholds breach\n\nSenior delivery is about limiting blast radius, not just making deployment faster.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Why separate CodeBuild from CodeDeploy instead of doing everything in one script?**"
+        },
+        {
+          "type": "text-panel",
+          "content": "\"Because build and deploy solve different problems.\n\nBuild should create a tested immutable artifact.\nDeploy should promote that exact artifact into environments.\n\nIf you rebuild per environment, you lose traceability and increase drift.\nSeparation gives you reproducibility, auditing, and safer rollback.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "19-ci-cd-codepipeline-codebuild-codedeploy-q1",
+          "question": "What makes a deployment pipeline production-grade?",
+          "answer": "\"Not just automation. A production-grade pipeline has safety.\n\nI look for:\n→ immutable artifacts\n→ automated tests\n→ environment promotion path\n→ approvals where needed\n→ health verification after deployment\n→ rollback mechanism tied to alarms\n\nA script that copies files to prod is automation.\nA pipeline that reduces change risk is CI/CD.\"",
+          "topicNumber": 19,
+          "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+          "topic": "CI/CD (CodePipeline, CodeBuild, CodeDeploy)"
+        },
+        {
+          "id": "19-ci-cd-codepipeline-codebuild-codedeploy-q2",
+          "question": "How do you reduce deployment risk for critical services?",
+          "answer": "\"Use progressive delivery.\n\nMy preferred sequence:\n→ deploy to staging with realistic tests\n→ blue/green or canary in production\n→ watch latency, errors, saturation, business KPIs\n→ auto-rollback if thresholds breach\n\nSenior delivery is about limiting blast radius, not just making deployment faster.\"",
+          "topicNumber": 19,
+          "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+          "topic": "CI/CD (CodePipeline, CodeBuild, CodeDeploy)"
+        },
+        {
+          "id": "19-ci-cd-codepipeline-codebuild-codedeploy-q3",
+          "question": "Why separate CodeBuild from CodeDeploy instead of doing everything in one script?",
+          "answer": "\"Because build and deploy solve different problems.\n\nBuild should create a tested immutable artifact.\nDeploy should promote that exact artifact into environments.\n\nIf you rebuild per environment, you lose traceability and increase drift.\nSeparation gives you reproducibility, auditing, and safer rollback.\"",
+          "topicNumber": 19,
+          "topicSlug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+          "topic": "CI/CD (CodePipeline, CodeBuild, CodeDeploy)"
+        }
+      ],
+      "revisionPoints": [
+        "→ immutable artifacts",
+        "→ automated tests",
+        "→ environment promotion path",
+        "→ approvals where needed",
+        "→ health verification after deployment",
+        "→ rollback mechanism tied to alarms",
+        "→ deploy to staging with realistic tests",
+        "→ blue/green or canary in production"
+      ]
+    },
+    {
+      "id": "connects-to",
+      "title": "🔗 Connects To",
+      "type": "relations",
+      "rawMarkdown": "```\nCodePipeline ← GitHub/CodeCommit: source changes\nCodePipeline → CodeBuild: build and test\nCodePipeline → CloudFormation/CodeDeploy/ECS/Lambda: deploy targets\nCodeBuild → ECR/S3: store built artifacts and images\nCodeDeploy → ALB/Lambda/ECS: traffic shifting and rollout control\nCI/CD → CloudWatch alarms: deployment verification and rollback triggers\n\nNEXT: Well-Architected + Architecture Patterns\nHow to judge whether the whole system is actually well designed.\n```\n\n---",
+      "blocks": [
+        {
+          "type": "diagram",
+          "content": "CodePipeline ← GitHub/CodeCommit: source changes\nCodePipeline → CodeBuild: build and test\nCodePipeline → CloudFormation/CodeDeploy/ECS/Lambda: deploy targets\nCodeBuild → ECR/S3: store built artifacts and images\nCodeDeploy → ALB/Lambda/ECS: traffic shifting and rollout control\nCI/CD → CloudWatch alarms: deployment verification and rollback triggers\n\nNEXT: Well-Architected + Architecture Patterns\nHow to judge whether the whole system is actually well designed."
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [],
+      "revisionPoints": [
+        "CodePipeline ← GitHub/CodeCommit: source changes"
+      ]
+    }
+  ]
+}

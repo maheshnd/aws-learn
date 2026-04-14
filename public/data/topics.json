@@ -81,7 +81,7 @@
       "number": 12,
       "slug": "12-lambda-serverless-compute-deep-dive",
       "title": "Lambda (Serverless Compute Deep Dive)",
-      "sectionCount": 5,
+      "sectionCount": 7,
       "qaCount": 3
     },
     {
@@ -95,28 +95,42 @@
       "number": 14,
       "slug": "14-api-gateway",
       "title": "API Gateway",
-      "sectionCount": 4,
+      "sectionCount": 6,
       "qaCount": 3
     },
     {
       "number": 15,
       "slug": "15-observability-cloudwatch-cloudtrail-x-ray",
       "title": "Observability (CloudWatch, CloudTrail, X-Ray)",
-      "sectionCount": 4,
+      "sectionCount": 6,
       "qaCount": 3
     },
     {
       "number": 16,
       "slug": "16-security-kms-secrets-manager-waf-guardduty-shield",
       "title": "Security (KMS, Secrets Manager, WAF, GuardDuty, Shield)",
-      "sectionCount": 5,
+      "sectionCount": 8,
       "qaCount": 3
     },
     {
       "number": 17,
       "slug": "17-cost-optimization",
       "title": "Cost Optimization",
-      "sectionCount": 2,
+      "sectionCount": 4,
+      "qaCount": 3
+    },
+    {
+      "number": 18,
+      "slug": "18-infrastructure-as-code-cloudformation",
+      "title": "Infrastructure as Code (CloudFormation)",
+      "sectionCount": 6,
+      "qaCount": 3
+    },
+    {
+      "number": 19,
+      "slug": "19-ci-cd-codepipeline-codebuild-codedeploy",
+      "title": "CI/CD (CodePipeline, CodeBuild, CodeDeploy)",
+      "sectionCount": 6,
       "qaCount": 3
     },
     {
@@ -127,7 +141,7 @@
       "qaCount": 3
     }
   ],
-  "totalTopics": 18,
-  "totalQA": 69,
-  "generatedAt": "2026-04-14T03:10:29.891Z"
+  "totalTopics": 20,
+  "totalQA": 75,
+  "generatedAt": "2026-04-14T03:32:22.221Z"
 }
