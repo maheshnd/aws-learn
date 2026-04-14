@@ -34,8 +34,16 @@
       "id": "core-services",
       "title": "🔁 Core Services",
       "type": "concept",
-      "rawMarkdown": "### CodePipeline\n```\nCodePipeline = orchestration layer\n→ defines stages: Source → Build → Test → Deploy\n→ integrates with GitHub, CodeBuild, CodeDeploy, CloudFormation\n→ visual pipeline state and history\n```\n\n### CodeBuild\n```\nCodeBuild = managed build runner\n→ compiles code, runs tests, builds Docker images\n→ ephemeral environment per build\n→ buildspec.yml defines commands\n\nExample buildspec phases:\ninstall  → dependencies\npre_build → auth/login/setup\nbuild    → tests + package/build\npost_build → push image / create artifacts\n```\n\n### CodeDeploy\n```\nCodeDeploy = deployment engine\n→ deploy to EC2, ECS, Lambda\n→ rolling, blue/green, canary styles depending on target\n→ lifecycle hooks for validation before/after traffic shift\n```\n\n---",
+      "rawMarkdown": "### CI/CD Big Picture Diagram\n```\nDeveloper push / merge\n        │\n        ▼\n   CodePipeline\n        │\n   ┌────┼───────────────┐\n   ▼    ▼               ▼\nSource Build         Deploy\n      CodeBuild   CodeDeploy / CloudFormation\n        │               │\n        ▼               ▼\n   tests + artifact   traffic shift\n        │               │\n        └──────► verify with alarms ◄──────┘\n                        │\n                 healthy? yes/no\n                    │         │\n                    ▼         ▼\n                 success   rollback\n\nMENTAL MODEL:\nCI/CD is a controlled path for change, not just a script that runs commands.\n```\n\n### CodePipeline\n```\nCodePipeline = orchestration layer\n→ defines stages: Source → Build → Test → Deploy\n→ integrates with GitHub, CodeBuild, CodeDeploy, CloudFormation\n→ visual pipeline state and history\n```\n\n### CodeBuild\n```\nCodeBuild = managed build runner\n→ compiles code, runs tests, builds Docker images\n→ ephemeral environment per build\n→ buildspec.yml defines commands\n\nExample buildspec phases:\ninstall  → dependencies\npre_build → auth/login/setup\nbuild    → tests + package/build\npost_build → push image / create artifacts\n```\n\n### CodeDeploy\n```\nCodeDeploy = deployment engine\n→ deploy to EC2, ECS, Lambda\n→ rolling, blue/green, canary styles depending on target\n→ lifecycle hooks for validation before/after traffic shift\n```\n\n---",
       "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### CI/CD Big Picture Diagram"
+        },
+        {
+          "type": "diagram",
+          "content": "Developer push / merge\n        │\n        ▼\n   CodePipeline\n        │\n   ┌────┼───────────────┐\n   ▼    ▼               ▼\nSource Build         Deploy\n      CodeBuild   CodeDeploy / CloudFormation\n        │               │\n        ▼               ▼\n   tests + artifact   traffic shift\n        │               │\n        └──────► verify with alarms ◄──────┘\n                        │\n                 healthy? yes/no\n                    │         │\n                    ▼         ▼\n                 success   rollback\n\nMENTAL MODEL:\nCI/CD is a controlled path for change, not just a script that runs commands."
+        },
         {
           "type": "paragraph",
           "content": "### CodePipeline"

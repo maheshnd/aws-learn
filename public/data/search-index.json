@@ -1114,7 +1114,7 @@
       "sectionId": "aws-cost-optimization-complete-guide",
       "sectionTitle": "💰 AWS Cost Optimization — Complete Guide",
       "type": "pricing",
-      "text": " Finding Where Money Goes EC2 Cost Optimization Database Cost Optimization S3 Cost Optimization Data Transfer Cost Optimization Cost Allocation Tags ---"
+      "text": " Cost Big Picture Diagram Finding Where Money Goes EC2 Cost Optimization Database Cost Optimization S3 Cost Optimization Data Transfer Cost Optimization Cost Allocation Tags ---"
     },
     {
       "id": "17-cost-optimization-interview-qa-cost-optimization",
@@ -1150,7 +1150,7 @@
       "sectionId": "core-concepts",
       "sectionTitle": "🧱 Core Concepts",
       "type": "concept",
-      "text": " Example Template Shape ---"
+      "text": " CloudFormation Big Picture Diagram Example Template Shape ---"
     },
     {
       "id": "18-infrastructure-as-code-cloudformation-advanced-patterns",
@@ -1204,7 +1204,7 @@
       "sectionId": "core-services",
       "sectionTitle": "🔁 Core Services",
       "type": "concept",
-      "text": " CodePipeline CodeBuild CodeDeploy ---"
+      "text": " CI/CD Big Picture Diagram CodePipeline CodeBuild CodeDeploy ---"
     },
     {
       "id": "19-ci-cd-codepipeline-codebuild-codedeploy-deployment-strategies",

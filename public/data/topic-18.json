@@ -34,11 +34,19 @@
       "id": "core-concepts",
       "title": "🧱 Core Concepts",
       "type": "concept",
-      "rawMarkdown": "```\nTEMPLATE:\n→ YAML or JSON file describing resources\n\nSTACK:\n→ a deployed instance of that template\n→ same template can create dev/prod stacks with different parameters\n\nCHANGE SET:\n→ preview of what CloudFormation will change before executing\n\nDRIFT:\n→ real infrastructure no longer matches template\n→ happens when someone changes resources manually in console\n\nROLLBACK:\n→ if stack creation/update fails, CloudFormation rolls back changes automatically\n```\n\n### Example Template Shape\n```\nParameters:\n  Environment:\n    Type: String\n    AllowedValues: [dev, prod]\n\nResources:\n  AppBucket:\n    Type: AWS::S3::Bucket\n    Properties:\n      BucketName: !Sub myapp-${Environment}-assets\n\nOutputs:\n  BucketName:\n    Value: !Ref AppBucket\n```\n\n---",
+      "rawMarkdown": "```\nTEMPLATE:\n→ YAML or JSON file describing resources\n\nSTACK:\n→ a deployed instance of that template\n→ same template can create dev/prod stacks with different parameters\n\nCHANGE SET:\n→ preview of what CloudFormation will change before executing\n\nDRIFT:\n→ real infrastructure no longer matches template\n→ happens when someone changes resources manually in console\n\nROLLBACK:\n→ if stack creation/update fails, CloudFormation rolls back changes automatically\n```\n\n### CloudFormation Big Picture Diagram\n```\nGit repo / template review\n          │\n          ▼\n   cloudformation.yaml\n          │\n          ▼\n      Change Set\n   (preview changes)\n          │\n          ▼\n        Stack\n          │\n   ┌──────┼───────────────┬───────────────┐\n   ▼      ▼               ▼               ▼\n  VPC    ALB             ECS             RDS\n   │      │               │               │\n   └──────┴──── stack state + outputs ───┘\n\nMENTAL MODEL:\nThe template is the blueprint.\nThe stack is the real deployed system.\nCloudFormation keeps the real world aligned to the blueprint.\n```\n\n### Example Template Shape\n```\nParameters:\n  Environment:\n    Type: String\n    AllowedValues: [dev, prod]\n\nResources:\n  AppBucket:\n    Type: AWS::S3::Bucket\n    Properties:\n      BucketName: !Sub myapp-${Environment}-assets\n\nOutputs:\n  BucketName:\n    Value: !Ref AppBucket\n```\n\n---",
       "blocks": [
         {
           "type": "diagram",
           "content": "TEMPLATE:\n→ YAML or JSON file describing resources\n\nSTACK:\n→ a deployed instance of that template\n→ same template can create dev/prod stacks with different parameters\n\nCHANGE SET:\n→ preview of what CloudFormation will change before executing\n\nDRIFT:\n→ real infrastructure no longer matches template\n→ happens when someone changes resources manually in console\n\nROLLBACK:\n→ if stack creation/update fails, CloudFormation rolls back changes automatically"
+        },
+        {
+          "type": "paragraph",
+          "content": "### CloudFormation Big Picture Diagram"
+        },
+        {
+          "type": "diagram",
+          "content": "Git repo / template review\n          │\n          ▼\n   cloudformation.yaml\n          │\n          ▼\n      Change Set\n   (preview changes)\n          │\n          ▼\n        Stack\n          │\n   ┌──────┼───────────────┬───────────────┐\n   ▼      ▼               ▼               ▼\n  VPC    ALB             ECS             RDS\n   │      │               │               │\n   └──────┴──── stack state + outputs ───┘\n\nMENTAL MODEL:\nThe template is the blueprint.\nThe stack is the real deployed system.\nCloudFormation keeps the real world aligned to the blueprint."
         },
         {
           "type": "paragraph",
