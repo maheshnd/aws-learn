@@ -34,8 +34,16 @@
       "id": "iam-is-global",
       "title": "🌐 IAM is Global",
       "type": "concept",
-      "rawMarkdown": "```\nIMPORTANT: IAM is a GLOBAL service.\n→ IAM users, groups, roles, policies exist in ALL regions simultaneously\n→ You do NOT choose a region when creating IAM resources\n→ One IAM user can access resources in any region (if policy allows)\n→ This is different from EC2, S3, RDS — those are regional\n\nContrast:\nIAM User \"alice\"  → exists globally, no region\nEC2 instance      → exists in us-east-1 specifically\n```\n\n---",
+      "rawMarkdown": "### IAM Big Picture Diagram\n```\nUser / app / AWS service\n          │\n          ▼\n      IAM identity\n          │\n          ▼\n    policy evaluation\n   allow / deny / default deny\n          │\n          ▼\n      AWS resource\n\nMENTAL MODEL:\nIAM sits between identities and actions as the gatekeeper.\n```\n\n```\nIMPORTANT: IAM is a GLOBAL service.\n→ IAM users, groups, roles, policies exist in ALL regions simultaneously\n→ You do NOT choose a region when creating IAM resources\n→ One IAM user can access resources in any region (if policy allows)\n→ This is different from EC2, S3, RDS — those are regional\n\nContrast:\nIAM User \"alice\"  → exists globally, no region\nEC2 instance      → exists in us-east-1 specifically\n```\n\n---",
       "blocks": [
+        {
+          "type": "paragraph",
+          "content": "### IAM Big Picture Diagram"
+        },
+        {
+          "type": "diagram",
+          "content": "User / app / AWS service\n          │\n          ▼\n      IAM identity\n          │\n          ▼\n    policy evaluation\n   allow / deny / default deny\n          │\n          ▼\n      AWS resource\n\nMENTAL MODEL:\nIAM sits between identities and actions as the gatekeeper."
+        },
         {
           "type": "diagram",
           "content": "IMPORTANT: IAM is a GLOBAL service.\n→ IAM users, groups, roles, policies exist in ALL regions simultaneously\n→ You do NOT choose a region when creating IAM resources\n→ One IAM user can access resources in any region (if policy allows)\n→ This is different from EC2, S3, RDS — those are regional\n\nContrast:\nIAM User \"alice\"  → exists globally, no region\nEC2 instance      → exists in us-east-1 specifically"

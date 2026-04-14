@@ -31,11 +31,19 @@
       "id": "what-cloud-computing-actually-is",
       "title": "📐 What Cloud Computing Actually Is",
       "type": "concept",
-      "rawMarkdown": "> **Simple version:** Renting computing power over the internet, paying only for what you use, scaling up or down in seconds.\n\n**Official NIST definition (broken down):**\n\n| Term | Plain English |\n|------|--------------|\n| On-demand | Get it when you need it. No waiting, no approval. |\n| Network access | Access over the internet from anywhere |\n| Shared pool | AWS's millions of servers, you borrow some |\n| Rapidly provisioned | Server in 90 seconds. Delete in 30 seconds. |\n| Minimal effort | You don't manage the building, power, or hardware |\n\n---",
+      "rawMarkdown": "> **Simple version:** Renting computing power over the internet, paying only for what you use, scaling up or down in seconds.\n\n### Cloud Big Picture Diagram\n```\nYour team needs infrastructure\n           │\n           ▼\n      AWS service catalog\n           │\n   ┌───────┼────────┬────────┬────────┐\n   ▼       ▼        ▼        ▼        ▼\n  EC2      S3      RDS      VPC    Lambda\n   │\n   ▼\nProvision in minutes, scale on demand, pay only for usage\n\nMENTAL MODEL:\nCloud is a menu of rentable building blocks, not one big server.\n```\n\n**Official NIST definition (broken down):**\n\n| Term | Plain English |\n|------|--------------|\n| On-demand | Get it when you need it. No waiting, no approval. |\n| Network access | Access over the internet from anywhere |\n| Shared pool | AWS's millions of servers, you borrow some |\n| Rapidly provisioned | Server in 90 seconds. Delete in 30 seconds. |\n| Minimal effort | You don't manage the building, power, or hardware |\n\n---",
       "blocks": [
         {
           "type": "paragraph",
-          "content": "> **Simple version:** Renting computing power over the internet, paying only for what you use, scaling up or down in seconds.\n\n**Official NIST definition (broken down):**\n\n| Term | Plain English |\n|------|--------------|\n| On-demand | Get it when you need it. No waiting, no approval. |\n| Network access | Access over the internet from anywhere |\n| Shared pool | AWS's millions of servers, you borrow some |\n| Rapidly provisioned | Server in 90 seconds. Delete in 30 seconds. |\n| Minimal effort | You don't manage the building, power, or hardware |\n\n---"
+          "content": "> **Simple version:** Renting computing power over the internet, paying only for what you use, scaling up or down in seconds.\n\n### Cloud Big Picture Diagram"
+        },
+        {
+          "type": "diagram",
+          "content": "Your team needs infrastructure\n           │\n           ▼\n      AWS service catalog\n           │\n   ┌───────┼────────┬────────┬────────┐\n   ▼       ▼        ▼        ▼        ▼\n  EC2      S3      RDS      VPC    Lambda\n   │\n   ▼\nProvision in minutes, scale on demand, pay only for usage\n\nMENTAL MODEL:\nCloud is a menu of rentable building blocks, not one big server."
+        },
+        {
+          "type": "paragraph",
+          "content": "**Official NIST definition (broken down):**\n\n| Term | Plain English |\n|------|--------------|\n| On-demand | Get it when you need it. No waiting, no approval. |\n| Network access | Access over the internet from anywhere |\n| Shared pool | AWS's millions of servers, you borrow some |\n| Rapidly provisioned | Server in 90 seconds. Delete in 30 seconds. |\n| Minimal effort | You don't manage the building, power, or hardware |\n\n---"
         }
       ],
       "qaItems": [],

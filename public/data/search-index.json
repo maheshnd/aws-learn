@@ -16,7 +16,7 @@
       "sectionId": "what-cloud-computing-actually-is",
       "sectionTitle": "📐 What Cloud Computing Actually Is",
       "type": "concept",
-      "text": "> Simple version: Renting computing power over the internet, paying only for what you use, scaling up or down in seconds. Official NIST definition (broken down): | Term | Plain English | |------|--------------| | On-demand | Get it when you need it. No waiting, no approval. | | Network access | Access over the internet from anywhere | | Shared pool | AWS's millions of servers, you borrow some | | Rapidly provisioned | Server in 90 seconds. Delete in 30 seconds. | | Minimal effort | You don't man"
+      "text": "> Simple version: Renting computing power over the internet, paying only for what you use, scaling up or down in seconds. Cloud Big Picture Diagram Official NIST definition (broken down): | Term | Plain English | |------|--------------| | On-demand | Get it when you need it. No waiting, no approval. | | Network access | Access over the internet from anywhere | | Shared pool | AWS's millions of servers, you borrow some | | Rapidly provisioned | Server in 90 seconds. Delete in 30 seconds. | | Mini"
     },
     {
       "id": "01-cloud-computing-5-the-5-characteristics-of-cloud-nist-must-know",
@@ -97,7 +97,7 @@
       "sectionId": "iam-is-global",
       "sectionTitle": "🌐 IAM is Global",
       "type": "concept",
-      "text": " ---"
+      "text": " IAM Big Picture Diagram ---"
     },
     {
       "id": "02-iam-identity-access-management-root-account-vs-iam-users",
@@ -196,7 +196,7 @@
       "sectionId": "the-story",
       "sectionTitle": "🧒 The Story",
       "type": "story",
-      "text": " ---"
+      "text": " EC2 Big Picture Diagram ---"
     },
     {
       "id": "03-ec2-elastic-compute-cloud-what-you-get-with-an-ec2-instance",
@@ -313,7 +313,7 @@
       "sectionId": "ebs-elastic-block-store",
       "sectionTitle": "💾 EBS — Elastic Block Store",
       "type": "concept",
-      "text": " What is EBS? EBS Volume Types gp2 vs gp3 — Always Use gp3 EBS — Important Behaviours EBS Snapshots ---"
+      "text": " What is EBS? Storage Big Picture Diagram EBS Volume Types gp2 vs gp3 — Always Use gp3 EBS — Important Behaviours EBS Snapshots ---"
     },
     {
       "id": "04-ec2-storage-ebs-efs-instance-store-instance-store-ephemeral-storage",
@@ -358,7 +358,7 @@
       "sectionId": "ami-amazon-machine-image",
       "sectionTitle": "🖼️ AMI — Amazon Machine Image",
       "type": "concept",
-      "text": " What is an AMI? AMI Types Creating a Custom AMI (Golden Image Pattern) ---"
+      "text": " Fleet Big Picture Diagram What is an AMI? AMI Types Creating a Custom AMI (Golden Image Pattern) ---"
     },
     {
       "id": "05-ami-auto-scaling-group-load-balancing-load-balancing-elb",
@@ -412,7 +412,7 @@
       "sectionId": "s3-core-concepts",
       "sectionTitle": "🪣 S3 Core Concepts",
       "type": "concept",
-      "text": " Buckets Objects S3 URL Formats ---"
+      "text": " S3 Big Picture Diagram Buckets Objects S3 URL Formats ---"
     },
     {
       "id": "06-s3-simple-storage-service-s3-security-access-control",
@@ -511,7 +511,7 @@
       "sectionId": "rds-relational-database-service",
       "sectionTitle": "🗃️ RDS — Relational Database Service",
       "type": "concept",
-      "text": " What is RDS? RDS Storage Multi-AZ Deployment — High Availability Read Replicas — Performance Scaling RDS Backup ---"
+      "text": " What is RDS? Databases Big Picture Diagram RDS Storage Multi-AZ Deployment — High Availability Read Replicas — Performance Scaling RDS Backup ---"
     },
     {
       "id": "07-databases-rds-aurora-dynamodb-elasticache-aurora-awss-premium-database",
@@ -646,7 +646,7 @@
       "sectionId": "hosted-zones",
       "sectionTitle": "🗂️ Hosted Zones",
       "type": "concept",
-      "text": " ---"
+      "text": " Route 53 Big Picture Diagram ---"
     },
     {
       "id": "09-route-53-dns-routing-policies-the-core-of-route-53",
@@ -700,7 +700,7 @@
       "sectionId": "cloudfront-components",
       "sectionTitle": "⚙️ CloudFront Components",
       "type": "concept",
-      "text": " ---"
+      "text": " CloudFront Big Picture Diagram ---"
     },
     {
       "id": "10-cloudfront-cdn-cloudfront-security",
@@ -790,7 +790,7 @@
       "sectionId": "step-functions-workflow-orchestration",
       "sectionTitle": "🔄 Step Functions — Workflow Orchestration",
       "type": "concept",
-      "text": " What is Step Functions? Step Functions Big Picture Diagram State Machine Concepts Express vs Standard Workflows ---"
+      "text": " What is Step Functions? Step Functions Big Picture Diagram Step Functions Real-World Failure Flow State Machine Concepts Express vs Standard Workflows ---"
     },
     {
       "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-interview-qa-messaging",
@@ -826,7 +826,7 @@
       "sectionId": "lambda-internals-how-it-actually-works",
       "sectionTitle": "⚙️ Lambda Internals — How it Actually Works",
       "type": "concept",
-      "text": " Cold Starts — Deep Understanding Concurrency — How Lambda Scales ---"
+      "text": " Lambda Real-World Failure Flow Cold Starts — Deep Understanding Concurrency — How Lambda Scales ---"
     },
     {
       "id": "12-lambda-serverless-compute-deep-dive-lambda-triggers-event-sources",
@@ -898,7 +898,7 @@
       "sectionId": "ecs-elastic-container-service",
       "sectionTitle": "🚢 ECS — Elastic Container Service",
       "type": "concept",
-      "text": " Task Definition — The Blueprint ECS Launch Types ECS Service — Long-Running Apps ECS vs EKS ---"
+      "text": " Containers Big Picture Diagram Task Definition — The Blueprint ECS Launch Types ECS Service — Long-Running Apps ECS vs EKS ---"
     },
     {
       "id": "13-containers-ecs-ecr-eks-interview-qa-containers",
@@ -907,7 +907,7 @@
       "sectionId": "interview-qa-containers",
       "sectionTitle": "🎯 Interview Q&A — Containers",
       "type": "qa",
-      "text": " Q: Lambda vs ECS Fargate — how do you decide? Q: How do you manage secrets in ECS containers? Q: ECS tasks keep restarting in production. What is your debugging approach? Q: ECS or EKS for a new platform team? How do you answer without being dogmatic? ---"
+      "text": " Containers Real-World Failure Flow Q: Lambda vs ECS Fargate — how do you decide? Q: How do you manage secrets in ECS containers? Q: ECS tasks keep restarting in production. What is your debugging approach? Q: ECS or EKS for a new platform team? How do you answer without being dogmatic? ---"
     },
     {
       "id": "13-containers-ecs-ecr-eks-connects-to",
@@ -961,7 +961,7 @@
       "sectionId": "interview-qa-api-gateway",
       "sectionTitle": "🎯 Interview Q&A — API Gateway",
       "type": "qa",
-      "text": " Q: Clients are getting random 429 errors from API Gateway. How do you debug that in production? Q: When would you choose API Gateway over ALB for Lambda or container backends? Q: A backend deploy succeeded, but users still see old or broken API behavior. Where do you look? ---"
+      "text": " API Gateway Real-World Failure Flow Q: Clients are getting random 429 errors from API Gateway. How do you debug that in production? Q: When would you choose API Gateway over ALB for Lambda or container backends? Q: A backend deploy succeeded, but users still see old or broken API behavior. Where do you look? ---"
     },
     {
       "id": "14-api-gateway-connects-to",
@@ -1015,7 +1015,7 @@
       "sectionId": "interview-qa-observability",
       "sectionTitle": "🎯 Interview Q&A — Observability",
       "type": "qa",
-      "text": " Q: A service is 'slow', but CPU looks fine everywhere. How do you lead that investigation? Q: What logs, metrics, and alarms are mandatory before you call a system production-ready? Q: CloudTrail shows who changed something, but how do you turn that into a real incident response workflow? ---"
+      "text": " Observability Real-World Failure Flow Q: A service is 'slow', but CPU looks fine everywhere. How do you lead that investigation? Q: What logs, metrics, and alarms are mandatory before you call a system production-ready? Q: CloudTrail shows who changed something, but how do you turn that into a real incident response workflow? ---"
     },
     {
       "id": "15-observability-cloudwatch-cloudtrail-x-ray-connects-to",
@@ -1078,7 +1078,7 @@
       "sectionId": "shield-ddos-protection",
       "sectionTitle": "🛡️ Shield — DDoS Protection",
       "type": "concept",
-      "text": " ---"
+      "text": " Security Real-World Failure Flow ---"
     },
     {
       "id": "16-security-kms-secrets-manager-waf-guardduty-shield-interview-qa-security",
@@ -1177,7 +1177,7 @@
       "sectionId": "interview-qa-cloudformation",
       "sectionTitle": "🎯 Interview Q&A — CloudFormation",
       "type": "qa",
-      "text": " Q: Why is Infrastructure as Code important beyond 'automation'? Q: A CloudFormation stack update failed halfway. How do you handle that? Q: What is drift and why is it dangerous? ---"
+      "text": " CloudFormation Real-World Failure Flow Q: Why is Infrastructure as Code important beyond 'automation'? Q: A CloudFormation stack update failed halfway. How do you handle that? Q: What is drift and why is it dangerous? ---"
     },
     {
       "id": "18-infrastructure-as-code-cloudformation-connects-to",
@@ -1231,7 +1231,7 @@
       "sectionId": "interview-qa-cicd",
       "sectionTitle": "🎯 Interview Q&A — CI/CD",
       "type": "qa",
-      "text": " Q: What makes a deployment pipeline production-grade? Q: How do you reduce deployment risk for critical services? Q: Why separate CodeBuild from CodeDeploy instead of doing everything in one script? ---"
+      "text": " CI/CD Real-World Failure Flow Q: What makes a deployment pipeline production-grade? Q: How do you reduce deployment risk for critical services? Q: Why separate CodeBuild from CodeDeploy instead of doing everything in one script? ---"
     },
     {
       "id": "19-ci-cd-codepipeline-codebuild-codedeploy-connects-to",
