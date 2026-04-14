@@ -126,6 +126,78 @@
         "✅ IAM execution role with LEAST privilege (not AdministratorAccess)",
         "✅ Never log sensitive data (PII, passwords, tokens) to CloudWatch"
       ]
+    },
+    {
+      "id": "interview-qa-lambda",
+      "title": "🎯 Interview Q&A — Lambda",
+      "type": "qa",
+      "rawMarkdown": "**Q: Our Lambda suddenly started timing out and throttling during a production spike. How would you investigate?**\n```\n\"I would treat that as a concurrency and downstream dependency incident, not just a Lambda incident.\n\nFirst I would check four metrics together in CloudWatch:\n→ ConcurrentExecutions\n→ Throttles\n→ Duration p95/p99\n→ Errors\n\nIf concurrency spiked and throttles increased, I would verify:\n→ account concurrency limit\n→ reserved concurrency on that function\n→ whether another noisy function consumed regional concurrency\n\nThen I would check what changed in duration.\nIf duration jumped from 300ms to 8 seconds, the real issue is often downstream:\n→ RDS connection exhaustion\n→ external API slowdown\n→ DynamoDB throttling\n→ VPC/NAT bottleneck\n\nFor immediate mitigation:\n→ set reserved concurrency for the critical function\n→ reduce traffic using API Gateway throttling if needed\n→ enable or increase Provisioned Concurrency if cold starts are part of problem\n→ if database-backed, move through RDS Proxy and verify connection reuse\n\nFor async sources like SQS, I would also verify queue age and DLQ growth.\nThe senior answer is: Lambda scaling fast is helpful, but if the dependency behind it\ncannot scale, Lambda becomes the thing that amplifies the outage.\"\n```\n\n**Q: How do you make Lambda safe for retries and duplicate events in real life?**\n```\n\"Assume duplicates will happen. Design for idempotency from day one.\n\nWhere duplicates come from:\n→ SQS visibility timeout expiry\n→ EventBridge retry\n→ client retry on timeout\n→ Lambda async retry after transient failure\n\nMy pattern is:\n1. Generate or extract an idempotency key\n   Example: orderId, paymentId, eventId\n2. Store processing status in DynamoDB with conditional write\n   'only process if key does not exist'\n3. Make side effects happen after idempotency check\n4. Return success for already-processed events instead of failing\n\nFor payments specifically:\n→ never charge card before idempotency check\n→ store request fingerprint + final outcome\n→ retries should return previous success, not create second charge\n\nThis is one of those questions where experienced engineers talk about duplicate-safe\nbusiness logic, not just Lambda retries.\"\n```\n\n**Q: When does a team regret choosing Lambda, even though the design looked good at first?**\n```\n\"Usually when the workload is long-lived, stateful, or operationally noisy.\n\nCommon regret cases:\n→ function runtime keeps growing close to 15 minutes\n→ too many cold-start-sensitive endpoints\n→ heavy VPC/database usage creates connection pressure\n→ local debugging becomes painful across many small functions\n→ event choreography becomes hard to reason about without strong tracing\n\nAt that point I ask:\n→ should this be an always-on service on ECS?\n→ should this workflow be Step Functions instead of many ad-hoc retries?\n→ should we consolidate small functions into bounded-context services?\n\nLambda is excellent, but senior judgment is knowing when serverless complexity\nstarts exceeding the operational benefit.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: Our Lambda suddenly started timing out and throttling during a production spike. How would you investigate?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I would treat that as a concurrency and downstream dependency incident, not just a Lambda incident.\n\nFirst I would check four metrics together in CloudWatch:\n→ ConcurrentExecutions\n→ Throttles\n→ Duration p95/p99\n→ Errors\n\nIf concurrency spiked and throttles increased, I would verify:\n→ account concurrency limit\n→ reserved concurrency on that function\n→ whether another noisy function consumed regional concurrency\n\nThen I would check what changed in duration.\nIf duration jumped from 300ms to 8 seconds, the real issue is often downstream:\n→ RDS connection exhaustion\n→ external API slowdown\n→ DynamoDB throttling\n→ VPC/NAT bottleneck\n\nFor immediate mitigation:\n→ set reserved concurrency for the critical function\n→ reduce traffic using API Gateway throttling if needed\n→ enable or increase Provisioned Concurrency if cold starts are part of problem\n→ if database-backed, move through RDS Proxy and verify connection reuse\n\nFor async sources like SQS, I would also verify queue age and DLQ growth.\nThe senior answer is: Lambda scaling fast is helpful, but if the dependency behind it\ncannot scale, Lambda becomes the thing that amplifies the outage.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How do you make Lambda safe for retries and duplicate events in real life?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Assume duplicates will happen. Design for idempotency from day one.\n\nWhere duplicates come from:\n→ SQS visibility timeout expiry\n→ EventBridge retry\n→ client retry on timeout\n→ Lambda async retry after transient failure\n\nMy pattern is:\n1. Generate or extract an idempotency key\n   Example: orderId, paymentId, eventId\n2. Store processing status in DynamoDB with conditional write\n   'only process if key does not exist'\n3. Make side effects happen after idempotency check\n4. Return success for already-processed events instead of failing\n\nFor payments specifically:\n→ never charge card before idempotency check\n→ store request fingerprint + final outcome\n→ retries should return previous success, not create second charge\n\nThis is one of those questions where experienced engineers talk about duplicate-safe\nbusiness logic, not just Lambda retries.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: When does a team regret choosing Lambda, even though the design looked good at first?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Usually when the workload is long-lived, stateful, or operationally noisy.\n\nCommon regret cases:\n→ function runtime keeps growing close to 15 minutes\n→ too many cold-start-sensitive endpoints\n→ heavy VPC/database usage creates connection pressure\n→ local debugging becomes painful across many small functions\n→ event choreography becomes hard to reason about without strong tracing\n\nAt that point I ask:\n→ should this be an always-on service on ECS?\n→ should this workflow be Step Functions instead of many ad-hoc retries?\n→ should we consolidate small functions into bounded-context services?\n\nLambda is excellent, but senior judgment is knowing when serverless complexity\nstarts exceeding the operational benefit.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "12-lambda-serverless-compute-deep-dive-q1",
+          "question": "Our Lambda suddenly started timing out and throttling during a production spike. How would you investigate?",
+          "answer": "\"I would treat that as a concurrency and downstream dependency incident, not just a Lambda incident.\n\nFirst I would check four metrics together in CloudWatch:\n→ ConcurrentExecutions\n→ Throttles\n→ Duration p95/p99\n→ Errors\n\nIf concurrency spiked and throttles increased, I would verify:\n→ account concurrency limit\n→ reserved concurrency on that function\n→ whether another noisy function consumed regional concurrency\n\nThen I would check what changed in duration.\nIf duration jumped from 300ms to 8 seconds, the real issue is often downstream:\n→ RDS connection exhaustion\n→ external API slowdown\n→ DynamoDB throttling\n→ VPC/NAT bottleneck\n\nFor immediate mitigation:\n→ set reserved concurrency for the critical function\n→ reduce traffic using API Gateway throttling if needed\n→ enable or increase Provisioned Concurrency if cold starts are part of problem\n→ if database-backed, move through RDS Proxy and verify connection reuse\n\nFor async sources like SQS, I would also verify queue age and DLQ growth.\nThe senior answer is: Lambda scaling fast is helpful, but if the dependency behind it\ncannot scale, Lambda becomes the thing that amplifies the outage.\"",
+          "topicNumber": 12,
+          "topicSlug": "12-lambda-serverless-compute-deep-dive",
+          "topic": "Lambda (Serverless Compute Deep Dive)"
+        },
+        {
+          "id": "12-lambda-serverless-compute-deep-dive-q2",
+          "question": "How do you make Lambda safe for retries and duplicate events in real life?",
+          "answer": "\"Assume duplicates will happen. Design for idempotency from day one.\n\nWhere duplicates come from:\n→ SQS visibility timeout expiry\n→ EventBridge retry\n→ client retry on timeout\n→ Lambda async retry after transient failure\n\nMy pattern is:\n1. Generate or extract an idempotency key\n   Example: orderId, paymentId, eventId\n2. Store processing status in DynamoDB with conditional write\n   'only process if key does not exist'\n3. Make side effects happen after idempotency check\n4. Return success for already-processed events instead of failing\n\nFor payments specifically:\n→ never charge card before idempotency check\n→ store request fingerprint + final outcome\n→ retries should return previous success, not create second charge\n\nThis is one of those questions where experienced engineers talk about duplicate-safe\nbusiness logic, not just Lambda retries.\"",
+          "topicNumber": 12,
+          "topicSlug": "12-lambda-serverless-compute-deep-dive",
+          "topic": "Lambda (Serverless Compute Deep Dive)"
+        },
+        {
+          "id": "12-lambda-serverless-compute-deep-dive-q3",
+          "question": "When does a team regret choosing Lambda, even though the design looked good at first?",
+          "answer": "\"Usually when the workload is long-lived, stateful, or operationally noisy.\n\nCommon regret cases:\n→ function runtime keeps growing close to 15 minutes\n→ too many cold-start-sensitive endpoints\n→ heavy VPC/database usage creates connection pressure\n→ local debugging becomes painful across many small functions\n→ event choreography becomes hard to reason about without strong tracing\n\nAt that point I ask:\n→ should this be an always-on service on ECS?\n→ should this workflow be Step Functions instead of many ad-hoc retries?\n→ should we consolidate small functions into bounded-context services?\n\nLambda is excellent, but senior judgment is knowing when serverless complexity\nstarts exceeding the operational benefit.\"",
+          "topicNumber": 12,
+          "topicSlug": "12-lambda-serverless-compute-deep-dive",
+          "topic": "Lambda (Serverless Compute Deep Dive)"
+        }
+      ],
+      "revisionPoints": [
+        "→ ConcurrentExecutions",
+        "→ Throttles",
+        "→ Duration p95/p99",
+        "→ Errors",
+        "→ account concurrency limit",
+        "→ reserved concurrency on that function",
+        "→ whether another noisy function consumed regional concurrency",
+        "→ RDS connection exhaustion"
+      ]
     }
   ]
 }

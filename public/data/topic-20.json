@@ -79,6 +79,78 @@
       ]
     },
     {
+      "id": "interview-qa-architecture-patterns",
+      "title": "🎯 Interview Q&A — Architecture Patterns",
+      "type": "qa",
+      "rawMarkdown": "**Q: In a senior interview, how do you answer 'design a scalable AWS system' without sounding generic?**\n```\n\"I structure the answer in layers and tradeoffs:\n→ ingress\n→ compute\n→ data\n→ async decoupling\n→ security\n→ observability\n→ failure handling\n→ cost\n\nThen I explicitly state assumptions:\ntraffic pattern, RTO/RPO, read/write ratio, compliance needs, team maturity.\n\nWhat interviewers want from a 10+ year engineer is not a list of AWS services.\nThey want to hear how you reason about failure, operational burden, and where the design will break first.\"\n```\n\n**Q: How do you choose between simplicity and future-proofing in architecture?**\n```\n\"I optimize for the simplest design that survives the next real business milestone.\n\nOver-engineering early creates operational drag.\nUnder-engineering creates expensive rewrites under pressure.\n\nSo I ask:\n→ what load do we need in 6-12 months, not 5 years?\n→ what compliance requirements are real today?\n→ what does the team know how to operate?\n→ where is change most likely?\n\nSenior architecture is mostly constraint management.\nI future-proof interfaces and data contracts more than infrastructure complexity.\"\n```\n\n**Q: Tell me about an AWS architecture failure mode that looks fine on diagrams but breaks in real life.**\n```\n\"A classic example is a fully serverless synchronous chain:\nAPI Gateway → Lambda → Lambda → Lambda → RDS\n\nOn the diagram it looks elegant.\nIn real life it can fail because:\n→ every hop adds timeout and retry complexity\n→ tracing becomes harder\n→ cold starts stack up\n→ RDS becomes the bottleneck under concurrent fan-out\n→ one partial failure creates duplicate side effects\n\nThe mature redesign is often:\nkeep synchronous path short,\npush non-critical work to SQS/EventBridge,\nadd idempotency,\nand protect the database with caching, queueing, or RDS Proxy.\n\nSenior engineers earn trust by talking about how systems misbehave under pressure, not just how they look when healthy.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: In a senior interview, how do you answer 'design a scalable AWS system' without sounding generic?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I structure the answer in layers and tradeoffs:\n→ ingress\n→ compute\n→ data\n→ async decoupling\n→ security\n→ observability\n→ failure handling\n→ cost\n\nThen I explicitly state assumptions:\ntraffic pattern, RTO/RPO, read/write ratio, compliance needs, team maturity.\n\nWhat interviewers want from a 10+ year engineer is not a list of AWS services.\nThey want to hear how you reason about failure, operational burden, and where the design will break first.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How do you choose between simplicity and future-proofing in architecture?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I optimize for the simplest design that survives the next real business milestone.\n\nOver-engineering early creates operational drag.\nUnder-engineering creates expensive rewrites under pressure.\n\nSo I ask:\n→ what load do we need in 6-12 months, not 5 years?\n→ what compliance requirements are real today?\n→ what does the team know how to operate?\n→ where is change most likely?\n\nSenior architecture is mostly constraint management.\nI future-proof interfaces and data contracts more than infrastructure complexity.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Tell me about an AWS architecture failure mode that looks fine on diagrams but breaks in real life.**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"A classic example is a fully serverless synchronous chain:\nAPI Gateway → Lambda → Lambda → Lambda → RDS\n\nOn the diagram it looks elegant.\nIn real life it can fail because:\n→ every hop adds timeout and retry complexity\n→ tracing becomes harder\n→ cold starts stack up\n→ RDS becomes the bottleneck under concurrent fan-out\n→ one partial failure creates duplicate side effects\n\nThe mature redesign is often:\nkeep synchronous path short,\npush non-critical work to SQS/EventBridge,\nadd idempotency,\nand protect the database with caching, queueing, or RDS Proxy.\n\nSenior engineers earn trust by talking about how systems misbehave under pressure, not just how they look when healthy.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "20-aws-well-architected-architecture-patterns-q1",
+          "question": "In a senior interview, how do you answer 'design a scalable AWS system' without sounding generic?",
+          "answer": "\"I structure the answer in layers and tradeoffs:\n→ ingress\n→ compute\n→ data\n→ async decoupling\n→ security\n→ observability\n→ failure handling\n→ cost\n\nThen I explicitly state assumptions:\ntraffic pattern, RTO/RPO, read/write ratio, compliance needs, team maturity.\n\nWhat interviewers want from a 10+ year engineer is not a list of AWS services.\nThey want to hear how you reason about failure, operational burden, and where the design will break first.\"",
+          "topicNumber": 20,
+          "topicSlug": "20-aws-well-architected-architecture-patterns",
+          "topic": "AWS Well-Architected + Architecture Patterns"
+        },
+        {
+          "id": "20-aws-well-architected-architecture-patterns-q2",
+          "question": "How do you choose between simplicity and future-proofing in architecture?",
+          "answer": "\"I optimize for the simplest design that survives the next real business milestone.\n\nOver-engineering early creates operational drag.\nUnder-engineering creates expensive rewrites under pressure.\n\nSo I ask:\n→ what load do we need in 6-12 months, not 5 years?\n→ what compliance requirements are real today?\n→ what does the team know how to operate?\n→ where is change most likely?\n\nSenior architecture is mostly constraint management.\nI future-proof interfaces and data contracts more than infrastructure complexity.\"",
+          "topicNumber": 20,
+          "topicSlug": "20-aws-well-architected-architecture-patterns",
+          "topic": "AWS Well-Architected + Architecture Patterns"
+        },
+        {
+          "id": "20-aws-well-architected-architecture-patterns-q3",
+          "question": "Tell me about an AWS architecture failure mode that looks fine on diagrams but breaks in real life.",
+          "answer": "\"A classic example is a fully serverless synchronous chain:\nAPI Gateway → Lambda → Lambda → Lambda → RDS\n\nOn the diagram it looks elegant.\nIn real life it can fail because:\n→ every hop adds timeout and retry complexity\n→ tracing becomes harder\n→ cold starts stack up\n→ RDS becomes the bottleneck under concurrent fan-out\n→ one partial failure creates duplicate side effects\n\nThe mature redesign is often:\nkeep synchronous path short,\npush non-critical work to SQS/EventBridge,\nadd idempotency,\nand protect the database with caching, queueing, or RDS Proxy.\n\nSenior engineers earn trust by talking about how systems misbehave under pressure, not just how they look when healthy.\"",
+          "topicNumber": 20,
+          "topicSlug": "20-aws-well-architected-architecture-patterns",
+          "topic": "AWS Well-Architected + Architecture Patterns"
+        }
+      ],
+      "revisionPoints": [
+        "→ ingress",
+        "→ compute",
+        "→ data",
+        "→ async decoupling",
+        "→ security",
+        "→ observability",
+        "→ failure handling",
+        "→ cost"
+      ]
+    },
+    {
       "id": "big-picture-everything-connected-bigpicture",
       "title": "🗺️ BIG PICTURE — Everything Connected {#big-picture}",
       "type": "concept",
@@ -158,7 +230,7 @@
       "id": "quick-reference-service-decision-trees",
       "title": "📋 Quick Reference — Service Decision Trees",
       "type": "concept",
-      "rawMarkdown": "```\nCOMPUTE:\nNeed to run code:\n  → Runs occasionally, short duration (< 15min), event-driven? → Lambda\n  → Runs continuously, containerized? → ECS Fargate\n  → Need specific OS/hardware, full control? → EC2\n  → Need GPU? → EC2 p/g family\n  → Batch processing, variable scale? → AWS Batch\n\nSTORAGE:\nNeed to store data:\n  → Files/objects (images, documents, backups)? → S3\n  → Block storage for EC2? → EBS gp3\n  → Shared filesystem (multiple EC2)? → EFS\n  → Temporary scratch space (ultra-fast)? → Instance Store\n\nDATABASE:\nNeed a database:\n  → Relational SQL (complex queries, joins)? → Aurora PostgreSQL/MySQL\n  → NoSQL, need < 10ms at any scale? → DynamoDB\n  → Cache in front of database? → ElastiCache Redis\n  → Analytics on petabytes? → Redshift\n  → Full-text search? → OpenSearch\n\nNETWORKING:\nNeed to connect:\n  → Users → your app → ALB (HTTP/HTTPS, path routing)\n  → Users → gaming/IoT → NLB (TCP/UDP, ultra-low latency)\n  → Global users, low latency → CloudFront (CDN)\n  → Your domain → AWS → Route 53 (DNS)\n  → Private VPC connection → VPC Peering or Transit Gateway\n  → On-premise to AWS → Direct Connect or VPN\n\nMESSAGING:\nNeed to decouple:\n  → Buffer between two services → SQS\n  → Fan-out one event to many → SNS\n  → Complex event routing, AWS service events → EventBridge\n  → Multi-step workflow → Step Functions\n  → Real-time streaming → Kinesis\n\nSECURITY:\nNeed to secure:\n  → Who can access what → IAM\n  → Encrypt data → KMS\n  → Store secrets → Secrets Manager\n  → Filter bad HTTP → WAF\n  → Detect threats → GuardDuty\n  → Find PII in S3 → Macie\n  → Scan containers → Inspector\n```\n\n---\n\n*AWS Master Notes — Complete*\n*Topics: 01 Cloud Computing → 20 Architecture + Big Picture*\n*Every service. Every concept. Every interview answer.*\n\n---",
+      "rawMarkdown": "```\nCOMPUTE:\nNeed to run code:\n  → Runs occasionally, short duration (< 15min), event-driven? → Lambda\n  → Runs continuously, containerized? → ECS Fargate\n  → Need specific OS/hardware, full control? → EC2\n  → Need GPU? → EC2 p/g family\n  → Batch processing, variable scale? → AWS Batch\n\nSTORAGE:\nNeed to store data:\n  → Files/objects (images, documents, backups)? → S3\n  → Block storage for EC2? → EBS gp3\n  → Shared filesystem (multiple EC2)? → EFS\n  → Temporary scratch space (ultra-fast)? → Instance Store\n\nDATABASE:\nNeed a database:\n  → Relational SQL (complex queries, joins)? → Aurora PostgreSQL/MySQL\n  → NoSQL, need < 10ms at any scale? → DynamoDB\n  → Cache in front of database? → ElastiCache Redis\n  → Analytics on petabytes? → Redshift\n  → Full-text search? → OpenSearch\n\nNETWORKING:\nNeed to connect:\n  → Users → your app → ALB (HTTP/HTTPS, path routing)\n  → Users → gaming/IoT → NLB (TCP/UDP, ultra-low latency)\n  → Global users, low latency → CloudFront (CDN)\n  → Your domain → AWS → Route 53 (DNS)\n  → Private VPC connection → VPC Peering or Transit Gateway\n  → On-premise to AWS → Direct Connect or VPN\n\nMESSAGING:\nNeed to decouple:\n  → Buffer between two services → SQS\n  → Fan-out one event to many → SNS\n  → Complex event routing, AWS service events → EventBridge\n  → Multi-step workflow → Step Functions\n  → Real-time streaming → Kinesis\n\nSECURITY:\nNeed to secure:\n  → Who can access what → IAM\n  → Encrypt data → KMS\n  → Store secrets → Secrets Manager\n  → Filter bad HTTP → WAF\n  → Detect threats → GuardDuty\n  → Find PII in S3 → Macie\n  → Scan containers → Inspector\n```\n\n---\n\n*AWS Master Notes — Complete*\n*Topics: 01 Cloud Computing → 20 Architecture + Big Picture*\n*Every service. Every concept. Every interview answer.*",
       "blocks": [
         {
           "type": "diagram",
@@ -166,7 +238,7 @@
         },
         {
           "type": "paragraph",
-          "content": "---\n\n*AWS Master Notes — Complete*\n*Topics: 01 Cloud Computing → 20 Architecture + Big Picture*\n*Every service. Every concept. Every interview answer.*\n\n---"
+          "content": "---\n\n*AWS Master Notes — Complete*\n*Topics: 01 Cloud Computing → 20 Architecture + Big Picture*\n*Every service. Every concept. Every interview answer.*"
         }
       ],
       "qaItems": [],

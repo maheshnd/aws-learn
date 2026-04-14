@@ -61,73 +61,73 @@
       "slug": "09-route-53-dns",
       "title": "Route 53 (DNS)",
       "sectionCount": 7,
-      "qaCount": 2
+      "qaCount": 4
     },
     {
       "number": 10,
       "slug": "10-cloudfront-cdn",
       "title": "CloudFront (CDN)",
       "sectionCount": 7,
-      "qaCount": 2
+      "qaCount": 4
     },
     {
       "number": 11,
       "slug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
       "title": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)",
       "sectionCount": 7,
-      "qaCount": 2
+      "qaCount": 5
     },
     {
       "number": 12,
       "slug": "12-lambda-serverless-compute-deep-dive",
       "title": "Lambda (Serverless Compute Deep Dive)",
-      "sectionCount": 4,
-      "qaCount": 0
+      "sectionCount": 5,
+      "qaCount": 3
     },
     {
       "number": 13,
       "slug": "13-containers-ecs-ecr-eks",
       "title": "Containers (ECS, ECR, EKS)",
       "sectionCount": 5,
-      "qaCount": 2
+      "qaCount": 4
     },
     {
       "number": 14,
       "slug": "14-api-gateway",
       "title": "API Gateway",
-      "sectionCount": 3,
-      "qaCount": 0
+      "sectionCount": 4,
+      "qaCount": 3
     },
     {
       "number": 15,
       "slug": "15-observability-cloudwatch-cloudtrail-x-ray",
       "title": "Observability (CloudWatch, CloudTrail, X-Ray)",
-      "sectionCount": 3,
-      "qaCount": 0
+      "sectionCount": 4,
+      "qaCount": 3
     },
     {
       "number": 16,
       "slug": "16-security-kms-secrets-manager-waf-guardduty-shield",
       "title": "Security (KMS, Secrets Manager, WAF, GuardDuty, Shield)",
-      "sectionCount": 4,
-      "qaCount": 0
+      "sectionCount": 5,
+      "qaCount": 3
     },
     {
       "number": 17,
       "slug": "17-cost-optimization",
       "title": "Cost Optimization",
-      "sectionCount": 1,
-      "qaCount": 0
+      "sectionCount": 2,
+      "qaCount": 3
     },
     {
       "number": 20,
       "slug": "20-aws-well-architected-architecture-patterns",
       "title": "AWS Well-Architected + Architecture Patterns",
-      "sectionCount": 4,
-      "qaCount": 0
+      "sectionCount": 5,
+      "qaCount": 3
     }
   ],
   "totalTopics": 18,
-  "totalQA": 42,
-  "generatedAt": "2026-04-13T22:55:41.322Z"
+  "totalQA": 69,
+  "generatedAt": "2026-04-14T03:10:29.891Z"
 }

@@ -73,6 +73,78 @@
         "→ Line-item level: every API call that incurred a charge",
         "→ Delivered to S3 hourly or daily"
       ]
+    },
+    {
+      "id": "interview-qa-cost-optimization",
+      "title": "🎯 Interview Q&A — Cost Optimization",
+      "type": "qa",
+      "rawMarkdown": "**Q: CFO says AWS spend jumped 40% this month. How do you investigate without guessing?**\n```\n\"I would start with Cost Explorer and CUR, not opinions.\n\nBreak the increase down by:\n→ service\n→ region\n→ linked account\n→ tag (team, environment, product)\n→ usage type\n\nTypical real causes:\n→ data transfer spike\n→ NAT Gateway growth\n→ accidental On-Demand instead of Savings Plan coverage\n→ forgotten dev resources\n→ CloudFront cache miss increase\n→ log retention set to never\n→ S3 request charges, not storage\n\nThen I separate one-time spike from baseline change.\nThe senior answer is not 'cut costs everywhere' but\n'find the exact cost driver, tie it to behavior, then fix the architecture or governance issue.'\"\n```\n\n**Q: What are the most common hidden AWS cost traps that junior engineers miss?**\n```\n\"The big ones are rarely the obvious compute line item.\n\nCommon traps:\n→ NAT Gateway hourly + per-GB charges\n→ cross-AZ data transfer\n→ idle but attached load balancers\n→ CloudWatch log retention left infinite\n→ old EBS snapshots and unattached EBS volumes\n→ S3 request costs on chatty workloads\n→ provisioned but unused RDS / ElastiCache capacity\n→ over-provisioned ECS or Lambda memory\n\nThe pattern is this:\nthe bill usually grows at architecture boundaries, not inside one EC2 instance.\"\n```\n\n**Q: How do you optimize cost without damaging reliability or performance?**\n```\n\"I optimize in this order:\n1. Remove waste\n2. Right-size\n3. Commit baseline usage\n4. Redesign expensive patterns\n\nI do not start by reducing redundancy in production.\nFor example, deleting Multi-AZ may save money but increases outage risk.\nBetter savings usually come from:\n→ right-sizing compute\n→ caching\n→ eliminating NAT traffic with VPC endpoints\n→ moving bursty workloads to serverless/Spot\n→ using Savings Plans for stable baseline\n\nSenior cost optimization is about cost per business outcome, not just making the bill smaller.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: CFO says AWS spend jumped 40% this month. How do you investigate without guessing?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I would start with Cost Explorer and CUR, not opinions.\n\nBreak the increase down by:\n→ service\n→ region\n→ linked account\n→ tag (team, environment, product)\n→ usage type\n\nTypical real causes:\n→ data transfer spike\n→ NAT Gateway growth\n→ accidental On-Demand instead of Savings Plan coverage\n→ forgotten dev resources\n→ CloudFront cache miss increase\n→ log retention set to never\n→ S3 request charges, not storage\n\nThen I separate one-time spike from baseline change.\nThe senior answer is not 'cut costs everywhere' but\n'find the exact cost driver, tie it to behavior, then fix the architecture or governance issue.'\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: What are the most common hidden AWS cost traps that junior engineers miss?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"The big ones are rarely the obvious compute line item.\n\nCommon traps:\n→ NAT Gateway hourly + per-GB charges\n→ cross-AZ data transfer\n→ idle but attached load balancers\n→ CloudWatch log retention left infinite\n→ old EBS snapshots and unattached EBS volumes\n→ S3 request costs on chatty workloads\n→ provisioned but unused RDS / ElastiCache capacity\n→ over-provisioned ECS or Lambda memory\n\nThe pattern is this:\nthe bill usually grows at architecture boundaries, not inside one EC2 instance.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How do you optimize cost without damaging reliability or performance?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I optimize in this order:\n1. Remove waste\n2. Right-size\n3. Commit baseline usage\n4. Redesign expensive patterns\n\nI do not start by reducing redundancy in production.\nFor example, deleting Multi-AZ may save money but increases outage risk.\nBetter savings usually come from:\n→ right-sizing compute\n→ caching\n→ eliminating NAT traffic with VPC endpoints\n→ moving bursty workloads to serverless/Spot\n→ using Savings Plans for stable baseline\n\nSenior cost optimization is about cost per business outcome, not just making the bill smaller.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "17-cost-optimization-q1",
+          "question": "CFO says AWS spend jumped 40% this month. How do you investigate without guessing?",
+          "answer": "\"I would start with Cost Explorer and CUR, not opinions.\n\nBreak the increase down by:\n→ service\n→ region\n→ linked account\n→ tag (team, environment, product)\n→ usage type\n\nTypical real causes:\n→ data transfer spike\n→ NAT Gateway growth\n→ accidental On-Demand instead of Savings Plan coverage\n→ forgotten dev resources\n→ CloudFront cache miss increase\n→ log retention set to never\n→ S3 request charges, not storage\n\nThen I separate one-time spike from baseline change.\nThe senior answer is not 'cut costs everywhere' but\n'find the exact cost driver, tie it to behavior, then fix the architecture or governance issue.'\"",
+          "topicNumber": 17,
+          "topicSlug": "17-cost-optimization",
+          "topic": "Cost Optimization"
+        },
+        {
+          "id": "17-cost-optimization-q2",
+          "question": "What are the most common hidden AWS cost traps that junior engineers miss?",
+          "answer": "\"The big ones are rarely the obvious compute line item.\n\nCommon traps:\n→ NAT Gateway hourly + per-GB charges\n→ cross-AZ data transfer\n→ idle but attached load balancers\n→ CloudWatch log retention left infinite\n→ old EBS snapshots and unattached EBS volumes\n→ S3 request costs on chatty workloads\n→ provisioned but unused RDS / ElastiCache capacity\n→ over-provisioned ECS or Lambda memory\n\nThe pattern is this:\nthe bill usually grows at architecture boundaries, not inside one EC2 instance.\"",
+          "topicNumber": 17,
+          "topicSlug": "17-cost-optimization",
+          "topic": "Cost Optimization"
+        },
+        {
+          "id": "17-cost-optimization-q3",
+          "question": "How do you optimize cost without damaging reliability or performance?",
+          "answer": "\"I optimize in this order:\n1. Remove waste\n2. Right-size\n3. Commit baseline usage\n4. Redesign expensive patterns\n\nI do not start by reducing redundancy in production.\nFor example, deleting Multi-AZ may save money but increases outage risk.\nBetter savings usually come from:\n→ right-sizing compute\n→ caching\n→ eliminating NAT traffic with VPC endpoints\n→ moving bursty workloads to serverless/Spot\n→ using Savings Plans for stable baseline\n\nSenior cost optimization is about cost per business outcome, not just making the bill smaller.\"",
+          "topicNumber": 17,
+          "topicSlug": "17-cost-optimization",
+          "topic": "Cost Optimization"
+        }
+      ],
+      "revisionPoints": [
+        "→ service",
+        "→ region",
+        "→ linked account",
+        "→ tag (team, environment, product)",
+        "→ usage type",
+        "→ data transfer spike",
+        "→ NAT Gateway growth",
+        "→ accidental On-Demand instead of Savings Plan coverage"
+      ]
     }
   ]
 }

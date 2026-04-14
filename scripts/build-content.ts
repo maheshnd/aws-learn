@@ -1,8 +1,22 @@
 import fs from 'fs';
 import path from 'path';
 
-const SRC = path.join(process.cwd(), 'content', 'aws_master_notes.md');
 const OUT = path.join(process.cwd(), 'public', 'data');
+
+function resolveSourcePath(): string {
+  const candidates = [
+    path.join(process.cwd(), 'content', 'aws_master_notes.md'),
+    path.join(process.cwd(), 'aws_master_notes.md'),
+  ];
+
+  const existing = candidates.find(candidate => fs.existsSync(candidate));
+  if (existing) return existing;
+
+  throw new Error(
+    `Content source not found. Checked: ${candidates.join(', ')}. ` +
+      'Add aws_master_notes.md to one of those locations before building content.'
+  );
+}
 
 function slugify(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -111,6 +125,7 @@ function extractQA(
 
 function main() {
   fs.mkdirSync(OUT, { recursive: true });
+  const SRC = resolveSourcePath();
   const raw = fs.readFileSync(SRC, 'utf8');
 
   const topicChunks = raw.split(/(?=^# \d+ — )/m).filter(c => c.match(/^# \d+ — /m));

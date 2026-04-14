@@ -95,6 +95,78 @@
         "→ No Lambda needed for validation",
         "→ Use for: end-user authentication"
       ]
+    },
+    {
+      "id": "interview-qa-api-gateway",
+      "title": "🎯 Interview Q&A — API Gateway",
+      "type": "qa",
+      "rawMarkdown": "**Q: Clients are getting random 429 errors from API Gateway. How do you debug that in production?**\n```\n\"I would first identify which throttle layer is firing.\n\nAPI Gateway has multiple places where requests can be limited:\n→ account-level regional throttle\n→ stage-level throttle\n→ method-level throttle\n→ usage plan / API key quota\n→ backend itself returning 429 or timing out\n\nSo I check:\n→ CloudWatch metric: 4XXError and specifically 429 count\n→ access logs with requestId, API key, route, status\n→ whether one customer or route is noisy\n\nThen I separate protection from capacity:\nif 429 is intentional to protect backend, good.\nIf 429 is because limits are too low relative to normal traffic, then it is a config problem.\n\nSenior answer includes both:\nprotect backend with throttling, but also shape traffic upstream and scale the backend so\nnormal business traffic is not treated like abuse.\"\n```\n\n**Q: When would you choose API Gateway over ALB for Lambda or container backends?**\n```\n\"Choose API Gateway when the API product needs gateway features:\nauth, throttling, quotas, request validation, usage plans, API keys, versioned stages.\n\nChoose ALB when:\n→ simple HTTP routing is enough\n→ lower cost matters at high request volume\n→ you want one front door for ECS/EC2 with optional Lambda targets\n\nFor internal microservices, ALB is often enough.\nFor public APIs, partner APIs, mobile backends, or APIs needing per-client governance,\nAPI Gateway is usually the better fit.\n\nThe senior tradeoff is not 'which service can technically route traffic' but\n'where do we want policy, throttling, auth, and product controls to live?'\"\n```\n\n**Q: A backend deploy succeeded, but users still see old or broken API behavior. Where do you look?**\n```\n\"I think in layers:\n→ API Gateway stage deployment not promoted?\n→ cached authorizer result still in use?\n→ API Gateway response cache serving stale data?\n→ CloudFront in front of API caching unexpectedly?\n→ Lambda alias/version still pointing to old code?\n→ canary stage got updated but production stage did not?\n\nThis is a classic senior troubleshooting question because the backend may be correct.\nThe issue is often stale control-plane state at the gateway or edge layer.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: Clients are getting random 429 errors from API Gateway. How do you debug that in production?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I would first identify which throttle layer is firing.\n\nAPI Gateway has multiple places where requests can be limited:\n→ account-level regional throttle\n→ stage-level throttle\n→ method-level throttle\n→ usage plan / API key quota\n→ backend itself returning 429 or timing out\n\nSo I check:\n→ CloudWatch metric: 4XXError and specifically 429 count\n→ access logs with requestId, API key, route, status\n→ whether one customer or route is noisy\n\nThen I separate protection from capacity:\nif 429 is intentional to protect backend, good.\nIf 429 is because limits are too low relative to normal traffic, then it is a config problem.\n\nSenior answer includes both:\nprotect backend with throttling, but also shape traffic upstream and scale the backend so\nnormal business traffic is not treated like abuse.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: When would you choose API Gateway over ALB for Lambda or container backends?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Choose API Gateway when the API product needs gateway features:\nauth, throttling, quotas, request validation, usage plans, API keys, versioned stages.\n\nChoose ALB when:\n→ simple HTTP routing is enough\n→ lower cost matters at high request volume\n→ you want one front door for ECS/EC2 with optional Lambda targets\n\nFor internal microservices, ALB is often enough.\nFor public APIs, partner APIs, mobile backends, or APIs needing per-client governance,\nAPI Gateway is usually the better fit.\n\nThe senior tradeoff is not 'which service can technically route traffic' but\n'where do we want policy, throttling, auth, and product controls to live?'\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: A backend deploy succeeded, but users still see old or broken API behavior. Where do you look?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I think in layers:\n→ API Gateway stage deployment not promoted?\n→ cached authorizer result still in use?\n→ API Gateway response cache serving stale data?\n→ CloudFront in front of API caching unexpectedly?\n→ Lambda alias/version still pointing to old code?\n→ canary stage got updated but production stage did not?\n\nThis is a classic senior troubleshooting question because the backend may be correct.\nThe issue is often stale control-plane state at the gateway or edge layer.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "14-api-gateway-q1",
+          "question": "Clients are getting random 429 errors from API Gateway. How do you debug that in production?",
+          "answer": "\"I would first identify which throttle layer is firing.\n\nAPI Gateway has multiple places where requests can be limited:\n→ account-level regional throttle\n→ stage-level throttle\n→ method-level throttle\n→ usage plan / API key quota\n→ backend itself returning 429 or timing out\n\nSo I check:\n→ CloudWatch metric: 4XXError and specifically 429 count\n→ access logs with requestId, API key, route, status\n→ whether one customer or route is noisy\n\nThen I separate protection from capacity:\nif 429 is intentional to protect backend, good.\nIf 429 is because limits are too low relative to normal traffic, then it is a config problem.\n\nSenior answer includes both:\nprotect backend with throttling, but also shape traffic upstream and scale the backend so\nnormal business traffic is not treated like abuse.\"",
+          "topicNumber": 14,
+          "topicSlug": "14-api-gateway",
+          "topic": "API Gateway"
+        },
+        {
+          "id": "14-api-gateway-q2",
+          "question": "When would you choose API Gateway over ALB for Lambda or container backends?",
+          "answer": "\"Choose API Gateway when the API product needs gateway features:\nauth, throttling, quotas, request validation, usage plans, API keys, versioned stages.\n\nChoose ALB when:\n→ simple HTTP routing is enough\n→ lower cost matters at high request volume\n→ you want one front door for ECS/EC2 with optional Lambda targets\n\nFor internal microservices, ALB is often enough.\nFor public APIs, partner APIs, mobile backends, or APIs needing per-client governance,\nAPI Gateway is usually the better fit.\n\nThe senior tradeoff is not 'which service can technically route traffic' but\n'where do we want policy, throttling, auth, and product controls to live?'\"",
+          "topicNumber": 14,
+          "topicSlug": "14-api-gateway",
+          "topic": "API Gateway"
+        },
+        {
+          "id": "14-api-gateway-q3",
+          "question": "A backend deploy succeeded, but users still see old or broken API behavior. Where do you look?",
+          "answer": "\"I think in layers:\n→ API Gateway stage deployment not promoted?\n→ cached authorizer result still in use?\n→ API Gateway response cache serving stale data?\n→ CloudFront in front of API caching unexpectedly?\n→ Lambda alias/version still pointing to old code?\n→ canary stage got updated but production stage did not?\n\nThis is a classic senior troubleshooting question because the backend may be correct.\nThe issue is often stale control-plane state at the gateway or edge layer.\"",
+          "topicNumber": 14,
+          "topicSlug": "14-api-gateway",
+          "topic": "API Gateway"
+        }
+      ],
+      "revisionPoints": [
+        "→ account-level regional throttle",
+        "→ stage-level throttle",
+        "→ method-level throttle",
+        "→ usage plan / API key quota",
+        "→ backend itself returning 429 or timing out",
+        "→ CloudWatch metric: 4XXError and specifically 429 count",
+        "→ access logs with requestId, API key, route, status",
+        "→ whether one customer or route is noisy"
+      ]
     }
   ]
 }

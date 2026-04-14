@@ -113,10 +113,10 @@
       ]
     },
     {
-      "id": "interview-qa-lambda-containers",
-      "title": "🎯 Interview Q&A — Lambda & Containers",
+      "id": "interview-qa-containers",
+      "title": "🎯 Interview Q&A — Containers",
       "type": "qa",
-      "rawMarkdown": "**Q: Lambda vs ECS Fargate — how do you decide?**\n```\n\"Primary question: is the workload event-driven or always-on?\n\nLambda wins for event-driven, short-duration work:\nTriggered by S3 upload, SQS message, HTTP request, schedule.\nRuns for milliseconds to minutes. Scales to zero (pay nothing when idle).\nNo infrastructure to manage. Perfect for: file processing, webhooks,\nscheduled jobs, API backends with variable traffic.\nLimitation: max 15 minutes, cold starts can add latency.\n\nECS Fargate wins for always-on services:\nLong-running processes, WebSocket connections, background workers consuming\nqueues continuously, services that benefit from persistent connections,\ntasks > 15 minutes (video transcoding, ML inference serving).\nCost: you pay for the full container runtime whether request is happening or not.\nNo cold starts. Predictable latency.\n\nThe practical rule: if it's triggered by events and runs for seconds/minutes\n→ Lambda. If it needs to run continuously or > 15 minutes → ECS Fargate.\n\nMany architectures use both: ECS for the main API (always-on, low latency),\nLambda for async processing (image resize on upload, email sending, etc.).\"\n```\n\n**Q: How do you manage secrets in ECS containers?**\n```\n\"Never put secrets in environment variables if they contain sensitive values,\nbecause they're visible in the ECS console, CloudWatch logs, and metadata service.\n\nCorrect approach: Secrets Manager or SSM Parameter Store.\n\nIn Task Definition, use the secrets field (not environment):\n{\n  'name': 'DB_PASSWORD',\n  'valueFrom': 'arn:aws:secretsmanager:us-east-1:123456:secret:prod/db-password'\n}\n\nECS agent fetches the secret at task startup and injects it as an environment\nvariable inside the container. The secret value never appears in the task\ndefinition. The ECS task execution role needs permission to read from Secrets Manager.\n\nFor rotation: Secrets Manager can auto-rotate (Lambda-based rotation).\nWhen rotated, ECS tasks read the new value on next restart. For immediate\nrotation: force new deployment of the ECS service (new tasks read new secret).\n\nFor configuration (non-sensitive): SSM Parameter Store Standard tier is free.\nFor sensitive secrets needing rotation: Secrets Manager ($0.40/secret/month).\"\n```\n\n---",
+      "rawMarkdown": "**Q: Lambda vs ECS Fargate — how do you decide?**\n```\n\"Primary question: is the workload event-driven or always-on?\n\nLambda wins for event-driven, short-duration work:\nTriggered by S3 upload, SQS message, HTTP request, schedule.\nRuns for milliseconds to minutes. Scales to zero (pay nothing when idle).\nNo infrastructure to manage. Perfect for: file processing, webhooks,\nscheduled jobs, API backends with variable traffic.\nLimitation: max 15 minutes, cold starts can add latency.\n\nECS Fargate wins for always-on services:\nLong-running processes, WebSocket connections, background workers consuming\nqueues continuously, services that benefit from persistent connections,\ntasks > 15 minutes (video transcoding, ML inference serving).\nCost: you pay for the full container runtime whether request is happening or not.\nNo cold starts. Predictable latency.\n\nThe practical rule: if it's triggered by events and runs for seconds/minutes\n→ Lambda. If it needs to run continuously or > 15 minutes → ECS Fargate.\n\nMany architectures use both: ECS for the main API (always-on, low latency),\nLambda for async processing (image resize on upload, email sending, etc.).\"\n```\n\n**Q: How do you manage secrets in ECS containers?**\n```\n\"Never put secrets in environment variables if they contain sensitive values,\nbecause they're visible in the ECS console, CloudWatch logs, and metadata service.\n\nCorrect approach: Secrets Manager or SSM Parameter Store.\n\nIn Task Definition, use the secrets field (not environment):\n{\n  'name': 'DB_PASSWORD',\n  'valueFrom': 'arn:aws:secretsmanager:us-east-1:123456:secret:prod/db-password'\n}\n\nECS agent fetches the secret at task startup and injects it as an environment\nvariable inside the container. The secret value never appears in the task\ndefinition. The ECS task execution role needs permission to read from Secrets Manager.\n\nFor rotation: Secrets Manager can auto-rotate (Lambda-based rotation).\nWhen rotated, ECS tasks read the new value on next restart. For immediate\nrotation: force new deployment of the ECS service (new tasks read new secret).\n\nFor configuration (non-sensitive): SSM Parameter Store Standard tier is free.\nFor sensitive secrets needing rotation: Secrets Manager ($0.40/secret/month).\"\n```\n\n**Q: ECS tasks keep restarting in production. What is your debugging approach?**\n```\n\"I split it into image startup, health checks, and resource pressure.\n\nFirst check ECS service events:\n→ task failed to start?\n→ task killed due to failing ALB health checks?\n→ essential container exited?\n\nThen CloudWatch logs:\n→ did app crash on boot?\n→ missing env var or secret?\n→ migration script blocking startup?\n\nThen resource signals:\n→ OutOfMemory in container logs\n→ CPU pegged at 100%\n→ container memory setting too low\n\nThen health check alignment:\n→ ALB health check path correct?\n→ startup time longer than grace period?\n→ app listening on correct container port?\n\nOne very common production issue is this:\nthe app is healthy after 90 seconds, but ALB starts checking at 15 seconds,\nmarks it unhealthy, ECS replaces it, and the service flaps forever.\nSenior fix: increase grace period, add startup/readiness behavior, and separate\n'process is alive' from 'service is ready for traffic'.\"\n```\n\n**Q: ECS or EKS for a new platform team? How do you answer without being dogmatic?**\n```\n\"I would answer based on org constraints, not tool fashion.\n\nChoose ECS when:\n→ team is AWS-centric\n→ speed and simplicity matter more than portability\n→ platform team is small\n→ workloads are straightforward APIs, workers, cron jobs\n\nChoose EKS when:\n→ company already has Kubernetes expertise\n→ you need ecosystem tools that assume Kubernetes\n→ multi-cloud portability is a real business requirement\n→ platform engineering maturity is already high\n\nThe mistake is choosing EKS because it is 'more advanced'.\nKubernetes gives flexibility, but it also gives you more surface area for outages:\ningress, CNI, autoscalers, controllers, admission webhooks, node lifecycle.\n\nFor many teams, ECS gets them to a stable production platform faster.\nThe senior answer is choosing the simplest platform that your team can operate well at 2 a.m.\"\n```\n\n---",
       "blocks": [
         {
           "type": "paragraph",
@@ -133,6 +133,22 @@
         {
           "type": "text-panel",
           "content": "\"Never put secrets in environment variables if they contain sensitive values,\nbecause they're visible in the ECS console, CloudWatch logs, and metadata service.\n\nCorrect approach: Secrets Manager or SSM Parameter Store.\n\nIn Task Definition, use the secrets field (not environment):\n{\n  'name': 'DB_PASSWORD',\n  'valueFrom': 'arn:aws:secretsmanager:us-east-1:123456:secret:prod/db-password'\n}\n\nECS agent fetches the secret at task startup and injects it as an environment\nvariable inside the container. The secret value never appears in the task\ndefinition. The ECS task execution role needs permission to read from Secrets Manager.\n\nFor rotation: Secrets Manager can auto-rotate (Lambda-based rotation).\nWhen rotated, ECS tasks read the new value on next restart. For immediate\nrotation: force new deployment of the ECS service (new tasks read new secret).\n\nFor configuration (non-sensitive): SSM Parameter Store Standard tier is free.\nFor sensitive secrets needing rotation: Secrets Manager ($0.40/secret/month).\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: ECS tasks keep restarting in production. What is your debugging approach?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I split it into image startup, health checks, and resource pressure.\n\nFirst check ECS service events:\n→ task failed to start?\n→ task killed due to failing ALB health checks?\n→ essential container exited?\n\nThen CloudWatch logs:\n→ did app crash on boot?\n→ missing env var or secret?\n→ migration script blocking startup?\n\nThen resource signals:\n→ OutOfMemory in container logs\n→ CPU pegged at 100%\n→ container memory setting too low\n\nThen health check alignment:\n→ ALB health check path correct?\n→ startup time longer than grace period?\n→ app listening on correct container port?\n\nOne very common production issue is this:\nthe app is healthy after 90 seconds, but ALB starts checking at 15 seconds,\nmarks it unhealthy, ECS replaces it, and the service flaps forever.\nSenior fix: increase grace period, add startup/readiness behavior, and separate\n'process is alive' from 'service is ready for traffic'.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: ECS or EKS for a new platform team? How do you answer without being dogmatic?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I would answer based on org constraints, not tool fashion.\n\nChoose ECS when:\n→ team is AWS-centric\n→ speed and simplicity matter more than portability\n→ platform team is small\n→ workloads are straightforward APIs, workers, cron jobs\n\nChoose EKS when:\n→ company already has Kubernetes expertise\n→ you need ecosystem tools that assume Kubernetes\n→ multi-cloud portability is a real business requirement\n→ platform engineering maturity is already high\n\nThe mistake is choosing EKS because it is 'more advanced'.\nKubernetes gives flexibility, but it also gives you more surface area for outages:\ningress, CNI, autoscalers, controllers, admission webhooks, node lifecycle.\n\nFor many teams, ECS gets them to a stable production platform faster.\nThe senior answer is choosing the simplest platform that your team can operate well at 2 a.m.\""
         },
         {
           "type": "paragraph",
@@ -155,10 +171,33 @@
           "topicNumber": 13,
           "topicSlug": "13-containers-ecs-ecr-eks",
           "topic": "Containers (ECS, ECR, EKS)"
+        },
+        {
+          "id": "13-containers-ecs-ecr-eks-q3",
+          "question": "ECS tasks keep restarting in production. What is your debugging approach?",
+          "answer": "\"I split it into image startup, health checks, and resource pressure.\n\nFirst check ECS service events:\n→ task failed to start?\n→ task killed due to failing ALB health checks?\n→ essential container exited?\n\nThen CloudWatch logs:\n→ did app crash on boot?\n→ missing env var or secret?\n→ migration script blocking startup?\n\nThen resource signals:\n→ OutOfMemory in container logs\n→ CPU pegged at 100%\n→ container memory setting too low\n\nThen health check alignment:\n→ ALB health check path correct?\n→ startup time longer than grace period?\n→ app listening on correct container port?\n\nOne very common production issue is this:\nthe app is healthy after 90 seconds, but ALB starts checking at 15 seconds,\nmarks it unhealthy, ECS replaces it, and the service flaps forever.\nSenior fix: increase grace period, add startup/readiness behavior, and separate\n'process is alive' from 'service is ready for traffic'.\"",
+          "topicNumber": 13,
+          "topicSlug": "13-containers-ecs-ecr-eks",
+          "topic": "Containers (ECS, ECR, EKS)"
+        },
+        {
+          "id": "13-containers-ecs-ecr-eks-q4",
+          "question": "ECS or EKS for a new platform team? How do you answer without being dogmatic?",
+          "answer": "\"I would answer based on org constraints, not tool fashion.\n\nChoose ECS when:\n→ team is AWS-centric\n→ speed and simplicity matter more than portability\n→ platform team is small\n→ workloads are straightforward APIs, workers, cron jobs\n\nChoose EKS when:\n→ company already has Kubernetes expertise\n→ you need ecosystem tools that assume Kubernetes\n→ multi-cloud portability is a real business requirement\n→ platform engineering maturity is already high\n\nThe mistake is choosing EKS because it is 'more advanced'.\nKubernetes gives flexibility, but it also gives you more surface area for outages:\ningress, CNI, autoscalers, controllers, admission webhooks, node lifecycle.\n\nFor many teams, ECS gets them to a stable production platform faster.\nThe senior answer is choosing the simplest platform that your team can operate well at 2 a.m.\"",
+          "topicNumber": 13,
+          "topicSlug": "13-containers-ecs-ecr-eks",
+          "topic": "Containers (ECS, ECR, EKS)"
         }
       ],
       "revisionPoints": [
-        "→ Lambda. If it needs to run continuously or > 15 minutes → ECS Fargate."
+        "→ Lambda. If it needs to run continuously or > 15 minutes → ECS Fargate.",
+        "→ task failed to start?",
+        "→ task killed due to failing ALB health checks?",
+        "→ essential container exited?",
+        "→ did app crash on boot?",
+        "→ missing env var or secret?",
+        "→ migration script blocking startup?",
+        "→ OutOfMemory in container logs"
       ]
     },
     {

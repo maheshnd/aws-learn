@@ -110,6 +110,78 @@
         "→ Lambda network activity",
         "→ \"API calls from known malicious IP\" (unusual location)"
       ]
+    },
+    {
+      "id": "interview-qa-security",
+      "title": "🎯 Interview Q&A — Security",
+      "type": "qa",
+      "rawMarkdown": "**Q: A developer accidentally exposed AWS credentials. What do you do in the first 30 minutes?**\n```\n\"I treat leaked credentials as compromised immediately.\n\nFirst 30 minutes:\n1. Disable or delete the exposed key\n2. Identify which principal it belongs to and what permissions it had\n3. Check CloudTrail for usage from suspicious IPs, regions, and services\n4. Rotate any downstream secrets that key could access\n5. If possible, isolate impacted resources and increase monitoring\n\nThen I answer the prevention question:\n→ why did a long-lived key exist?\n→ why was secret scanning not catching it?\n→ why was the role over-permissioned?\n\nSenior security answers are always two-part:\ncontain the blast radius now, then remove the class of failure permanently.\"\n```\n\n**Q: When do you use a customer-managed KMS key instead of the default AWS-managed key?**\n```\n\"Use customer-managed keys when you need policy control, audit boundaries, or lifecycle ownership.\n\nExamples:\n→ cross-account sharing with explicit key permissions\n→ separation of duties between app team and security team\n→ need to disable access quickly by disabling the key\n→ regulatory requirement to control rotation and deletion schedule\n\nIf none of those apply, AWS-managed keys are often enough.\nThe senior answer is avoiding unnecessary key sprawl while knowing where customer-managed\nkeys provide real control.\"\n```\n\n**Q: WAF is blocking legitimate traffic after a new rule rollout. How do you handle that safely?**\n```\n\"This is why I deploy WAF changes in count mode first.\n\nImmediate response:\n→ identify which rule is firing\n→ switch that rule to count or exclude affected path/IP pattern\n→ preserve logs so we can analyze false positives\n\nLonger term:\n→ test rules against real traffic samples\n→ scope rules by path, header, country, or URI if needed\n→ keep emergency rollback procedure documented\n\nA senior engineer knows security controls can create outages too, so controls must be\nintroduced progressively and observed like any other production change.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: A developer accidentally exposed AWS credentials. What do you do in the first 30 minutes?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I treat leaked credentials as compromised immediately.\n\nFirst 30 minutes:\n1. Disable or delete the exposed key\n2. Identify which principal it belongs to and what permissions it had\n3. Check CloudTrail for usage from suspicious IPs, regions, and services\n4. Rotate any downstream secrets that key could access\n5. If possible, isolate impacted resources and increase monitoring\n\nThen I answer the prevention question:\n→ why did a long-lived key exist?\n→ why was secret scanning not catching it?\n→ why was the role over-permissioned?\n\nSenior security answers are always two-part:\ncontain the blast radius now, then remove the class of failure permanently.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: When do you use a customer-managed KMS key instead of the default AWS-managed key?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Use customer-managed keys when you need policy control, audit boundaries, or lifecycle ownership.\n\nExamples:\n→ cross-account sharing with explicit key permissions\n→ separation of duties between app team and security team\n→ need to disable access quickly by disabling the key\n→ regulatory requirement to control rotation and deletion schedule\n\nIf none of those apply, AWS-managed keys are often enough.\nThe senior answer is avoiding unnecessary key sprawl while knowing where customer-managed\nkeys provide real control.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: WAF is blocking legitimate traffic after a new rule rollout. How do you handle that safely?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"This is why I deploy WAF changes in count mode first.\n\nImmediate response:\n→ identify which rule is firing\n→ switch that rule to count or exclude affected path/IP pattern\n→ preserve logs so we can analyze false positives\n\nLonger term:\n→ test rules against real traffic samples\n→ scope rules by path, header, country, or URI if needed\n→ keep emergency rollback procedure documented\n\nA senior engineer knows security controls can create outages too, so controls must be\nintroduced progressively and observed like any other production change.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "16-security-kms-secrets-manager-waf-guardduty-shield-q1",
+          "question": "A developer accidentally exposed AWS credentials. What do you do in the first 30 minutes?",
+          "answer": "\"I treat leaked credentials as compromised immediately.\n\nFirst 30 minutes:\n1. Disable or delete the exposed key\n2. Identify which principal it belongs to and what permissions it had\n3. Check CloudTrail for usage from suspicious IPs, regions, and services\n4. Rotate any downstream secrets that key could access\n5. If possible, isolate impacted resources and increase monitoring\n\nThen I answer the prevention question:\n→ why did a long-lived key exist?\n→ why was secret scanning not catching it?\n→ why was the role over-permissioned?\n\nSenior security answers are always two-part:\ncontain the blast radius now, then remove the class of failure permanently.\"",
+          "topicNumber": 16,
+          "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+          "topic": "Security (KMS, Secrets Manager, WAF, GuardDuty, Shield)"
+        },
+        {
+          "id": "16-security-kms-secrets-manager-waf-guardduty-shield-q2",
+          "question": "When do you use a customer-managed KMS key instead of the default AWS-managed key?",
+          "answer": "\"Use customer-managed keys when you need policy control, audit boundaries, or lifecycle ownership.\n\nExamples:\n→ cross-account sharing with explicit key permissions\n→ separation of duties between app team and security team\n→ need to disable access quickly by disabling the key\n→ regulatory requirement to control rotation and deletion schedule\n\nIf none of those apply, AWS-managed keys are often enough.\nThe senior answer is avoiding unnecessary key sprawl while knowing where customer-managed\nkeys provide real control.\"",
+          "topicNumber": 16,
+          "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+          "topic": "Security (KMS, Secrets Manager, WAF, GuardDuty, Shield)"
+        },
+        {
+          "id": "16-security-kms-secrets-manager-waf-guardduty-shield-q3",
+          "question": "WAF is blocking legitimate traffic after a new rule rollout. How do you handle that safely?",
+          "answer": "\"This is why I deploy WAF changes in count mode first.\n\nImmediate response:\n→ identify which rule is firing\n→ switch that rule to count or exclude affected path/IP pattern\n→ preserve logs so we can analyze false positives\n\nLonger term:\n→ test rules against real traffic samples\n→ scope rules by path, header, country, or URI if needed\n→ keep emergency rollback procedure documented\n\nA senior engineer knows security controls can create outages too, so controls must be\nintroduced progressively and observed like any other production change.\"",
+          "topicNumber": 16,
+          "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+          "topic": "Security (KMS, Secrets Manager, WAF, GuardDuty, Shield)"
+        }
+      ],
+      "revisionPoints": [
+        "→ why did a long-lived key exist?",
+        "→ why was secret scanning not catching it?",
+        "→ why was the role over-permissioned?",
+        "→ cross-account sharing with explicit key permissions",
+        "→ separation of duties between app team and security team",
+        "→ need to disable access quickly by disabling the key",
+        "→ regulatory requirement to control rotation and deletion schedule",
+        "→ identify which rule is firing"
+      ]
     }
   ]
 }

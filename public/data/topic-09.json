@@ -194,7 +194,7 @@
       "id": "interview-qa-route-53",
       "title": "🎯 Interview Q&A — Route 53",
       "type": "qa",
-      "rawMarkdown": "**Q: What's the difference between CNAME and Alias records?**\n```\n\"CNAME maps a name to another name, which then gets resolved again.\nLimitation: cannot be used at the zone apex (root domain).\nexample.com CANNOT have a CNAME record (DNS spec prohibits it).\nwww.example.com can have CNAME → example.com. Fine.\n\nAlias is AWS-specific. It maps a name directly to an AWS resource\n(ALB, CloudFront distribution, S3 website endpoint, another Route 53 record).\nWorks at the zone apex! example.com → your ALB. This is what you need\nfor pointing your root domain at an AWS load balancer.\n\nAlso: Alias queries to AWS resources are free. Route 53 doesn't charge\nfor DNS queries that resolve to AWS resources via Alias. CNAME queries\nare charged normally.\n\nIn practice: always use Alias for AWS resources, CNAME for non-AWS.\"\n```\n\n**Q: How do you implement blue-green deployment with Route 53?**\n```\n\"Two approaches depending on speed requirement:\n\nWeighted routing approach (gradual):\nBlue environment: example.com → blue-ALB, Weight: 100\nGreen environment: example.com → green-ALB, Weight: 0\n\nDeploy to green. Test it.\nShift: blue=90, green=10 (canary — 10% gets new version)\nMonitor error rates, latency for 30 minutes.\nShift: blue=0, green=100 (complete cutover)\nIf problems: blue=100, green=0 (instant rollback)\nTTL: set to 60 seconds so changes propagate in 1 minute.\n\nFailover routing approach (instant):\nPrimary: example.com → green-ALB (active, health check enabled)\nSecondary: example.com → blue-ALB (standby)\n\nDeploy to secondary. Test it. Promote secondary to primary.\nFor true instant switchover: \nJust update the primary record to point to green. Takes < 60 seconds\nwith low TTL. But requires DNS to propagate (clients may cache old TTL).\n\nFor zero-propagation-delay switching: do it at the ALB level\n(weighted target groups) not DNS level.\"\n```\n\n---",
+      "rawMarkdown": "**Q: What's the difference between CNAME and Alias records?**\n```\n\"CNAME maps a name to another name, which then gets resolved again.\nLimitation: cannot be used at the zone apex (root domain).\nexample.com CANNOT have a CNAME record (DNS spec prohibits it).\nwww.example.com can have CNAME → example.com. Fine.\n\nAlias is AWS-specific. It maps a name directly to an AWS resource\n(ALB, CloudFront distribution, S3 website endpoint, another Route 53 record).\nWorks at the zone apex! example.com → your ALB. This is what you need\nfor pointing your root domain at an AWS load balancer.\n\nAlso: Alias queries to AWS resources are free. Route 53 doesn't charge\nfor DNS queries that resolve to AWS resources via Alias. CNAME queries\nare charged normally.\n\nIn practice: always use Alias for AWS resources, CNAME for non-AWS.\"\n```\n\n**Q: How do you implement blue-green deployment with Route 53?**\n```\n\"Two approaches depending on speed requirement:\n\nWeighted routing approach (gradual):\nBlue environment: example.com → blue-ALB, Weight: 100\nGreen environment: example.com → green-ALB, Weight: 0\n\nDeploy to green. Test it.\nShift: blue=90, green=10 (canary — 10% gets new version)\nMonitor error rates, latency for 30 minutes.\nShift: blue=0, green=100 (complete cutover)\nIf problems: blue=100, green=0 (instant rollback)\nTTL: set to 60 seconds so changes propagate in 1 minute.\n\nFailover routing approach (instant):\nPrimary: example.com → green-ALB (active, health check enabled)\nSecondary: example.com → blue-ALB (standby)\n\nDeploy to secondary. Test it. Promote secondary to primary.\nFor true instant switchover: \nJust update the primary record to point to green. Takes < 60 seconds\nwith low TTL. But requires DNS to propagate (clients may cache old TTL).\n\nFor zero-propagation-delay switching: do it at the ALB level\n(weighted target groups) not DNS level.\"\n```\n\n**Q: DNS cutover happened, but some users still hit the old environment. Why?**\n```\n\"Because DNS is eventually consistent at the client edge, not an instant switch.\n\nCommon reasons:\n→ client/ISP resolver still honoring old TTL\n→ browser or OS DNS cache\n→ upstream corporate DNS caching aggressively\n→ old keep-alive connections still open to old ALB\n\nThat is why DNS is good for gradual traffic shifting and regional failover,\nbut not for millisecond-precise cutovers.\n\nSenior answer:\n→ reduce TTL ahead of migration, not at the last minute\n→ keep old environment alive during drain period\n→ use ALB weighted target groups or application-level feature flags when you need tighter control\n→ treat DNS cutover as a rollout window, not a single instant\"\n```\n\n**Q: Route 53 health checks say the endpoint is healthy, but users still report outage. How do you explain that?**\n```\n\"Health checks prove only the thing you tested, from the places Route 53 tested it.\n\nExamples:\n→ health check hits /health and gets 200, but checkout API is broken\n→ app is healthy from public internet, but backend dependency inside VPC is failing\n→ partial regional issue affects specific users or ISPs, not all Route 53 checkers\n\nSo for real failover safety, health checks must represent business readiness, not just TCP reachability.\n\nA mature pattern is:\n→ /health/live for process alive\n→ /health/ready for dependency readiness\n→ CloudWatch alarm health checks for private-service health or business KPI alarms\n\nSenior engineers know bad health checks create false confidence.\"\n```\n\n---",
       "blocks": [
         {
           "type": "paragraph",
@@ -211,6 +211,22 @@
         {
           "type": "diagram",
           "content": "\"Two approaches depending on speed requirement:\n\nWeighted routing approach (gradual):\nBlue environment: example.com → blue-ALB, Weight: 100\nGreen environment: example.com → green-ALB, Weight: 0\n\nDeploy to green. Test it.\nShift: blue=90, green=10 (canary — 10% gets new version)\nMonitor error rates, latency for 30 minutes.\nShift: blue=0, green=100 (complete cutover)\nIf problems: blue=100, green=0 (instant rollback)\nTTL: set to 60 seconds so changes propagate in 1 minute.\n\nFailover routing approach (instant):\nPrimary: example.com → green-ALB (active, health check enabled)\nSecondary: example.com → blue-ALB (standby)\n\nDeploy to secondary. Test it. Promote secondary to primary.\nFor true instant switchover: \nJust update the primary record to point to green. Takes < 60 seconds\nwith low TTL. But requires DNS to propagate (clients may cache old TTL).\n\nFor zero-propagation-delay switching: do it at the ALB level\n(weighted target groups) not DNS level.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: DNS cutover happened, but some users still hit the old environment. Why?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Because DNS is eventually consistent at the client edge, not an instant switch.\n\nCommon reasons:\n→ client/ISP resolver still honoring old TTL\n→ browser or OS DNS cache\n→ upstream corporate DNS caching aggressively\n→ old keep-alive connections still open to old ALB\n\nThat is why DNS is good for gradual traffic shifting and regional failover,\nbut not for millisecond-precise cutovers.\n\nSenior answer:\n→ reduce TTL ahead of migration, not at the last minute\n→ keep old environment alive during drain period\n→ use ALB weighted target groups or application-level feature flags when you need tighter control\n→ treat DNS cutover as a rollout window, not a single instant\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Route 53 health checks say the endpoint is healthy, but users still report outage. How do you explain that?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Health checks prove only the thing you tested, from the places Route 53 tested it.\n\nExamples:\n→ health check hits /health and gets 200, but checkout API is broken\n→ app is healthy from public internet, but backend dependency inside VPC is failing\n→ partial regional issue affects specific users or ISPs, not all Route 53 checkers\n\nSo for real failover safety, health checks must represent business readiness, not just TCP reachability.\n\nA mature pattern is:\n→ /health/live for process alive\n→ /health/ready for dependency readiness\n→ CloudWatch alarm health checks for private-service health or business KPI alarms\n\nSenior engineers know bad health checks create false confidence.\""
         },
         {
           "type": "paragraph",
@@ -233,10 +249,33 @@
           "topicNumber": 9,
           "topicSlug": "09-route-53-dns",
           "topic": "Route 53 (DNS)"
+        },
+        {
+          "id": "09-route-53-dns-q3",
+          "question": "DNS cutover happened, but some users still hit the old environment. Why?",
+          "answer": "\"Because DNS is eventually consistent at the client edge, not an instant switch.\n\nCommon reasons:\n→ client/ISP resolver still honoring old TTL\n→ browser or OS DNS cache\n→ upstream corporate DNS caching aggressively\n→ old keep-alive connections still open to old ALB\n\nThat is why DNS is good for gradual traffic shifting and regional failover,\nbut not for millisecond-precise cutovers.\n\nSenior answer:\n→ reduce TTL ahead of migration, not at the last minute\n→ keep old environment alive during drain period\n→ use ALB weighted target groups or application-level feature flags when you need tighter control\n→ treat DNS cutover as a rollout window, not a single instant\"",
+          "topicNumber": 9,
+          "topicSlug": "09-route-53-dns",
+          "topic": "Route 53 (DNS)"
+        },
+        {
+          "id": "09-route-53-dns-q4",
+          "question": "Route 53 health checks say the endpoint is healthy, but users still report outage. How do you explain that?",
+          "answer": "\"Health checks prove only the thing you tested, from the places Route 53 tested it.\n\nExamples:\n→ health check hits /health and gets 200, but checkout API is broken\n→ app is healthy from public internet, but backend dependency inside VPC is failing\n→ partial regional issue affects specific users or ISPs, not all Route 53 checkers\n\nSo for real failover safety, health checks must represent business readiness, not just TCP reachability.\n\nA mature pattern is:\n→ /health/live for process alive\n→ /health/ready for dependency readiness\n→ CloudWatch alarm health checks for private-service health or business KPI alarms\n\nSenior engineers know bad health checks create false confidence.\"",
+          "topicNumber": 9,
+          "topicSlug": "09-route-53-dns",
+          "topic": "Route 53 (DNS)"
         }
       ],
       "revisionPoints": [
-        "**Q: What's the difference between CNAME and Alias records?**"
+        "→ client/ISP resolver still honoring old TTL",
+        "→ browser or OS DNS cache",
+        "→ upstream corporate DNS caching aggressively",
+        "→ old keep-alive connections still open to old ALB",
+        "→ reduce TTL ahead of migration, not at the last minute",
+        "→ keep old environment alive during drain period",
+        "→ use ALB weighted target groups or application-level feature flags when you need tighter control",
+        "→ treat DNS cutover as a rollout window, not a single instant\""
       ]
     },
     {

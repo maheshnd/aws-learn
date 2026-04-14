@@ -289,6 +289,22 @@
       "topic": "Route 53 (DNS)"
     },
     {
+      "id": "09-route-53-dns-q3",
+      "question": "DNS cutover happened, but some users still hit the old environment. Why?",
+      "answer": "\"Because DNS is eventually consistent at the client edge, not an instant switch.\n\nCommon reasons:\n→ client/ISP resolver still honoring old TTL\n→ browser or OS DNS cache\n→ upstream corporate DNS caching aggressively\n→ old keep-alive connections still open to old ALB\n\nThat is why DNS is good for gradual traffic shifting and regional failover,\nbut not for millisecond-precise cutovers.\n\nSenior answer:\n→ reduce TTL ahead of migration, not at the last minute\n→ keep old environment alive during drain period\n→ use ALB weighted target groups or application-level feature flags when you need tighter control\n→ treat DNS cutover as a rollout window, not a single instant\"",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "topic": "Route 53 (DNS)"
+    },
+    {
+      "id": "09-route-53-dns-q4",
+      "question": "Route 53 health checks say the endpoint is healthy, but users still report outage. How do you explain that?",
+      "answer": "\"Health checks prove only the thing you tested, from the places Route 53 tested it.\n\nExamples:\n→ health check hits /health and gets 200, but checkout API is broken\n→ app is healthy from public internet, but backend dependency inside VPC is failing\n→ partial regional issue affects specific users or ISPs, not all Route 53 checkers\n\nSo for real failover safety, health checks must represent business readiness, not just TCP reachability.\n\nA mature pattern is:\n→ /health/live for process alive\n→ /health/ready for dependency readiness\n→ CloudWatch alarm health checks for private-service health or business KPI alarms\n\nSenior engineers know bad health checks create false confidence.\"",
+      "topicNumber": 9,
+      "topicSlug": "09-route-53-dns",
+      "topic": "Route 53 (DNS)"
+    },
+    {
       "id": "10-cloudfront-cdn-q1",
       "question": "Why use CloudFront in front of S3 instead of serving directly from S3?",
       "answer": "\"Four reasons:\n\nPerformance: S3 is regional (one location). CloudFront has 400+ edge\nlocations. User in Tokyo gets files from Tokyo edge, not your us-east-1\nbucket. Latency drops from 180ms to 5ms for cached content.\n\nCost: S3 to internet data transfer is $0.09/GB. CloudFront to internet\nis $0.0085/GB (90% cheaper) because CloudFront has preferential rates with\nISPs and optimized transfer from S3 to CloudFront is also cheaper.\n\nSecurity: with OAC, S3 bucket is completely private. Block Public Access\nis ON. Only CloudFront can read objects. Direct S3 URLs fail. Users always\ngo through CloudFront (WAF, rate limiting, geo-blocking all apply).\n\nHTTPS: S3 static website hosting doesn't support HTTPS with custom domain.\nCloudFront + ACM certificate = HTTPS with your domain. Required for SEO\nand browser trust.\n\nThe combination is: Route 53 → CloudFront (HTTPS, WAF, CDN) → S3 (OAC,\nprivate, origin). This is the standard pattern for all static sites.\"",
@@ -300,6 +316,22 @@
       "id": "10-cloudfront-cdn-q2",
       "question": "How do you ensure users always get the latest version of your SPA after deployment?",
       "answer": "\"Two-part strategy:\n\nPart 1: Cache-bust JS/CSS with content hashes.\nModern build tools (Vite, webpack) append file content hash to filename:\nmain.a1b2c3d4.js, styles.e5f6g7h8.css\nCloudFront caches these with max-age=31536000 (1 year).\nWhen code changes → new hash → new filename → new cache entry.\nOld cached files are never requested again (dead cache entries harmless).\n\nPart 2: Short TTL on index.html.\nindex.html references the hashed filenames.\nSet: Cache-Control: max-age=60, must-revalidate on index.html responses.\nOr: invalidate /index.html from CloudFront on every deployment.\n\nResult: users cache JS/CSS for 1 year (fast!), always get fresh index.html\nwithin 60 seconds of deployment. index.html references new hashed files.\nNew hashes → cache miss → fetched from origin → cached at edge.\nTotal update propagation: < 2 minutes after deployment. No manual invalidation.\"",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "topic": "CloudFront (CDN)"
+    },
+    {
+      "id": "10-cloudfront-cdn-q3",
+      "question": "Users in one region still see stale content while others see the new site. How do you debug CloudFront?",
+      "answer": "\"I would think cache key and cache lifetime first.\n\nChecklist:\n→ Is the stale object actually cached at edge because TTL is still valid?\n→ Did we invalidate the right path, especially index.html?\n→ Are query strings, headers, or cookies part of cache key unexpectedly?\n→ Is origin returning different cache-control in different paths?\n→ Is CloudFront even serving from cache, or are we seeing origin inconsistency?\n\nI would compare response headers:\n→ x-cache\n→ age\n→ cache-control\n→ etag / last-modified\n\nThe senior lesson is that stale content is often not 'CloudFront is broken';\nit is usually a mismatch between cache strategy and deployment strategy.\"",
+      "topicNumber": 10,
+      "topicSlug": "10-cloudfront-cdn",
+      "topic": "CloudFront (CDN)"
+    },
+    {
+      "id": "10-cloudfront-cdn-q4",
+      "question": "When can CloudFront make an outage worse instead of better?",
+      "answer": "\"If the cache policy is wrong, CloudFront can amplify bad behavior globally.\n\nExamples:\n→ cache a bad HTML response and every region serves it\n→ forward too many headers/cookies and destroy cache hit ratio\n→ no origin shielding and massive cache miss storm hits origin after deploy\n→ dynamic API responses cached incorrectly and users see other users' data\n\nSo CloudFront is not just a speed layer. It is a distribution layer.\nAny mistake at that layer becomes global very quickly.\n\nThat is why I treat cache policy, origin failover, and invalidation strategy as production controls, not CDN details.\"",
       "topicNumber": 10,
       "topicSlug": "10-cloudfront-cdn",
       "topic": "CloudFront (CDN)"
@@ -321,6 +353,54 @@
       "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
     },
     {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-q3",
+      "question": "Queue backlog is growing fast, but consumer CPU is normal. What do you investigate?",
+      "answer": "\"Normal CPU does not mean the consumer is healthy enough for backlog.\n\nI would check:\n→ queue depth and age of oldest message\n→ consumer concurrency / number of workers\n→ downstream dependency latency\n→ visibility timeout too short causing reprocessing\n→ batch size too small\n→ poison messages causing repeated retries\n\nThis often happens when consumers are waiting on database or third-party API calls.\nCPU stays low because workers are blocked, not busy.\n\nThe senior response is to find the throughput limiter end to end, not just add more consumers blindly.\"",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-q4",
+      "question": "How do you design messaging so one bad downstream service does not take the whole platform down?",
+      "answer": "\"Use isolation boundaries in the event flow.\n\nPatterns:\n→ SNS fan-out to separate SQS queue per consumer\n→ each queue gets its own retry policy and DLQ\n→ slow email service should not block billing or inventory\n→ Step Functions for explicit compensating actions where workflow matters\n\nIf every consumer shares one queue or one synchronous chain,\none bad dependency becomes everyone's outage.\n\nThe mature design principle is failure isolation first, feature fan-out second.\"",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
+    },
+    {
+      "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-q5",
+      "question": "Ordering, retries, and exactly-once delivery keep coming up in interviews. How do you answer clearly?",
+      "answer": "\"I start by correcting the premise: in distributed systems, exactly-once is usually a business-level design goal, not a transport guarantee.\n\nSQS Standard:\n→ at-least-once\n→ best-effort ordering\n\nSQS FIFO:\n→ ordered within message group\n→ exactly-once processing still requires idempotent consumer logic\n\nSo my answer is:\n→ choose FIFO only when ordering is a real requirement\n→ keep message groups practical so throughput does not collapse\n→ build idempotent consumers because retries and duplicates still matter at application level\n\nSenior interviewers usually want to hear that you understand delivery semantics plus application safeguards, not just product marketing.\"",
+      "topicNumber": 11,
+      "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+      "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
+    },
+    {
+      "id": "12-lambda-serverless-compute-deep-dive-q1",
+      "question": "Our Lambda suddenly started timing out and throttling during a production spike. How would you investigate?",
+      "answer": "\"I would treat that as a concurrency and downstream dependency incident, not just a Lambda incident.\n\nFirst I would check four metrics together in CloudWatch:\n→ ConcurrentExecutions\n→ Throttles\n→ Duration p95/p99\n→ Errors\n\nIf concurrency spiked and throttles increased, I would verify:\n→ account concurrency limit\n→ reserved concurrency on that function\n→ whether another noisy function consumed regional concurrency\n\nThen I would check what changed in duration.\nIf duration jumped from 300ms to 8 seconds, the real issue is often downstream:\n→ RDS connection exhaustion\n→ external API slowdown\n→ DynamoDB throttling\n→ VPC/NAT bottleneck\n\nFor immediate mitigation:\n→ set reserved concurrency for the critical function\n→ reduce traffic using API Gateway throttling if needed\n→ enable or increase Provisioned Concurrency if cold starts are part of problem\n→ if database-backed, move through RDS Proxy and verify connection reuse\n\nFor async sources like SQS, I would also verify queue age and DLQ growth.\nThe senior answer is: Lambda scaling fast is helpful, but if the dependency behind it\ncannot scale, Lambda becomes the thing that amplifies the outage.\"",
+      "topicNumber": 12,
+      "topicSlug": "12-lambda-serverless-compute-deep-dive",
+      "topic": "Lambda (Serverless Compute Deep Dive)"
+    },
+    {
+      "id": "12-lambda-serverless-compute-deep-dive-q2",
+      "question": "How do you make Lambda safe for retries and duplicate events in real life?",
+      "answer": "\"Assume duplicates will happen. Design for idempotency from day one.\n\nWhere duplicates come from:\n→ SQS visibility timeout expiry\n→ EventBridge retry\n→ client retry on timeout\n→ Lambda async retry after transient failure\n\nMy pattern is:\n1. Generate or extract an idempotency key\n   Example: orderId, paymentId, eventId\n2. Store processing status in DynamoDB with conditional write\n   'only process if key does not exist'\n3. Make side effects happen after idempotency check\n4. Return success for already-processed events instead of failing\n\nFor payments specifically:\n→ never charge card before idempotency check\n→ store request fingerprint + final outcome\n→ retries should return previous success, not create second charge\n\nThis is one of those questions where experienced engineers talk about duplicate-safe\nbusiness logic, not just Lambda retries.\"",
+      "topicNumber": 12,
+      "topicSlug": "12-lambda-serverless-compute-deep-dive",
+      "topic": "Lambda (Serverless Compute Deep Dive)"
+    },
+    {
+      "id": "12-lambda-serverless-compute-deep-dive-q3",
+      "question": "When does a team regret choosing Lambda, even though the design looked good at first?",
+      "answer": "\"Usually when the workload is long-lived, stateful, or operationally noisy.\n\nCommon regret cases:\n→ function runtime keeps growing close to 15 minutes\n→ too many cold-start-sensitive endpoints\n→ heavy VPC/database usage creates connection pressure\n→ local debugging becomes painful across many small functions\n→ event choreography becomes hard to reason about without strong tracing\n\nAt that point I ask:\n→ should this be an always-on service on ECS?\n→ should this workflow be Step Functions instead of many ad-hoc retries?\n→ should we consolidate small functions into bounded-context services?\n\nLambda is excellent, but senior judgment is knowing when serverless complexity\nstarts exceeding the operational benefit.\"",
+      "topicNumber": 12,
+      "topicSlug": "12-lambda-serverless-compute-deep-dive",
+      "topic": "Lambda (Serverless Compute Deep Dive)"
+    },
+    {
       "id": "13-containers-ecs-ecr-eks-q1",
       "question": "Lambda vs ECS Fargate — how do you decide?",
       "answer": "\"Primary question: is the workload event-driven or always-on?\n\nLambda wins for event-driven, short-duration work:\nTriggered by S3 upload, SQS message, HTTP request, schedule.\nRuns for milliseconds to minutes. Scales to zero (pay nothing when idle).\nNo infrastructure to manage. Perfect for: file processing, webhooks,\nscheduled jobs, API backends with variable traffic.\nLimitation: max 15 minutes, cold starts can add latency.\n\nECS Fargate wins for always-on services:\nLong-running processes, WebSocket connections, background workers consuming\nqueues continuously, services that benefit from persistent connections,\ntasks > 15 minutes (video transcoding, ML inference serving).\nCost: you pay for the full container runtime whether request is happening or not.\nNo cold starts. Predictable latency.\n\nThe practical rule: if it's triggered by events and runs for seconds/minutes\n→ Lambda. If it needs to run continuously or > 15 minutes → ECS Fargate.\n\nMany architectures use both: ECS for the main API (always-on, low latency),\nLambda for async processing (image resize on upload, email sending, etc.).\"",
@@ -335,7 +415,143 @@
       "topicNumber": 13,
       "topicSlug": "13-containers-ecs-ecr-eks",
       "topic": "Containers (ECS, ECR, EKS)"
+    },
+    {
+      "id": "13-containers-ecs-ecr-eks-q3",
+      "question": "ECS tasks keep restarting in production. What is your debugging approach?",
+      "answer": "\"I split it into image startup, health checks, and resource pressure.\n\nFirst check ECS service events:\n→ task failed to start?\n→ task killed due to failing ALB health checks?\n→ essential container exited?\n\nThen CloudWatch logs:\n→ did app crash on boot?\n→ missing env var or secret?\n→ migration script blocking startup?\n\nThen resource signals:\n→ OutOfMemory in container logs\n→ CPU pegged at 100%\n→ container memory setting too low\n\nThen health check alignment:\n→ ALB health check path correct?\n→ startup time longer than grace period?\n→ app listening on correct container port?\n\nOne very common production issue is this:\nthe app is healthy after 90 seconds, but ALB starts checking at 15 seconds,\nmarks it unhealthy, ECS replaces it, and the service flaps forever.\nSenior fix: increase grace period, add startup/readiness behavior, and separate\n'process is alive' from 'service is ready for traffic'.\"",
+      "topicNumber": 13,
+      "topicSlug": "13-containers-ecs-ecr-eks",
+      "topic": "Containers (ECS, ECR, EKS)"
+    },
+    {
+      "id": "13-containers-ecs-ecr-eks-q4",
+      "question": "ECS or EKS for a new platform team? How do you answer without being dogmatic?",
+      "answer": "\"I would answer based on org constraints, not tool fashion.\n\nChoose ECS when:\n→ team is AWS-centric\n→ speed and simplicity matter more than portability\n→ platform team is small\n→ workloads are straightforward APIs, workers, cron jobs\n\nChoose EKS when:\n→ company already has Kubernetes expertise\n→ you need ecosystem tools that assume Kubernetes\n→ multi-cloud portability is a real business requirement\n→ platform engineering maturity is already high\n\nThe mistake is choosing EKS because it is 'more advanced'.\nKubernetes gives flexibility, but it also gives you more surface area for outages:\ningress, CNI, autoscalers, controllers, admission webhooks, node lifecycle.\n\nFor many teams, ECS gets them to a stable production platform faster.\nThe senior answer is choosing the simplest platform that your team can operate well at 2 a.m.\"",
+      "topicNumber": 13,
+      "topicSlug": "13-containers-ecs-ecr-eks",
+      "topic": "Containers (ECS, ECR, EKS)"
+    },
+    {
+      "id": "14-api-gateway-q1",
+      "question": "Clients are getting random 429 errors from API Gateway. How do you debug that in production?",
+      "answer": "\"I would first identify which throttle layer is firing.\n\nAPI Gateway has multiple places where requests can be limited:\n→ account-level regional throttle\n→ stage-level throttle\n→ method-level throttle\n→ usage plan / API key quota\n→ backend itself returning 429 or timing out\n\nSo I check:\n→ CloudWatch metric: 4XXError and specifically 429 count\n→ access logs with requestId, API key, route, status\n→ whether one customer or route is noisy\n\nThen I separate protection from capacity:\nif 429 is intentional to protect backend, good.\nIf 429 is because limits are too low relative to normal traffic, then it is a config problem.\n\nSenior answer includes both:\nprotect backend with throttling, but also shape traffic upstream and scale the backend so\nnormal business traffic is not treated like abuse.\"",
+      "topicNumber": 14,
+      "topicSlug": "14-api-gateway",
+      "topic": "API Gateway"
+    },
+    {
+      "id": "14-api-gateway-q2",
+      "question": "When would you choose API Gateway over ALB for Lambda or container backends?",
+      "answer": "\"Choose API Gateway when the API product needs gateway features:\nauth, throttling, quotas, request validation, usage plans, API keys, versioned stages.\n\nChoose ALB when:\n→ simple HTTP routing is enough\n→ lower cost matters at high request volume\n→ you want one front door for ECS/EC2 with optional Lambda targets\n\nFor internal microservices, ALB is often enough.\nFor public APIs, partner APIs, mobile backends, or APIs needing per-client governance,\nAPI Gateway is usually the better fit.\n\nThe senior tradeoff is not 'which service can technically route traffic' but\n'where do we want policy, throttling, auth, and product controls to live?'\"",
+      "topicNumber": 14,
+      "topicSlug": "14-api-gateway",
+      "topic": "API Gateway"
+    },
+    {
+      "id": "14-api-gateway-q3",
+      "question": "A backend deploy succeeded, but users still see old or broken API behavior. Where do you look?",
+      "answer": "\"I think in layers:\n→ API Gateway stage deployment not promoted?\n→ cached authorizer result still in use?\n→ API Gateway response cache serving stale data?\n→ CloudFront in front of API caching unexpectedly?\n→ Lambda alias/version still pointing to old code?\n→ canary stage got updated but production stage did not?\n\nThis is a classic senior troubleshooting question because the backend may be correct.\nThe issue is often stale control-plane state at the gateway or edge layer.\"",
+      "topicNumber": 14,
+      "topicSlug": "14-api-gateway",
+      "topic": "API Gateway"
+    },
+    {
+      "id": "15-observability-cloudwatch-cloudtrail-x-ray-q1",
+      "question": "A service is 'slow', but CPU looks fine everywhere. How do you lead that investigation?",
+      "answer": "\"CPU being normal just tells me the bottleneck is elsewhere.\n\nI would build a latency breakdown:\n→ ALB/API Gateway latency\n→ app latency\n→ downstream database latency\n→ cache hit rate\n→ external API latency\n\nThen I would use:\n→ CloudWatch metrics for high-level symptoms\n→ logs for error context and request IDs\n→ X-Ray or tracing for end-to-end timeline\n\nThe key senior move is correlating one user request across systems instead of looking at\none dashboard at a time. Most 'slow app' incidents turn out to be a dependency,\nlock contention, bad query plan, or retry storm rather than raw CPU shortage.\"",
+      "topicNumber": 15,
+      "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+      "topic": "Observability (CloudWatch, CloudTrail, X-Ray)"
+    },
+    {
+      "id": "15-observability-cloudwatch-cloudtrail-x-ray-q2",
+      "question": "What logs, metrics, and alarms are mandatory before you call a system production-ready?",
+      "answer": "\"At minimum I want three layers:\n\nGolden signals:\n→ latency\n→ traffic\n→ errors\n→ saturation\n\nBusiness signals:\n→ orders placed\n→ checkout success rate\n→ payment failures\n→ queue age / backlog growth\n\nOperational alarms:\n→ error budget burn or 5xx spike\n→ DLQ > 0\n→ database connections near max\n→ latency p95/p99 above threshold\n→ no traffic when there should be traffic\n\nAnd I want structured logs with correlation IDs.\nSenior teams do not just log errors; they make incidents searchable and explainable.\"",
+      "topicNumber": 15,
+      "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+      "topic": "Observability (CloudWatch, CloudTrail, X-Ray)"
+    },
+    {
+      "id": "15-observability-cloudwatch-cloudtrail-x-ray-q3",
+      "question": "CloudTrail shows who changed something, but how do you turn that into a real incident response workflow?",
+      "answer": "\"CloudTrail alone is just evidence. The production pattern is:\nCloudTrail → CloudWatch/EventBridge rule → SNS/PagerDuty/Lambda automation.\n\nExamples:\n→ root login detected → page security team immediately\n→ security group opened to 0.0.0.0/0 on SSH → revert automatically or quarantine\n→ CloudTrail disabled → critical severity incident\n\nThe mature answer is that audit logs must be connected to alerting and response,\notherwise you only discover the problem during postmortem.\"",
+      "topicNumber": 15,
+      "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+      "topic": "Observability (CloudWatch, CloudTrail, X-Ray)"
+    },
+    {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-q1",
+      "question": "A developer accidentally exposed AWS credentials. What do you do in the first 30 minutes?",
+      "answer": "\"I treat leaked credentials as compromised immediately.\n\nFirst 30 minutes:\n1. Disable or delete the exposed key\n2. Identify which principal it belongs to and what permissions it had\n3. Check CloudTrail for usage from suspicious IPs, regions, and services\n4. Rotate any downstream secrets that key could access\n5. If possible, isolate impacted resources and increase monitoring\n\nThen I answer the prevention question:\n→ why did a long-lived key exist?\n→ why was secret scanning not catching it?\n→ why was the role over-permissioned?\n\nSenior security answers are always two-part:\ncontain the blast radius now, then remove the class of failure permanently.\"",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "topic": "Security (KMS, Secrets Manager, WAF, GuardDuty, Shield)"
+    },
+    {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-q2",
+      "question": "When do you use a customer-managed KMS key instead of the default AWS-managed key?",
+      "answer": "\"Use customer-managed keys when you need policy control, audit boundaries, or lifecycle ownership.\n\nExamples:\n→ cross-account sharing with explicit key permissions\n→ separation of duties between app team and security team\n→ need to disable access quickly by disabling the key\n→ regulatory requirement to control rotation and deletion schedule\n\nIf none of those apply, AWS-managed keys are often enough.\nThe senior answer is avoiding unnecessary key sprawl while knowing where customer-managed\nkeys provide real control.\"",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "topic": "Security (KMS, Secrets Manager, WAF, GuardDuty, Shield)"
+    },
+    {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-q3",
+      "question": "WAF is blocking legitimate traffic after a new rule rollout. How do you handle that safely?",
+      "answer": "\"This is why I deploy WAF changes in count mode first.\n\nImmediate response:\n→ identify which rule is firing\n→ switch that rule to count or exclude affected path/IP pattern\n→ preserve logs so we can analyze false positives\n\nLonger term:\n→ test rules against real traffic samples\n→ scope rules by path, header, country, or URI if needed\n→ keep emergency rollback procedure documented\n\nA senior engineer knows security controls can create outages too, so controls must be\nintroduced progressively and observed like any other production change.\"",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "topic": "Security (KMS, Secrets Manager, WAF, GuardDuty, Shield)"
+    },
+    {
+      "id": "17-cost-optimization-q1",
+      "question": "CFO says AWS spend jumped 40% this month. How do you investigate without guessing?",
+      "answer": "\"I would start with Cost Explorer and CUR, not opinions.\n\nBreak the increase down by:\n→ service\n→ region\n→ linked account\n→ tag (team, environment, product)\n→ usage type\n\nTypical real causes:\n→ data transfer spike\n→ NAT Gateway growth\n→ accidental On-Demand instead of Savings Plan coverage\n→ forgotten dev resources\n→ CloudFront cache miss increase\n→ log retention set to never\n→ S3 request charges, not storage\n\nThen I separate one-time spike from baseline change.\nThe senior answer is not 'cut costs everywhere' but\n'find the exact cost driver, tie it to behavior, then fix the architecture or governance issue.'\"",
+      "topicNumber": 17,
+      "topicSlug": "17-cost-optimization",
+      "topic": "Cost Optimization"
+    },
+    {
+      "id": "17-cost-optimization-q2",
+      "question": "What are the most common hidden AWS cost traps that junior engineers miss?",
+      "answer": "\"The big ones are rarely the obvious compute line item.\n\nCommon traps:\n→ NAT Gateway hourly + per-GB charges\n→ cross-AZ data transfer\n→ idle but attached load balancers\n→ CloudWatch log retention left infinite\n→ old EBS snapshots and unattached EBS volumes\n→ S3 request costs on chatty workloads\n→ provisioned but unused RDS / ElastiCache capacity\n→ over-provisioned ECS or Lambda memory\n\nThe pattern is this:\nthe bill usually grows at architecture boundaries, not inside one EC2 instance.\"",
+      "topicNumber": 17,
+      "topicSlug": "17-cost-optimization",
+      "topic": "Cost Optimization"
+    },
+    {
+      "id": "17-cost-optimization-q3",
+      "question": "How do you optimize cost without damaging reliability or performance?",
+      "answer": "\"I optimize in this order:\n1. Remove waste\n2. Right-size\n3. Commit baseline usage\n4. Redesign expensive patterns\n\nI do not start by reducing redundancy in production.\nFor example, deleting Multi-AZ may save money but increases outage risk.\nBetter savings usually come from:\n→ right-sizing compute\n→ caching\n→ eliminating NAT traffic with VPC endpoints\n→ moving bursty workloads to serverless/Spot\n→ using Savings Plans for stable baseline\n\nSenior cost optimization is about cost per business outcome, not just making the bill smaller.\"",
+      "topicNumber": 17,
+      "topicSlug": "17-cost-optimization",
+      "topic": "Cost Optimization"
+    },
+    {
+      "id": "20-aws-well-architected-architecture-patterns-q1",
+      "question": "In a senior interview, how do you answer 'design a scalable AWS system' without sounding generic?",
+      "answer": "\"I structure the answer in layers and tradeoffs:\n→ ingress\n→ compute\n→ data\n→ async decoupling\n→ security\n→ observability\n→ failure handling\n→ cost\n\nThen I explicitly state assumptions:\ntraffic pattern, RTO/RPO, read/write ratio, compliance needs, team maturity.\n\nWhat interviewers want from a 10+ year engineer is not a list of AWS services.\nThey want to hear how you reason about failure, operational burden, and where the design will break first.\"",
+      "topicNumber": 20,
+      "topicSlug": "20-aws-well-architected-architecture-patterns",
+      "topic": "AWS Well-Architected + Architecture Patterns"
+    },
+    {
+      "id": "20-aws-well-architected-architecture-patterns-q2",
+      "question": "How do you choose between simplicity and future-proofing in architecture?",
+      "answer": "\"I optimize for the simplest design that survives the next real business milestone.\n\nOver-engineering early creates operational drag.\nUnder-engineering creates expensive rewrites under pressure.\n\nSo I ask:\n→ what load do we need in 6-12 months, not 5 years?\n→ what compliance requirements are real today?\n→ what does the team know how to operate?\n→ where is change most likely?\n\nSenior architecture is mostly constraint management.\nI future-proof interfaces and data contracts more than infrastructure complexity.\"",
+      "topicNumber": 20,
+      "topicSlug": "20-aws-well-architected-architecture-patterns",
+      "topic": "AWS Well-Architected + Architecture Patterns"
+    },
+    {
+      "id": "20-aws-well-architected-architecture-patterns-q3",
+      "question": "Tell me about an AWS architecture failure mode that looks fine on diagrams but breaks in real life.",
+      "answer": "\"A classic example is a fully serverless synchronous chain:\nAPI Gateway → Lambda → Lambda → Lambda → RDS\n\nOn the diagram it looks elegant.\nIn real life it can fail because:\n→ every hop adds timeout and retry complexity\n→ tracing becomes harder\n→ cold starts stack up\n→ RDS becomes the bottleneck under concurrent fan-out\n→ one partial failure creates duplicate side effects\n\nThe mature redesign is often:\nkeep synchronous path short,\npush non-critical work to SQS/EventBridge,\nadd idempotency,\nand protect the database with caching, queueing, or RDS Proxy.\n\nSenior engineers earn trust by talking about how systems misbehave under pressure, not just how they look when healthy.\"",
+      "topicNumber": 20,
+      "topicSlug": "20-aws-well-architected-architecture-patterns",
+      "topic": "AWS Well-Architected + Architecture Patterns"
     }
   ],
-  "totalCount": 42
+  "totalCount": 69
 }

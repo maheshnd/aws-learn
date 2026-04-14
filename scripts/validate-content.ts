@@ -1,9 +1,23 @@
 import fs from 'fs';
 import path from 'path';
 
-const SRC = path.join(process.cwd(), 'content', 'aws_master_notes.md');
 const OUT = path.join(process.cwd(), 'public', 'data');
+function resolveSourcePath(): string {
+  const candidates = [
+    path.join(process.cwd(), 'content', 'aws_master_notes.md'),
+    path.join(process.cwd(), 'aws_master_notes.md'),
+  ];
 
+  const existing = candidates.find(candidate => fs.existsSync(candidate));
+  if (existing) return existing;
+
+  throw new Error(
+    `Content source not found. Checked: ${candidates.join(', ')}. ` +
+      'Add aws_master_notes.md to one of those locations before validating content.'
+  );
+}
+
+const SRC = resolveSourcePath();
 const raw = fs.readFileSync(SRC, 'utf8');
 const manifest = JSON.parse(fs.readFileSync(path.join(OUT, 'topics.json'), 'utf8'));
 const qa = JSON.parse(fs.readFileSync(path.join(OUT, 'qa-all.json'), 'utf8'));

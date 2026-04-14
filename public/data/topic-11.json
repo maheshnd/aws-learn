@@ -250,7 +250,7 @@
       "id": "interview-qa-messaging",
       "title": "🎯 Interview Q&A — Messaging",
       "type": "qa",
-      "rawMarkdown": "**Q: SQS vs SNS vs EventBridge — explain the difference and when to use each.**\n```\n\"Three different messaging patterns for different needs.\n\nSQS is a point-to-point queue. One producer sends messages, one type of\nconsumer processes them. The queue buffers messages so consumers can work\nat their own pace. Use it when you need to decouple and buffer work between\ntwo services, and when retries and DLQ matter (payment processing, file processing).\n\nSNS is pub/sub fan-out. One message goes to ALL subscribers simultaneously.\nUse it when one event needs to trigger multiple services at the same time —\norder placed needs to trigger payment, inventory, email, analytics all at once.\nFan-out pattern: SNS + multiple SQS queues is the most reliable version.\n\nEventBridge is an intelligent event bus with content-based routing.\nEvents flow in from 100+ sources, rules match patterns, and route to targets.\nUse when you need complex routing logic, events from AWS services (EC2 state\nchanges, S3 events), SaaS integrations, or event replay capabilities.\n\nIn practice: SQS for buffering between two services, SNS for fan-out,\nEventBridge for complex event-driven architectures and AWS service events.\nOften used together: EventBridge routes events to SNS which fans out to SQS.\"\n```\n\n**Q: How would you handle a situation where SQS messages are failing repeatedly?**\n```\n\"That's exactly what Dead Letter Queues are for — and they're mandatory in production.\n\nConfigure DLQ on the main queue with maxReceiveCount = 3.\nAfter 3 failed processing attempts, SQS moves the message to the DLQ.\nSet a CloudWatch alarm: ApproximateNumberOfMessagesVisible on DLQ > 0.\nThe moment a message lands in DLQ → alarm fires → team is notified.\n\nInvestigation: read the DLQ message → look at the payload → find the problem.\nCommon causes: malformed JSON, unexpected data format, dependency service down,\ncode exception that wasn't caught.\n\nFix the consumer code. Then use SQS redrive: move messages from DLQ back to\nmain queue. Consumer processes them successfully this time.\n\nWithout DLQ: bad messages would retry infinitely, block the queue, and a single\nmalformed message could bring down your entire processing pipeline.\"\n```\n\n---",
+      "rawMarkdown": "**Q: SQS vs SNS vs EventBridge — explain the difference and when to use each.**\n```\n\"Three different messaging patterns for different needs.\n\nSQS is a point-to-point queue. One producer sends messages, one type of\nconsumer processes them. The queue buffers messages so consumers can work\nat their own pace. Use it when you need to decouple and buffer work between\ntwo services, and when retries and DLQ matter (payment processing, file processing).\n\nSNS is pub/sub fan-out. One message goes to ALL subscribers simultaneously.\nUse it when one event needs to trigger multiple services at the same time —\norder placed needs to trigger payment, inventory, email, analytics all at once.\nFan-out pattern: SNS + multiple SQS queues is the most reliable version.\n\nEventBridge is an intelligent event bus with content-based routing.\nEvents flow in from 100+ sources, rules match patterns, and route to targets.\nUse when you need complex routing logic, events from AWS services (EC2 state\nchanges, S3 events), SaaS integrations, or event replay capabilities.\n\nIn practice: SQS for buffering between two services, SNS for fan-out,\nEventBridge for complex event-driven architectures and AWS service events.\nOften used together: EventBridge routes events to SNS which fans out to SQS.\"\n```\n\n**Q: How would you handle a situation where SQS messages are failing repeatedly?**\n```\n\"That's exactly what Dead Letter Queues are for — and they're mandatory in production.\n\nConfigure DLQ on the main queue with maxReceiveCount = 3.\nAfter 3 failed processing attempts, SQS moves the message to the DLQ.\nSet a CloudWatch alarm: ApproximateNumberOfMessagesVisible on DLQ > 0.\nThe moment a message lands in DLQ → alarm fires → team is notified.\n\nInvestigation: read the DLQ message → look at the payload → find the problem.\nCommon causes: malformed JSON, unexpected data format, dependency service down,\ncode exception that wasn't caught.\n\nFix the consumer code. Then use SQS redrive: move messages from DLQ back to\nmain queue. Consumer processes them successfully this time.\n\nWithout DLQ: bad messages would retry infinitely, block the queue, and a single\nmalformed message could bring down your entire processing pipeline.\"\n```\n\n**Q: Queue backlog is growing fast, but consumer CPU is normal. What do you investigate?**\n```\n\"Normal CPU does not mean the consumer is healthy enough for backlog.\n\nI would check:\n→ queue depth and age of oldest message\n→ consumer concurrency / number of workers\n→ downstream dependency latency\n→ visibility timeout too short causing reprocessing\n→ batch size too small\n→ poison messages causing repeated retries\n\nThis often happens when consumers are waiting on database or third-party API calls.\nCPU stays low because workers are blocked, not busy.\n\nThe senior response is to find the throughput limiter end to end, not just add more consumers blindly.\"\n```\n\n**Q: How do you design messaging so one bad downstream service does not take the whole platform down?**\n```\n\"Use isolation boundaries in the event flow.\n\nPatterns:\n→ SNS fan-out to separate SQS queue per consumer\n→ each queue gets its own retry policy and DLQ\n→ slow email service should not block billing or inventory\n→ Step Functions for explicit compensating actions where workflow matters\n\nIf every consumer shares one queue or one synchronous chain,\none bad dependency becomes everyone's outage.\n\nThe mature design principle is failure isolation first, feature fan-out second.\"\n```\n\n**Q: Ordering, retries, and exactly-once delivery keep coming up in interviews. How do you answer clearly?**\n```\n\"I start by correcting the premise: in distributed systems, exactly-once is usually a business-level design goal, not a transport guarantee.\n\nSQS Standard:\n→ at-least-once\n→ best-effort ordering\n\nSQS FIFO:\n→ ordered within message group\n→ exactly-once processing still requires idempotent consumer logic\n\nSo my answer is:\n→ choose FIFO only when ordering is a real requirement\n→ keep message groups practical so throughput does not collapse\n→ build idempotent consumers because retries and duplicates still matter at application level\n\nSenior interviewers usually want to hear that you understand delivery semantics plus application safeguards, not just product marketing.\"\n```\n\n---",
       "blocks": [
         {
           "type": "paragraph",
@@ -267,6 +267,30 @@
         {
           "type": "diagram",
           "content": "\"That's exactly what Dead Letter Queues are for — and they're mandatory in production.\n\nConfigure DLQ on the main queue with maxReceiveCount = 3.\nAfter 3 failed processing attempts, SQS moves the message to the DLQ.\nSet a CloudWatch alarm: ApproximateNumberOfMessagesVisible on DLQ > 0.\nThe moment a message lands in DLQ → alarm fires → team is notified.\n\nInvestigation: read the DLQ message → look at the payload → find the problem.\nCommon causes: malformed JSON, unexpected data format, dependency service down,\ncode exception that wasn't caught.\n\nFix the consumer code. Then use SQS redrive: move messages from DLQ back to\nmain queue. Consumer processes them successfully this time.\n\nWithout DLQ: bad messages would retry infinitely, block the queue, and a single\nmalformed message could bring down your entire processing pipeline.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Queue backlog is growing fast, but consumer CPU is normal. What do you investigate?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Normal CPU does not mean the consumer is healthy enough for backlog.\n\nI would check:\n→ queue depth and age of oldest message\n→ consumer concurrency / number of workers\n→ downstream dependency latency\n→ visibility timeout too short causing reprocessing\n→ batch size too small\n→ poison messages causing repeated retries\n\nThis often happens when consumers are waiting on database or third-party API calls.\nCPU stays low because workers are blocked, not busy.\n\nThe senior response is to find the throughput limiter end to end, not just add more consumers blindly.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: How do you design messaging so one bad downstream service does not take the whole platform down?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"Use isolation boundaries in the event flow.\n\nPatterns:\n→ SNS fan-out to separate SQS queue per consumer\n→ each queue gets its own retry policy and DLQ\n→ slow email service should not block billing or inventory\n→ Step Functions for explicit compensating actions where workflow matters\n\nIf every consumer shares one queue or one synchronous chain,\none bad dependency becomes everyone's outage.\n\nThe mature design principle is failure isolation first, feature fan-out second.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Ordering, retries, and exactly-once delivery keep coming up in interviews. How do you answer clearly?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I start by correcting the premise: in distributed systems, exactly-once is usually a business-level design goal, not a transport guarantee.\n\nSQS Standard:\n→ at-least-once\n→ best-effort ordering\n\nSQS FIFO:\n→ ordered within message group\n→ exactly-once processing still requires idempotent consumer logic\n\nSo my answer is:\n→ choose FIFO only when ordering is a real requirement\n→ keep message groups practical so throughput does not collapse\n→ build idempotent consumers because retries and duplicates still matter at application level\n\nSenior interviewers usually want to hear that you understand delivery semantics plus application safeguards, not just product marketing.\""
         },
         {
           "type": "paragraph",
@@ -289,10 +313,41 @@
           "topicNumber": 11,
           "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
           "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
+        },
+        {
+          "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-q3",
+          "question": "Queue backlog is growing fast, but consumer CPU is normal. What do you investigate?",
+          "answer": "\"Normal CPU does not mean the consumer is healthy enough for backlog.\n\nI would check:\n→ queue depth and age of oldest message\n→ consumer concurrency / number of workers\n→ downstream dependency latency\n→ visibility timeout too short causing reprocessing\n→ batch size too small\n→ poison messages causing repeated retries\n\nThis often happens when consumers are waiting on database or third-party API calls.\nCPU stays low because workers are blocked, not busy.\n\nThe senior response is to find the throughput limiter end to end, not just add more consumers blindly.\"",
+          "topicNumber": 11,
+          "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+          "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
+        },
+        {
+          "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-q4",
+          "question": "How do you design messaging so one bad downstream service does not take the whole platform down?",
+          "answer": "\"Use isolation boundaries in the event flow.\n\nPatterns:\n→ SNS fan-out to separate SQS queue per consumer\n→ each queue gets its own retry policy and DLQ\n→ slow email service should not block billing or inventory\n→ Step Functions for explicit compensating actions where workflow matters\n\nIf every consumer shares one queue or one synchronous chain,\none bad dependency becomes everyone's outage.\n\nThe mature design principle is failure isolation first, feature fan-out second.\"",
+          "topicNumber": 11,
+          "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+          "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
+        },
+        {
+          "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-q5",
+          "question": "Ordering, retries, and exactly-once delivery keep coming up in interviews. How do you answer clearly?",
+          "answer": "\"I start by correcting the premise: in distributed systems, exactly-once is usually a business-level design goal, not a transport guarantee.\n\nSQS Standard:\n→ at-least-once\n→ best-effort ordering\n\nSQS FIFO:\n→ ordered within message group\n→ exactly-once processing still requires idempotent consumer logic\n\nSo my answer is:\n→ choose FIFO only when ordering is a real requirement\n→ keep message groups practical so throughput does not collapse\n→ build idempotent consumers because retries and duplicates still matter at application level\n\nSenior interviewers usually want to hear that you understand delivery semantics plus application safeguards, not just product marketing.\"",
+          "topicNumber": 11,
+          "topicSlug": "11-messaging-integration-sqs-sns-eventbridge-step-functions",
+          "topic": "Messaging & Integration (SQS, SNS, EventBridge, Step Functions)"
         }
       ],
       "revisionPoints": [
-        "**Q: SQS vs SNS vs EventBridge — explain the difference and when to use each.**"
+        "→ queue depth and age of oldest message",
+        "→ consumer concurrency / number of workers",
+        "→ downstream dependency latency",
+        "→ visibility timeout too short causing reprocessing",
+        "→ batch size too small",
+        "→ poison messages causing repeated retries",
+        "→ SNS fan-out to separate SQS queue per consumer",
+        "→ each queue gets its own retry policy and DLQ"
       ]
     },
     {

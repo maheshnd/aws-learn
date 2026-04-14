@@ -103,6 +103,78 @@
         "→ Timeline visualization: API Gateway (10ms) → Lambda (50ms) → RDS query (2000ms!)",
         "→ Found it: RDS query is the bottleneck → add index → fixed"
       ]
+    },
+    {
+      "id": "interview-qa-observability",
+      "title": "🎯 Interview Q&A — Observability",
+      "type": "qa",
+      "rawMarkdown": "**Q: A service is 'slow', but CPU looks fine everywhere. How do you lead that investigation?**\n```\n\"CPU being normal just tells me the bottleneck is elsewhere.\n\nI would build a latency breakdown:\n→ ALB/API Gateway latency\n→ app latency\n→ downstream database latency\n→ cache hit rate\n→ external API latency\n\nThen I would use:\n→ CloudWatch metrics for high-level symptoms\n→ logs for error context and request IDs\n→ X-Ray or tracing for end-to-end timeline\n\nThe key senior move is correlating one user request across systems instead of looking at\none dashboard at a time. Most 'slow app' incidents turn out to be a dependency,\nlock contention, bad query plan, or retry storm rather than raw CPU shortage.\"\n```\n\n**Q: What logs, metrics, and alarms are mandatory before you call a system production-ready?**\n```\n\"At minimum I want three layers:\n\nGolden signals:\n→ latency\n→ traffic\n→ errors\n→ saturation\n\nBusiness signals:\n→ orders placed\n→ checkout success rate\n→ payment failures\n→ queue age / backlog growth\n\nOperational alarms:\n→ error budget burn or 5xx spike\n→ DLQ > 0\n→ database connections near max\n→ latency p95/p99 above threshold\n→ no traffic when there should be traffic\n\nAnd I want structured logs with correlation IDs.\nSenior teams do not just log errors; they make incidents searchable and explainable.\"\n```\n\n**Q: CloudTrail shows who changed something, but how do you turn that into a real incident response workflow?**\n```\n\"CloudTrail alone is just evidence. The production pattern is:\nCloudTrail → CloudWatch/EventBridge rule → SNS/PagerDuty/Lambda automation.\n\nExamples:\n→ root login detected → page security team immediately\n→ security group opened to 0.0.0.0/0 on SSH → revert automatically or quarantine\n→ CloudTrail disabled → critical severity incident\n\nThe mature answer is that audit logs must be connected to alerting and response,\notherwise you only discover the problem during postmortem.\"\n```\n\n---",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": "**Q: A service is 'slow', but CPU looks fine everywhere. How do you lead that investigation?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"CPU being normal just tells me the bottleneck is elsewhere.\n\nI would build a latency breakdown:\n→ ALB/API Gateway latency\n→ app latency\n→ downstream database latency\n→ cache hit rate\n→ external API latency\n\nThen I would use:\n→ CloudWatch metrics for high-level symptoms\n→ logs for error context and request IDs\n→ X-Ray or tracing for end-to-end timeline\n\nThe key senior move is correlating one user request across systems instead of looking at\none dashboard at a time. Most 'slow app' incidents turn out to be a dependency,\nlock contention, bad query plan, or retry storm rather than raw CPU shortage.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: What logs, metrics, and alarms are mandatory before you call a system production-ready?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"At minimum I want three layers:\n\nGolden signals:\n→ latency\n→ traffic\n→ errors\n→ saturation\n\nBusiness signals:\n→ orders placed\n→ checkout success rate\n→ payment failures\n→ queue age / backlog growth\n\nOperational alarms:\n→ error budget burn or 5xx spike\n→ DLQ > 0\n→ database connections near max\n→ latency p95/p99 above threshold\n→ no traffic when there should be traffic\n\nAnd I want structured logs with correlation IDs.\nSenior teams do not just log errors; they make incidents searchable and explainable.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: CloudTrail shows who changed something, but how do you turn that into a real incident response workflow?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"CloudTrail alone is just evidence. The production pattern is:\nCloudTrail → CloudWatch/EventBridge rule → SNS/PagerDuty/Lambda automation.\n\nExamples:\n→ root login detected → page security team immediately\n→ security group opened to 0.0.0.0/0 on SSH → revert automatically or quarantine\n→ CloudTrail disabled → critical severity incident\n\nThe mature answer is that audit logs must be connected to alerting and response,\notherwise you only discover the problem during postmortem.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "---"
+        }
+      ],
+      "qaItems": [
+        {
+          "id": "15-observability-cloudwatch-cloudtrail-x-ray-q1",
+          "question": "A service is 'slow', but CPU looks fine everywhere. How do you lead that investigation?",
+          "answer": "\"CPU being normal just tells me the bottleneck is elsewhere.\n\nI would build a latency breakdown:\n→ ALB/API Gateway latency\n→ app latency\n→ downstream database latency\n→ cache hit rate\n→ external API latency\n\nThen I would use:\n→ CloudWatch metrics for high-level symptoms\n→ logs for error context and request IDs\n→ X-Ray or tracing for end-to-end timeline\n\nThe key senior move is correlating one user request across systems instead of looking at\none dashboard at a time. Most 'slow app' incidents turn out to be a dependency,\nlock contention, bad query plan, or retry storm rather than raw CPU shortage.\"",
+          "topicNumber": 15,
+          "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+          "topic": "Observability (CloudWatch, CloudTrail, X-Ray)"
+        },
+        {
+          "id": "15-observability-cloudwatch-cloudtrail-x-ray-q2",
+          "question": "What logs, metrics, and alarms are mandatory before you call a system production-ready?",
+          "answer": "\"At minimum I want three layers:\n\nGolden signals:\n→ latency\n→ traffic\n→ errors\n→ saturation\n\nBusiness signals:\n→ orders placed\n→ checkout success rate\n→ payment failures\n→ queue age / backlog growth\n\nOperational alarms:\n→ error budget burn or 5xx spike\n→ DLQ > 0\n→ database connections near max\n→ latency p95/p99 above threshold\n→ no traffic when there should be traffic\n\nAnd I want structured logs with correlation IDs.\nSenior teams do not just log errors; they make incidents searchable and explainable.\"",
+          "topicNumber": 15,
+          "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+          "topic": "Observability (CloudWatch, CloudTrail, X-Ray)"
+        },
+        {
+          "id": "15-observability-cloudwatch-cloudtrail-x-ray-q3",
+          "question": "CloudTrail shows who changed something, but how do you turn that into a real incident response workflow?",
+          "answer": "\"CloudTrail alone is just evidence. The production pattern is:\nCloudTrail → CloudWatch/EventBridge rule → SNS/PagerDuty/Lambda automation.\n\nExamples:\n→ root login detected → page security team immediately\n→ security group opened to 0.0.0.0/0 on SSH → revert automatically or quarantine\n→ CloudTrail disabled → critical severity incident\n\nThe mature answer is that audit logs must be connected to alerting and response,\notherwise you only discover the problem during postmortem.\"",
+          "topicNumber": 15,
+          "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+          "topic": "Observability (CloudWatch, CloudTrail, X-Ray)"
+        }
+      ],
+      "revisionPoints": [
+        "→ ALB/API Gateway latency",
+        "→ app latency",
+        "→ downstream database latency",
+        "→ cache hit rate",
+        "→ external API latency",
+        "→ CloudWatch metrics for high-level symptoms",
+        "→ logs for error context and request IDs",
+        "→ X-Ray or tracing for end-to-end timeline"
+      ]
     }
   ]
 }

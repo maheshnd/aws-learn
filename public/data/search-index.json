@@ -673,7 +673,7 @@
       "sectionId": "interview-qa-route-53",
       "sectionTitle": "🎯 Interview Q&A — Route 53",
       "type": "qa",
-      "text": " Q: What's the difference between CNAME and Alias records? Q: How do you implement blue-green deployment with Route 53? ---"
+      "text": " Q: What's the difference between CNAME and Alias records? Q: How do you implement blue-green deployment with Route 53? Q: DNS cutover happened, but some users still hit the old environment. Why? Q: Route 53 health checks say the endpoint is healthy, but users still report outage. How do you explain that? ---"
     },
     {
       "id": "09-route-53-dns-connects-to",
@@ -736,7 +736,7 @@
       "sectionId": "interview-qa-cloudfront",
       "sectionTitle": "🎯 Interview Q&A — CloudFront",
       "type": "qa",
-      "text": " Q: Why use CloudFront in front of S3 instead of serving directly from S3? Q: How do you ensure users always get the latest version of your SPA after deployment? ---"
+      "text": " Q: Why use CloudFront in front of S3 instead of serving directly from S3? Q: How do you ensure users always get the latest version of your SPA after deployment? Q: Users in one region still see stale content while others see the new site. How do you debug CloudFront? Q: When can CloudFront make an outage worse instead of better? ---"
     },
     {
       "id": "10-cloudfront-cdn-connects-to",
@@ -799,7 +799,7 @@
       "sectionId": "interview-qa-messaging",
       "sectionTitle": "🎯 Interview Q&A — Messaging",
       "type": "qa",
-      "text": " Q: SQS vs SNS vs EventBridge — explain the difference and when to use each. Q: How would you handle a situation where SQS messages are failing repeatedly? ---"
+      "text": " Q: SQS vs SNS vs EventBridge — explain the difference and when to use each. Q: How would you handle a situation where SQS messages are failing repeatedly? Q: Queue backlog is growing fast, but consumer CPU is normal. What do you investigate? Q: How do you design messaging so one bad downstream service does not take the whole platform down? Q: Ordering, retries, and exactly-once delivery keep coming up in interviews. How do you answer clearly? ---"
     },
     {
       "id": "11-messaging-integration-sqs-sns-eventbridge-step-functions-connects-to",
@@ -847,6 +847,15 @@
       "text": " ---"
     },
     {
+      "id": "12-lambda-serverless-compute-deep-dive-interview-qa-lambda",
+      "topicNumber": 12,
+      "topicSlug": "12-lambda-serverless-compute-deep-dive",
+      "sectionId": "interview-qa-lambda",
+      "sectionTitle": "🎯 Interview Q&A — Lambda",
+      "type": "qa",
+      "text": " Q: Our Lambda suddenly started timing out and throttling during a production spike. How would you investigate? Q: How do you make Lambda safe for retries and duplicate events in real life? Q: When does a team regret choosing Lambda, even though the design looked good at first? ---"
+    },
+    {
       "id": "13-containers-ecs-ecr-eks-docker-quick-review",
       "topicNumber": 13,
       "topicSlug": "13-containers-ecs-ecr-eks",
@@ -874,13 +883,13 @@
       "text": " Task Definition — The Blueprint ECS Launch Types ECS Service — Long-Running Apps ECS vs EKS ---"
     },
     {
-      "id": "13-containers-ecs-ecr-eks-interview-qa-lambda-containers",
+      "id": "13-containers-ecs-ecr-eks-interview-qa-containers",
       "topicNumber": 13,
       "topicSlug": "13-containers-ecs-ecr-eks",
-      "sectionId": "interview-qa-lambda-containers",
-      "sectionTitle": "🎯 Interview Q&A — Lambda & Containers",
+      "sectionId": "interview-qa-containers",
+      "sectionTitle": "🎯 Interview Q&A — Containers",
       "type": "qa",
-      "text": " Q: Lambda vs ECS Fargate — how do you decide? Q: How do you manage secrets in ECS containers? ---"
+      "text": " Q: Lambda vs ECS Fargate — how do you decide? Q: How do you manage secrets in ECS containers? Q: ECS tasks keep restarting in production. What is your debugging approach? Q: ECS or EKS for a new platform team? How do you answer without being dogmatic? ---"
     },
     {
       "id": "13-containers-ecs-ecr-eks-connects-to",
@@ -919,6 +928,15 @@
       "text": " Authentication Options Throttling and Caching ---"
     },
     {
+      "id": "14-api-gateway-interview-qa-api-gateway",
+      "topicNumber": 14,
+      "topicSlug": "14-api-gateway",
+      "sectionId": "interview-qa-api-gateway",
+      "sectionTitle": "🎯 Interview Q&A — API Gateway",
+      "type": "qa",
+      "text": " Q: Clients are getting random 429 errors from API Gateway. How do you debug that in production? Q: When would you choose API Gateway over ALB for Lambda or container backends? Q: A backend deploy succeeded, but users still see old or broken API behavior. Where do you look? ---"
+    },
+    {
       "id": "15-observability-cloudwatch-cloudtrail-x-ray-cloudwatch-deep-dive",
       "topicNumber": 15,
       "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
@@ -944,6 +962,15 @@
       "sectionTitle": "🔭 X-Ray — Distributed Tracing",
       "type": "concept",
       "text": " ---"
+    },
+    {
+      "id": "15-observability-cloudwatch-cloudtrail-x-ray-interview-qa-observability",
+      "topicNumber": 15,
+      "topicSlug": "15-observability-cloudwatch-cloudtrail-x-ray",
+      "sectionId": "interview-qa-observability",
+      "sectionTitle": "🎯 Interview Q&A — Observability",
+      "type": "qa",
+      "text": " Q: A service is 'slow', but CPU looks fine everywhere. How do you lead that investigation? Q: What logs, metrics, and alarms are mandatory before you call a system production-ready? Q: CloudTrail shows who changed something, but how do you turn that into a real incident response workflow? ---"
     },
     {
       "id": "16-security-kms-secrets-manager-waf-guardduty-shield-kms-key-management-service",
@@ -982,6 +1009,15 @@
       "text": " ---"
     },
     {
+      "id": "16-security-kms-secrets-manager-waf-guardduty-shield-interview-qa-security",
+      "topicNumber": 16,
+      "topicSlug": "16-security-kms-secrets-manager-waf-guardduty-shield",
+      "sectionId": "interview-qa-security",
+      "sectionTitle": "🎯 Interview Q&A — Security",
+      "type": "qa",
+      "text": " Q: A developer accidentally exposed AWS credentials. What do you do in the first 30 minutes? Q: When do you use a customer-managed KMS key instead of the default AWS-managed key? Q: WAF is blocking legitimate traffic after a new rule rollout. How do you handle that safely? ---"
+    },
+    {
       "id": "17-cost-optimization-aws-cost-optimization-complete-guide",
       "topicNumber": 17,
       "topicSlug": "17-cost-optimization",
@@ -991,6 +1027,15 @@
       "text": " Finding Where Money Goes EC2 Cost Optimization Database Cost Optimization S3 Cost Optimization Data Transfer Cost Optimization Cost Allocation Tags ---"
     },
     {
+      "id": "17-cost-optimization-interview-qa-cost-optimization",
+      "topicNumber": 17,
+      "topicSlug": "17-cost-optimization",
+      "sectionId": "interview-qa-cost-optimization",
+      "sectionTitle": "🎯 Interview Q&A — Cost Optimization",
+      "type": "qa",
+      "text": " Q: CFO says AWS spend jumped 40% this month. How do you investigate without guessing? Q: What are the most common hidden AWS cost traps that junior engineers miss? Q: How do you optimize cost without damaging reliability or performance? ---"
+    },
+    {
       "id": "20-aws-well-architected-architecture-patterns-wellarchitected-framework-6-pillars",
       "topicNumber": 20,
       "topicSlug": "20-aws-well-architected-architecture-patterns",
@@ -998,6 +1043,15 @@
       "sectionTitle": "🏛️ Well-Architected Framework — 6 Pillars",
       "type": "concept",
       "text": " Pillar 1: Operational Excellence Pillar 2: Security Pillar 3: Reliability Pillar 4: Performance Efficiency Pillar 5: Cost Optimization Pillar 6: Sustainability ---"
+    },
+    {
+      "id": "20-aws-well-architected-architecture-patterns-interview-qa-architecture-patterns",
+      "topicNumber": 20,
+      "topicSlug": "20-aws-well-architected-architecture-patterns",
+      "sectionId": "interview-qa-architecture-patterns",
+      "sectionTitle": "🎯 Interview Q&A — Architecture Patterns",
+      "type": "qa",
+      "text": " Q: In a senior interview, how do you answer 'design a scalable AWS system' without sounding generic? Q: How do you choose between simplicity and future-proofing in architecture? Q: Tell me about an AWS architecture failure mode that looks fine on diagrams but breaks in real life. ---"
     },
     {
       "id": "20-aws-well-architected-architecture-patterns-big-picture-everything-connected-bigpicture",
@@ -1024,7 +1078,7 @@
       "sectionId": "quick-reference-service-decision-trees",
       "sectionTitle": "📋 Quick Reference — Service Decision Trees",
       "type": "concept",
-      "text": " --- AWS Master Notes — Complete Topics: 01 Cloud Computing → 20 Architecture + Big Picture Every service. Every concept. Every interview answer. ---"
+      "text": " --- AWS Master Notes — Complete Topics: 01 Cloud Computing → 20 Architecture + Big Picture Every service. Every concept. Every interview answer. "
     }
   ]
 }

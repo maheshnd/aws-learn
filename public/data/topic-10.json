@@ -159,7 +159,7 @@
       "id": "interview-qa-cloudfront",
       "title": "🎯 Interview Q&A — CloudFront",
       "type": "qa",
-      "rawMarkdown": "**Q: Why use CloudFront in front of S3 instead of serving directly from S3?**\n```\n\"Four reasons:\n\nPerformance: S3 is regional (one location). CloudFront has 400+ edge\nlocations. User in Tokyo gets files from Tokyo edge, not your us-east-1\nbucket. Latency drops from 180ms to 5ms for cached content.\n\nCost: S3 to internet data transfer is $0.09/GB. CloudFront to internet\nis $0.0085/GB (90% cheaper) because CloudFront has preferential rates with\nISPs and optimized transfer from S3 to CloudFront is also cheaper.\n\nSecurity: with OAC, S3 bucket is completely private. Block Public Access\nis ON. Only CloudFront can read objects. Direct S3 URLs fail. Users always\ngo through CloudFront (WAF, rate limiting, geo-blocking all apply).\n\nHTTPS: S3 static website hosting doesn't support HTTPS with custom domain.\nCloudFront + ACM certificate = HTTPS with your domain. Required for SEO\nand browser trust.\n\nThe combination is: Route 53 → CloudFront (HTTPS, WAF, CDN) → S3 (OAC,\nprivate, origin). This is the standard pattern for all static sites.\"\n```\n\n**Q: How do you ensure users always get the latest version of your SPA after deployment?**\n```\n\"Two-part strategy:\n\nPart 1: Cache-bust JS/CSS with content hashes.\nModern build tools (Vite, webpack) append file content hash to filename:\nmain.a1b2c3d4.js, styles.e5f6g7h8.css\nCloudFront caches these with max-age=31536000 (1 year).\nWhen code changes → new hash → new filename → new cache entry.\nOld cached files are never requested again (dead cache entries harmless).\n\nPart 2: Short TTL on index.html.\nindex.html references the hashed filenames.\nSet: Cache-Control: max-age=60, must-revalidate on index.html responses.\nOr: invalidate /index.html from CloudFront on every deployment.\n\nResult: users cache JS/CSS for 1 year (fast!), always get fresh index.html\nwithin 60 seconds of deployment. index.html references new hashed files.\nNew hashes → cache miss → fetched from origin → cached at edge.\nTotal update propagation: < 2 minutes after deployment. No manual invalidation.\"\n```\n\n---",
+      "rawMarkdown": "**Q: Why use CloudFront in front of S3 instead of serving directly from S3?**\n```\n\"Four reasons:\n\nPerformance: S3 is regional (one location). CloudFront has 400+ edge\nlocations. User in Tokyo gets files from Tokyo edge, not your us-east-1\nbucket. Latency drops from 180ms to 5ms for cached content.\n\nCost: S3 to internet data transfer is $0.09/GB. CloudFront to internet\nis $0.0085/GB (90% cheaper) because CloudFront has preferential rates with\nISPs and optimized transfer from S3 to CloudFront is also cheaper.\n\nSecurity: with OAC, S3 bucket is completely private. Block Public Access\nis ON. Only CloudFront can read objects. Direct S3 URLs fail. Users always\ngo through CloudFront (WAF, rate limiting, geo-blocking all apply).\n\nHTTPS: S3 static website hosting doesn't support HTTPS with custom domain.\nCloudFront + ACM certificate = HTTPS with your domain. Required for SEO\nand browser trust.\n\nThe combination is: Route 53 → CloudFront (HTTPS, WAF, CDN) → S3 (OAC,\nprivate, origin). This is the standard pattern for all static sites.\"\n```\n\n**Q: How do you ensure users always get the latest version of your SPA after deployment?**\n```\n\"Two-part strategy:\n\nPart 1: Cache-bust JS/CSS with content hashes.\nModern build tools (Vite, webpack) append file content hash to filename:\nmain.a1b2c3d4.js, styles.e5f6g7h8.css\nCloudFront caches these with max-age=31536000 (1 year).\nWhen code changes → new hash → new filename → new cache entry.\nOld cached files are never requested again (dead cache entries harmless).\n\nPart 2: Short TTL on index.html.\nindex.html references the hashed filenames.\nSet: Cache-Control: max-age=60, must-revalidate on index.html responses.\nOr: invalidate /index.html from CloudFront on every deployment.\n\nResult: users cache JS/CSS for 1 year (fast!), always get fresh index.html\nwithin 60 seconds of deployment. index.html references new hashed files.\nNew hashes → cache miss → fetched from origin → cached at edge.\nTotal update propagation: < 2 minutes after deployment. No manual invalidation.\"\n```\n\n**Q: Users in one region still see stale content while others see the new site. How do you debug CloudFront?**\n```\n\"I would think cache key and cache lifetime first.\n\nChecklist:\n→ Is the stale object actually cached at edge because TTL is still valid?\n→ Did we invalidate the right path, especially index.html?\n→ Are query strings, headers, or cookies part of cache key unexpectedly?\n→ Is origin returning different cache-control in different paths?\n→ Is CloudFront even serving from cache, or are we seeing origin inconsistency?\n\nI would compare response headers:\n→ x-cache\n→ age\n→ cache-control\n→ etag / last-modified\n\nThe senior lesson is that stale content is often not 'CloudFront is broken';\nit is usually a mismatch between cache strategy and deployment strategy.\"\n```\n\n**Q: When can CloudFront make an outage worse instead of better?**\n```\n\"If the cache policy is wrong, CloudFront can amplify bad behavior globally.\n\nExamples:\n→ cache a bad HTML response and every region serves it\n→ forward too many headers/cookies and destroy cache hit ratio\n→ no origin shielding and massive cache miss storm hits origin after deploy\n→ dynamic API responses cached incorrectly and users see other users' data\n\nSo CloudFront is not just a speed layer. It is a distribution layer.\nAny mistake at that layer becomes global very quickly.\n\nThat is why I treat cache policy, origin failover, and invalidation strategy as production controls, not CDN details.\"\n```\n\n---",
       "blocks": [
         {
           "type": "paragraph",
@@ -176,6 +176,22 @@
         {
           "type": "diagram",
           "content": "\"Two-part strategy:\n\nPart 1: Cache-bust JS/CSS with content hashes.\nModern build tools (Vite, webpack) append file content hash to filename:\nmain.a1b2c3d4.js, styles.e5f6g7h8.css\nCloudFront caches these with max-age=31536000 (1 year).\nWhen code changes → new hash → new filename → new cache entry.\nOld cached files are never requested again (dead cache entries harmless).\n\nPart 2: Short TTL on index.html.\nindex.html references the hashed filenames.\nSet: Cache-Control: max-age=60, must-revalidate on index.html responses.\nOr: invalidate /index.html from CloudFront on every deployment.\n\nResult: users cache JS/CSS for 1 year (fast!), always get fresh index.html\nwithin 60 seconds of deployment. index.html references new hashed files.\nNew hashes → cache miss → fetched from origin → cached at edge.\nTotal update propagation: < 2 minutes after deployment. No manual invalidation.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: Users in one region still see stale content while others see the new site. How do you debug CloudFront?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"I would think cache key and cache lifetime first.\n\nChecklist:\n→ Is the stale object actually cached at edge because TTL is still valid?\n→ Did we invalidate the right path, especially index.html?\n→ Are query strings, headers, or cookies part of cache key unexpectedly?\n→ Is origin returning different cache-control in different paths?\n→ Is CloudFront even serving from cache, or are we seeing origin inconsistency?\n\nI would compare response headers:\n→ x-cache\n→ age\n→ cache-control\n→ etag / last-modified\n\nThe senior lesson is that stale content is often not 'CloudFront is broken';\nit is usually a mismatch between cache strategy and deployment strategy.\""
+        },
+        {
+          "type": "paragraph",
+          "content": "**Q: When can CloudFront make an outage worse instead of better?**"
+        },
+        {
+          "type": "diagram",
+          "content": "\"If the cache policy is wrong, CloudFront can amplify bad behavior globally.\n\nExamples:\n→ cache a bad HTML response and every region serves it\n→ forward too many headers/cookies and destroy cache hit ratio\n→ no origin shielding and massive cache miss storm hits origin after deploy\n→ dynamic API responses cached incorrectly and users see other users' data\n\nSo CloudFront is not just a speed layer. It is a distribution layer.\nAny mistake at that layer becomes global very quickly.\n\nThat is why I treat cache policy, origin failover, and invalidation strategy as production controls, not CDN details.\""
         },
         {
           "type": "paragraph",
@@ -198,10 +214,33 @@
           "topicNumber": 10,
           "topicSlug": "10-cloudfront-cdn",
           "topic": "CloudFront (CDN)"
+        },
+        {
+          "id": "10-cloudfront-cdn-q3",
+          "question": "Users in one region still see stale content while others see the new site. How do you debug CloudFront?",
+          "answer": "\"I would think cache key and cache lifetime first.\n\nChecklist:\n→ Is the stale object actually cached at edge because TTL is still valid?\n→ Did we invalidate the right path, especially index.html?\n→ Are query strings, headers, or cookies part of cache key unexpectedly?\n→ Is origin returning different cache-control in different paths?\n→ Is CloudFront even serving from cache, or are we seeing origin inconsistency?\n\nI would compare response headers:\n→ x-cache\n→ age\n→ cache-control\n→ etag / last-modified\n\nThe senior lesson is that stale content is often not 'CloudFront is broken';\nit is usually a mismatch between cache strategy and deployment strategy.\"",
+          "topicNumber": 10,
+          "topicSlug": "10-cloudfront-cdn",
+          "topic": "CloudFront (CDN)"
+        },
+        {
+          "id": "10-cloudfront-cdn-q4",
+          "question": "When can CloudFront make an outage worse instead of better?",
+          "answer": "\"If the cache policy is wrong, CloudFront can amplify bad behavior globally.\n\nExamples:\n→ cache a bad HTML response and every region serves it\n→ forward too many headers/cookies and destroy cache hit ratio\n→ no origin shielding and massive cache miss storm hits origin after deploy\n→ dynamic API responses cached incorrectly and users see other users' data\n\nSo CloudFront is not just a speed layer. It is a distribution layer.\nAny mistake at that layer becomes global very quickly.\n\nThat is why I treat cache policy, origin failover, and invalidation strategy as production controls, not CDN details.\"",
+          "topicNumber": 10,
+          "topicSlug": "10-cloudfront-cdn",
+          "topic": "CloudFront (CDN)"
         }
       ],
       "revisionPoints": [
-        "**Q: Why use CloudFront in front of S3 instead of serving directly from S3?**"
+        "→ Is the stale object actually cached at edge because TTL is still valid?",
+        "→ Did we invalidate the right path, especially index.html?",
+        "→ Are query strings, headers, or cookies part of cache key unexpectedly?",
+        "→ Is origin returning different cache-control in different paths?",
+        "→ Is CloudFront even serving from cache, or are we seeing origin inconsistency?",
+        "→ x-cache",
+        "→ age",
+        "→ cache-control"
       ]
     },
     {
